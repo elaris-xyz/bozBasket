@@ -1,0 +1,183 @@
+
+تحلیل عمیق Stocklana و انتخاب ایده‌های برنده برای Hackathon
+تمرکز: توکنایز سهام، میکروساختار بازار، اوراکل، DeFi و مزیت واقعی سولانا
+مبنای تصمیم‌گیری: صفحه رسمی مسابقه + وضعیت فعلی اکوسیستم Solana در سپتامبر 2026
+جمع‌بندی اجرایی
+این مسابقه عملاً مسابقه «توکن سهام بساز» نیست. خود صفحه Stocklana صریحاً می‌گوید که توکن‌های سهام همین حالا روی سولانا معامله می‌شوند و از شرکت‌کننده می‌خواهد چیزی بسازد که مالکیت و استفاده از سهام را از یک اپ بروکری سنتی بهتر کند. در همان صفحه نیز حوزه‌ها به‌طور مشخص شامل معامله 24/7، سرمایه‌گذاری خودکار، اعتبار و بازده، زیرساخت قیمت/Corporate Action/Compliance/Analytics و تجربه مصرف‌کننده است. داوری هم بر چهار سؤال می‌چرخد: کاربر و مسئله واقعی، دمو end-to-end، دلیل روشن برای سولانا و کیفیت اجرا. [1]
+بر اساس وضعیت بازار در 2026، ساده‌ترین ایده‌ها قبلاً اشغال شده‌اند: xStocks صدها سهم و ETF را 24/7 و 1:1 پشتوانه‌دار ارائه می‌کند؛ Ondo بیش از 200 دارایی سهامی/ETF را روی سولانا آورده؛ Jupiter همین حالا برخی xStockها را به‌عنوان وثیقه می‌پذیرد؛ و اکوسیستم Solana عملاً به سمت بازارهای RWA با نقدشوندگی، وام‌دهی و routing رفته است. بنابراین ساختن «یک DEX برای سهام» یا «یک اپ خرید سهام» احتمالاً تمایز کافی ندارد. [2][3][4][5]
+از نظر من دو ایده ارزش جدی ساختن دارند. ایده اول با فاصله بهترین است: یک لایه «Market Integrity / Fair-Value» برای سهام توکنایزشده که قیمت را فقط از یک Oracle نپذیرد، وضعیت بازار سنتی و نقدشوندگی آنچین را هم بسنجد و در وضعیت پرریسک، معامله یا liquidation را محدود کند. این دقیقاً به یکی از دردناک‌ترین نقص‌های فعلی بازار سهام آنچین یعنی قیمت‌گذاری خارج از ساعات بازار و ریسک oracle وصل می‌شود. Solana در یک گزارش/پادکست رسمی هم به رشد سریع equity spot و مشکل وابستگی به اوراکل و حتی exploit حدود 24 میلیون دلاری Ostium اشاره کرده است. [6][7]
+ایده دوم یک «Corporate Actions + Portfolio Accounting OS» است که چند wrapper مختلف یک سهم را به یک هویت اقتصادی واحد وصل می‌کند و split/dividend/adjusted cost basis/P&L را استاندارد می‌سازد. جذابیت آن کمتر از ایده اول است، اما از نظر امکان ساخت در یک هفته و امکان فروش B2B به walletها، lenders و brokers منطقی است. [3][8]
+1) مسابقه دقیقاً چه چیزی را پاداش می‌دهد؟
+صفحه رسمی مسابقه: جایزه کل 100,000 دلار؛ آخرین مهلت ارسال 18 سپتامبر 2026 ساعت 4 عصر ET؛ در زمان بررسی 179 ثبت‌نام و 15 submission نمایش داده می‌شد. بنابراین پنجره ساخت بسیار کوتاه است و execution مهم‌تر از ایده بسیار پیچیده است. [1]
+مسئله‌ای که خود برگزارکننده پیشنهاد می‌کند broad است، اما جمله کلیدی «Pick one wedge and make it excellent» است. این یعنی محصولی که پنج feature متوسط داشته باشد از یک wedge کوچک و کامل بهتر نیست. [1]
+از چهار معیار داوری، دو مورد بیشترین ریسک را برای پروژه‌های دانشجویی/هکاتونی دارند: end-to-end demo و «چرا Solana؟». یک front-end زیبا که smart contract آن فقط نقش database دارد، از نظر داوری ضعیف است. همین‌طور پروژه‌ای که همان محصول را روی Ethereum/Base هم بتوان ساخت، دلیل کافی برای Solana ندارد.
+2) تصویر واقعی بازار: چرا «سهام روی بلاکچین» دیگر ایده جدیدی نیست؟
+Solana در 2026 دیگر صرفاً زیرساخت است؛ یک بازار واقعی RWA دارد. گزارش رسمی Solana Foundation در اواخر جولای 2026 از حدود 3.7 میلیارد دلار RWA غیر‌استیبل‌کوینی و 313 هزار دارنده خبر می‌دهد و می‌گوید 97٪ حجم spot توکنایزشده سهام که تا آن زمان ثبت شده روی Solana settle شده است. [2]
+xStocks با ساختار 1:1 backed و قابلیت معامله 24/7، fractional ownership و composability، یک لایه distribution و asset issuance جدی ساخته است. خود xStocks در سایت فعلی‌اش از 715 سهم/ETF، بیش از 40 میلیارد دلار transaction volume و حضور 24/7 صحبت می‌کند. این اعداد متعلق به خود پروژه‌اند و باید به‌عنوان داده اعلام‌شده توسط issuer دیده شوند، نه آمار مستقل ممیزی‌شده. [3]
+Ondo نیز در ژانویه 2026 با بیش از 200 سهم و ETF روی Solana فعال شد و بعداً این کاتالوگ به بیش از 250 دارایی رسید. یعنی «دسترسی به تعداد زیادی سهم» مزیت رقابتی قابل اتکایی برای یک پروژه هکاتونی نیست. [4][5]
+حتی لایه اعتباری هم خالی نیست: Jupiter Lend در حال حاضر SPYx، QQQx و NVDAx را در بازار وثیقه دارد و آستانه liquidation برای بعضی از این دارایی‌ها را اعلام می‌کند. بنابراین «وام با وثیقه سهام» بدون یک نوآوری مشخص، عملاً تکرار محصول موجود است. [9]
+حفره‌های باقی‌مانده از نگاه محصول
+حوزه
+وضعیت فعلی
+مسئله باقیمانده
+فرصت برای هکاتون
+Issuance
+قوی
+ورود به بازار/توکن‌سازی دیگر novelty نیست
+رد
+Trading
+رقابت زیاد
+قیمت کشف‌شده آنچین در خارج ساعات TradFi و نقدشوندگی نابرابر
+بالا، اگر روی market integrity تمرکز شود
+Lending
+در حال بلوغ
+وثیقه سهام همین حالا در Jupiter/Kamino در حال استفاده است
+متوسط، مگر با risk engine جدید
+Corporate actions
+جزئی و issuer-specific
+هر issuer رفتار متفاوتی برای dividend/split/wrapper دارد
+بالا برای زیرساخت B2B
+Portfolio analytics
+پراکنده
+یک سهم ممکن است چند wrapper، issuer و backing model داشته باشد
+خوب
+Consumer investing
+رقابت سنگین
+DCA/robo/copy trading تمایز کمی دارد
+ضعیف مگر با یک onchain primitive خاص
+3) سولانا در این مسئله چه مزیتی دارد؟
+Solana برای RWA سه چیز بسیار مهم دارد: settlement سریع و ارزان، توکن‌استاندارد Token-2022 با extensionهای compliance، و composability با DeFi. مستندات رسمی Solana صریحاً از sub-second finality، fee زیر 0.001 دلار و قابلیت‌هایی مانند transfer restrictions، pausability، confidential transfers و permanent delegate صحبت می‌کنند. [10]
+برای پروژه Stocklana باید این مزیت‌ها در «flow» دیده شوند، نه در اسلاید. مثلاً کاربر باید بتواند سهام توکنایزشده را با USDC در یک تراکنش/مسیر اتمیک جابه‌جا کند، collateral را به یک lending market بدهد یا یک risk state را روی chain مصرف کند. خود Solana نیز delivery-versus-payment اتمیک برای دارایی‌های توکنایزشده را به‌عنوان الگوی native مطرح می‌کند. [10]
+Oracle مسئله اصلی است. Pyth داده‌های مالی با confidence و زمان‌بندی بازار ارائه می‌کند، اما خودش صریحاً می‌گوید سهام آمریکا خارج از ساعات بازار قیمت تازه‌ای ندارد و در برخی شرایط داده ممکن است stale شود؛ SDK هم برای جلوگیری از استفاده ناخواسته از قیمت stale چک staleness دارد. این یعنی «بازار سهام 24/7» لزوماً به معنی «یک قیمت مرجع 24/7 قابل اعتماد» نیست. [11][12]
+4) ایده شماره 1 — EquityGuard: لایه Fair-Value و Market Integrity برای سهام آنچین
+حکم من: اگر تیم فنی متوسط به بالا باشد، این ایده را انتخاب می‌کنم. دلیل: مسئله واقعی، Solana-native، demoپذیر، قابل توسعه به SDK/API و از نظر داوری بسیار قابل توضیح است.
+مسئله دقیق
+وقتی بازار سهام سنتی بسته است، tokenized equity ممکن است هنوز معامله شود، اما reference price رسمی با همان کیفیت ساعت بازار ندارد. اگر یک protocol برای liquidation، margin یا valuation فقط به یک feed تکیه کند، stale/mispriced data می‌تواند به liquidation اشتباه یا حتی exploit منجر شود. Pyth خودش محدودیت market-hours و stale data را مستند کرده و گزارش Solana درباره equity perps نیز وابستگی به oracle را یکی از bottleneckها دانسته است. [6][7][11]
+پس مسئله واقعی «پیدا کردن قیمت» نیست؛ مسئله «تصمیم گرفتن درباره اینکه چه زمانی به یک قیمت باید اعتماد کرد» است.
+محصول
+یک protocol + SDK که برای هر stock token یک وضعیت ریسک روی chain نگه می‌دارد: SAFE / DEGRADED / HALTED. این وضعیت به‌جای یک عدد ساده به lending vault، swap router یا trading app می‌گوید آیا اکنون این قیمت برای اجرای یک عملیات حساس قابل اتکاست یا خیر.
+نسخه hackathon نباید یک oracle جدید از صفر بسازد. باید یک «aggregator / guard layer» بسازد که از Pyth به‌عنوان reference در ساعات مناسب و از داده‌های spot آنچین/venueهای موجود برای تشخیص price discovery خارج ساعات بازار استفاده کند. هدف، ساختن یک consensus price محافظه‌کارانه است، نه ادعای اینکه یک feed جادویی همیشه حقیقت را می‌داند.
+منطق پیشنهادی موتور
+FairPriceState = f(reference_price, confidence, staleness, session, onchain_liquidity, TWAP, venue_divergence, event_risk)
+در بازار باز: وزن reference price بالاست؛ onchain TWAP نقش sanity check دارد.
+در pre/post-market و weekend: وزن reference به‌تنهایی کافی نیست؛ confidence و staleness به‌شدت مهم می‌شوند و onchain spot فقط در صورت داشتن liquidity کافی وارد consensus می‌شود.
+اگر divergence زیاد شود یا نقدشوندگی سقوط کند، پروتکل به‌جای تولید یک «قیمت جعلی دقیق»، وضعیت DEGRADED/HALTED می‌دهد. این نکته محصول را از یک AMM یا price dashboard معمولی جدا می‌کند.
+برای robustness، median/trimmed aggregation از mean ساده بهتر است؛ چون یک outlier قیمت نباید کل تصمیم را جابه‌جا کند. آستانه‌ها را deterministic و قابل مشاهده روی chain قرار دهید.
+دموی برنده
+سناریو 1: NVDAx در ساعات بازار → reference و onchain price هم‌راستا → SAFE → یک swap/borrow موفق.
+سناریو 2: یک feed stale یا quote دستکاری‌شده به سیستم داده می‌شود → confidence/staleness check و divergence detector فعال می‌شود → وضعیت DEGRADED → liquidation یا trade حساس متوقف می‌شود.
+سناریو 3: یک synthetic/off-hours quote فقط وقتی نقدشوندگی آنچین از حد مشخص بالاتر است در قیمت ترکیبی وارد می‌شود. کاربر روی داشبورد می‌بیند چرا سیستم به یک قیمت اعتماد کرده یا نکرده است.
+Stack پیشنهادی
+Anchor/Rust: حساب FairValueState، حساب Policy و instructionهای update/consume.
+Token/market adapters: اتصال به Pyth و یک یا دو منبع spot روی Solana. داده خام خارج زنجیره فقط برای observation است؛ تصمیم نهایی باید با policy قابل بازتولید باشد.
+Next.js/React dashboard: chart قیمت، confidence، session state، liquidity، reason code برای SAFE/DEGRADED/HALTED.
+یک SDK کوچک TypeScript/Rust: مثلاً can_execute(asset, action) که appهای دیگر بتوانند آن را مصرف کنند.
+5) ایده شماره 2 — EquityGraph / Corporate Actions OS
+حکم من: برای تیمی که backend/data قوی‌تری دارد و نمی‌خواهد وارد ریسک liquidation/oracle شود، این گزینه قابل دفاع است؛ اما دمو باید بسیار polished باشد تا به اندازه EquityGuard جذاب شود.
+یک سهم اقتصادی واحد ممکن است چند wrapper داشته باشد: xStock، token issuer دیگر، ETF wrapper یا دارایی‌ای با مدل total-return متفاوت. xStocks و Ondo همین حالا محصولات هم‌پوشان در بازار دارند و حتی نوع رفتار corporate action می‌تواند متفاوت باشد؛ xStocks توضیح می‌دهد dividend با rebasing به موجودی holder منتقل می‌شود و split هم به‌شکل onchain اعمال می‌شود. [3][8]
+ایده این است که به‌جای تمرکز بر issuance، یک canonical asset graph بسازیم: هر token به underlying security، issuer، custodian model، chain، corporate-action policy و eligibility متصل می‌شود. سپس portfolio engine روی این گراف P&L و income را محاسبه می‌کند.
+خروجی واقعی برای appها: «این دو token هر دو exposure به یک سهم‌اند، اما risk/backing model آنها متفاوت است»؛ «این dividend مربوط به کدام wallet و کدام wrapper است؟»؛ «بعد از split، cost basis و unit count چطور تغییر کرده؟»
+دموی لازم
+یک wallet با دو wrapper از یک underlying داشته باشید.
+یک dividend event و یک split event را به صورت deterministic replay کنید.
+نشان دهید token balance، economic exposure، adjusted cost basis و P&L بدون double-counting به‌روزرسانی می‌شوند.
+در نهایت API بدهید که یک lending protocol یا wallet بتواند canonical exposure را query کند.
+6) ایده ذخیره — Smart Execution / DCA برای سهام آنچین
+این ایده را فقط در صورت داشتن وقت/تیم product قوی پیشنهاد می‌کنم؛ انتخاب اول من نیست.
+محصول: recurring buy + basket + smart routing بین venueهای موجود، با جلوگیری از اجرای بد در ساعات کم‌نقدشونده و با rebalancing اتمیک.
+مزیت: demo بسیار ساده و برای مصرف‌کننده قابل فهم است.
+ضعف: DCA، robo investing، basket و routing همه حوزه‌های شلوغ‌اند. بدون یک تفاوت محکم مثل «session-aware execution» یا استفاده از FairValueGuard، احتمالاً شبیه یک frontend بهتر برای زیرساخت موجود به نظر می‌رسد.
+اگر ساخته شود، بهتر است به EquityGuard متصل شود و صرفاً یک feature روی آن باشد، نه پروژه اصلی.
+7) امتیازدهی سخت‌گیرانه ایده‌ها
+این امتیازها رسمی نیستند؛ مدل تصمیم‌گیری من هستند. وزن‌ها: درد واقعی 25٪، تمایز 20٪، Solana-native بودن 20٪، قابلیت ساخت در یک هفته 20٪، قدرت دمو 15٪.
+ایده
+درد
+تمایز
+Solana
+۷ روز
+دمو
+جمع / 10
+EquityGuard
+9.5
+9.0
+9.5
+8.5
+9.5
+9.2
+EquityGraph
+8.5
+8.5
+8.5
+9.0
+7.5
+8.4
+Smart Execution/DCA
+7.0
+6.5
+8.0
+8.5
+8.5
+7.5
+Generic stock lending
+8.0
+5.5
+8.5
+7.0
+8.0
+7.1
+Generic tokenized-stock DEX
+7.5
+4.5
+7.5
+5.5
+7.5
+6.2
+AI stock picker/copy trading
+6.0
+4.0
+4.5
+8.0
+7.0
+5.7
+8) چیزهایی که عمداً پیشنهاد نمی‌کنم
+«یک Uniswap برای سهام»؛ چون venue و liquidity aggregation همین حالا ecosystem دارند و novelty آن پایین است.
+«یک Robinhood روی Solana»؛ چون رابط کاربری به‌تنهایی دلیل blockchain نیست.
+«AI که می‌گوید چه سهمی بخریم»؛ چون مشکل اصلی مسابقه زیرساخت بازار و استفاده از tokenized stocks است، نه تولید سیگنال buy/sell.
+«Prediction market برای قیمت سهام»؛ مگر اینکه یک مکانیسم بسیار خاص برای market structure داشته باشد. prediction market خود به‌تنهایی مسئله بنیادی tokenized equity را حل نمی‌کند.
+«وام با وثیقه TSLAx» بدون تفاوت بنیادی؛ Jupiter همین حالا چنین primitiveای دارد. [9]
+9) اگر EquityGuard را بسازیم، scope هفت‌روزه باید چگونه باشد؟
+روز 1: انتخاب فقط 2 یا 3 دارایی (مثلاً SPYx، NVDAx، TSLAx)، قرارداد accountها، data model و state machine.
+روز 2: adapter برای Pyth + normalization قیمت/confidence/staleness + session calendar.
+روز 3: onchain market observer و TWAP/liquidity metrics از یک venue. هنوز هیچ UI سنگینی نسازید.
+روز 4: FairValueState + rules + حالت DEGRADED/HALTED + یک mock consumer برای liquidation/swap.
+روز 5: داشبورد و visual proof: timestamp، source weights، confidence، liquidity و reason code.
+روز 6: سناریوهای حمله: stale oracle، outlier quote، کمبود liquidity، price gap. یک test harness بسازید که نشان دهد guard جلوی execution اشتباه را می‌گیرد.
+روز 7: polish، video demo 2 تا 3 دقیقه‌ای، README معماری، quickstart و یک slide «Why Solana?». هیچ feature جدیدی در روز آخر اضافه نشود.
+چیزی که داور باید در 90 ثانیه اول ببیند
+0–15 ثانیه: «توکن سهام 24/7 است، اما قیمت مرجع الزاماً 24/7 نیست.»
+15–45 ثانیه: کاربر پوزیشن/قیمت را می‌بیند؛ سیستم از reference + onchain evidence استفاده می‌کند و SAFE می‌دهد.
+45–70 ثانیه: feed stale یا دستکاری می‌شود؛ وضعیت به DEGRADED/HALTED تغییر می‌کند و liquidation/trade حساس reject می‌شود.
+70–90 ثانیه: تراکنش روی Solana، state onchain، SDK و کاربرد در lending/router نشان داده می‌شود.
+10) ریسک‌های فنی و محصولی که نباید پنهان شوند
+اول: «fair value» خود یک حقیقت مطلق نیست. خارج بازار رسمی، یک tokenized stock می‌تواند واقعاً با قیمت بسته‌شدن قبلی متفاوت باشد. بنابراین محصول باید uncertainty را مدل کند، نه اینکه با confidence جعلی عدد بیشتری تولید کند. [7][11]
+دوم: اگر onchain liquidity پایین باشد، قیمت آنچین ممکن است خودش قابل دستکاری باشد. بنابراین استفاده از TWAP بدون liquidity threshold خطرناک است.
+سوم: corporate actions و backing model بین issuerها یکسان نیست. هر چیزی که از کلمه «stock» نتیجه بگیرد دو token از دو issuer دقیقاً معادل‌اند، ممکن است از نظر اقتصادی اشتباه کند. [3][8]
+چهارم: دسترسی و eligibility برای tokenized securities به jurisdiction و پلتفرم وابسته است. MVP نباید ادعای «همه‌جا و برای همه» داشته باشد. منابع رسمی Solana نیز روی eligibility و jurisdiction برای برخی محصولات سهامی تأکید کرده‌اند. [5]
+پنجم: اگر هدف پروژه deployment production باشد، audit و legal/compliance بسیار جدی است. برای hackathon می‌توان محصول را به‌عنوان protocol/SDK با demo محدود ساخت، اما نباید چنین وانمود کرد که با یک smart contract مسئله مقررات اوراق بهادار حل شده است.
+نتیجه نهایی من
+اگر قرار است فقط یک چیز بسازیم، انتخاب من EquityGuard است. دلیلش نه «نو بودن» صرف، بلکه هم‌پوشانی دقیق با درد امروز بازار است: tokenized equities رشد کرده‌اند، 24/7 بودنشان ارزشمند است، اما قیمت مرجع و risk management هنوز با ساعات بازار سنتی و کیفیت oracleها درگیر است. [2][6][7]
+مسیر درست این نیست که یک exchange کامل یا lending protocol کامل بسازیم. مسیر درست یک wedge کوچک و عمیق است: «قبل از اینکه یک protocol با یک قیمت سهام کاری انجام دهد، این لایه به آن می‌گوید چقدر باید به آن قیمت اعتماد کند.»
+اگر تیم در oracle/risk engineering قوی نیست، EquityGraph انتخاب امن‌تر است: کمتر خطرناک، قابل‌ساخت‌تر و با امکان تبدیل‌شدن به زیرساخت استاندارد برای wallet/lender/broker. Smart Execution را فقط به‌صورت feature جانبی نگه می‌دارم.
+منابع
+[1] Stocklana — Hackathons Solana (صفحه رسمی مسابقه) — https://hackathons.solana.com/hackathons/stocklana
+[2] Solana Foundation — Overview of Institutional Real World Assets on Solana, Jul 30 2026 — https://solana.com/ar/news/overview-of-institutional-real-world-assets-on-solana
+[3] xStocks — Tokenized Equities — https://xstocks.com/
+[4] Solana — Ondo Global Markets: Access 200+ Tokenized U.S. Stocks and ETFs on Solana — https://solana.com/news/ondo-global-markets-tokenized-stocks-etfs-solana
+[5] Solana Ecosystem Roundup: April 2026 — https://solana.com/ar/news/solana-ecosystem-roundup-april-2026
+[6] Solana Media — Equity Perps Explained, Aug 14 2026 — https://solana.com/ja/podcasts/talking-tokens/episodes/equity-perps-explained-can-traditional-stocks-e3ndlbj
+[7] StrataMedia Research — Equity Perps Are Nothing Without Equity Spot, Aug 14 2026 — https://www.token-relations.com/p/stratamedia-research-equity-perps-are-nothing-without-equity-spot-3faff8781eab4cf2
+[8] xStocks — Partner FAQ / corporate actions — https://xstocks.com/partner
+[9] Jupiter Lend — xStock collateral markets — https://jup.ag/lend/borrow?xStock=true
+[10] Solana Docs — Tokenization for Stablecoins and Real-World Assets — https://solana.com/docs/tokenization
+[11] Pyth Developer Hub — Best Practices — https://docs.pyth.network/price-feeds/core/best-practices
+[12] Pyth Developer Hub — Product Metadata / Market Schedule — https://docs.pyth.network/price-feeds/core/pythnet-reference/product-metadata
