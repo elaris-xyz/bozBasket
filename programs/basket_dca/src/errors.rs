@@ -30,4 +30,18 @@ pub enum BasketError {
 	NotAdmin,
 	#[msg("Arithmetic overflow")]
 	Overflow,
+	#[msg("Signer is not the configured keeper")]
+	NotKeeper,
+	#[msg("Plan is not active")]
+	PlanNotActive,
+	#[msg("Plan is not due yet")]
+	NotDue,
+	#[msg("Remaining accounts must be 6 per leg, in leg order")]
+	WrongLegAccountCount,
+	#[msg("Reference price account is not a valid PriceUpdateV2 for this leg")]
+	BadReference,
+	#[msg("Venue account does not match this leg or the config")]
+	BadVenue,
+	#[msg("Venue and reference prices use different exponents")]
+	MismatchedExponent,
 }

@@ -39,3 +39,43 @@ pub struct StatusChanged {
 	pub plan: Pubkey,
 	pub status: u8,
 }
+
+/// One leg of a completed execution.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct LegFill {
+	pub mint: Pubkey,
+	pub usdc_in: u64,
+	pub units: u64,
+	pub reference_price: i64,
+	pub venue_price: i64,
+	pub exponent: i32,
+}
+
+#[event]
+pub struct Executed {
+	pub plan: Pubkey,
+	pub ts: i64,
+	pub usdc_in: u64,
+	pub vault_balance: u64,
+	pub next_execution: i64,
+	pub legs: Vec<LegFill>,
+}
+
+/// The guard said no. `detail` depends on the reason: publish age in seconds
+/// for REFERENCE_STALE, basis points for CONFIDENCE_TOO_WIDE and DIVERGENCE,
+/// remaining USDC for LOW_LIQUIDITY and INSUFFICIENT_BALANCE.
+#[event]
+pub struct Deferred {
+	pub plan: Pubkey,
+	pub ts: i64,
+	pub reason: u8,
+	pub leg_index: u8,
+	pub detail: i64,
+	pub next_execution: i64,
+}
+
+#[event]
+pub struct PlanEnded {
+	pub plan: Pubkey,
+	pub ts: i64,
+}

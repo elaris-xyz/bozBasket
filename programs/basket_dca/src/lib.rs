@@ -1,18 +1,20 @@
 //! bozBasket on-chain program: recurring basket buys of tokenized US stocks,
 //! executed by a keeper only when the reference price can be trusted.
 //!
-//! Day 2: config, plan lifecycle and the USDC vault. `execute_basket` (the
-//! guard) lands on day 3.
+//! `create_plan`/`deposit`/`withdraw`/`set_paused` are the user's side;
+//! `execute_basket` in `execute.rs` is the keeper's side and holds the guard.
 
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 pub mod errors;
 pub mod events;
+pub mod execute;
 pub mod state;
 
 pub use errors::BasketError;
 pub use events::*;
+pub use execute::*;
 pub use state::*;
 
 declare_id!("4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR");
@@ -197,6 +199,18 @@ pub mod basket_dca {
 		plan.status = target;
 		emit!(StatusChanged { plan: plan.key(), status: target });
 		Ok(())
+	}
+
+	/// Keeper-only. Checks the guard for every leg and either fills the whole
+	/// basket atomically or records a deferral with a reason code. See
+	/// `execute.rs`; remaining accounts are 6 per leg in leg order.
+	pub fn execute_basket<'info>(ctx: Context<'_, '_, 'info, 'info, ExecuteBasket<'info>>) -> Result<()> {
+		execute::execute_basket(ctx)
+	}
+
+	/// Admin-only demo control: make a plan due at `ts` (0 = now).
+	pub fn nudge_plan(ctx: Context<NudgePlan>, ts: i64) -> Result<()> {
+		execute::nudge_plan(ctx, ts)
 	}
 }
 
