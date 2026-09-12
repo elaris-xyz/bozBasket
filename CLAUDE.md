@@ -143,7 +143,12 @@ Copy selectively, do not fork the monorepo:
     relying on it.
   Never copy any keypair into the repo.
 - Secrets live in `.env` (gitignored, already written): Neon Postgres
-  `DATABASE_URL`, RPC URL, keeper pubkey, `PYTH_API_KEY`. `.env.example` is the committed
+  `DATABASE_URL`, RPC URL, keeper pubkey, `PYTH_API_KEY`. Load it with
+  `tools/env.sh` / `tools/env.ps1`, never `source .env`: the Neon URL has
+  `&` in it. On 2026-09-13 Neon answered ECONNRESET/timeouts from this host
+  (TCP opens, TLS dies); the keeper falls back to a log-only ledger when
+  `DATABASE_URL` is unset or the database does not answer, and never lets a
+  ledger error block an execution. `.env.example` is the committed
   template. The user rotates the DB password before submission.
 - **Network: everything external goes through the user's VPN.** Nobody
   will use this from Iran. When Hermes, Jupiter, devnet RPC, npm, or
@@ -167,6 +172,12 @@ transfer from the wallet, the mocha loader is `tsx/cjs` (ts-mocha's bundled
 ts-node breaks), and the provider is pinned to "confirmed". `anchor test`
 with `cluster = Devnet` in Anchor.toml would deploy to devnet, which is slow
 and costs SOL; do not run it bare.
+
+Keeper: `pnpm --filter keeper test` (pure unit tests), `pnpm --filter keeper
+once` (one pass), `pnpm --filter keeper setup:devnet` (idempotent devnet
+setup, writes `deploy/devnet.json`), `scripts/faucet.ts <wallet>` (mock
+USDC). Deploy with `solana program deploy ... --use-rpc --max-len N` per
+program; `anchor deploy` over TPU dies with "max retries" on this network.
 
 Rules learned on day 2: box every `Account<_>` in a struct that inits two or
 more accounts (4 KiB SBF frame), use `.accountsPartial()` in tests, and keep

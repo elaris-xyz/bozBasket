@@ -23,7 +23,8 @@ export interface Ledger {
 export class PgLedger implements Ledger {
 	private pool: Pool;
 	constructor(databaseUrl: string) {
-		this.pool = new Pool({ connectionString: databaseUrl, max: 2 });
+		this.pool = new Pool({ connectionString: databaseUrl, max: 2, connectionTimeoutMillis: 30_000 });
+		this.pool.on("error", (err) => console.warn("ledger: pool error", err.message));
 	}
 
 	async migrate() {
@@ -45,6 +46,14 @@ export class PgLedger implements Ledger {
 	}
 
 	async record(r: LedgerRow) {
+		try {
+			await this.insert(r);
+		} catch (err) {
+			console.warn(`ledger: insert failed (${(err as Error).message}); row: ${r.kind} ${r.plan} ${r.signature ?? ""}`);
+		}
+	}
+
+	private async insert(r: LedgerRow) {
 		await this.pool.query(
 			`INSERT INTO executions (plan, ts, kind, reason, detail, signature, usdc_in, legs)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)

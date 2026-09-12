@@ -22,13 +22,21 @@ async function main() {
 	const chain = connect(cfg.rpcUrl, cfg.keeper);
 	const hermes = new HermesClient(cfg.hermesUrl, cfg.pythApiKey);
 
-	let ledger: Ledger;
+	// The chain is the source of truth; a ledger outage must never stop the
+	// keeper. Neon was unreachable from the dev host on 2026-09-13.
+	let ledger: Ledger = new LogLedger();
 	if (cfg.databaseUrl) {
 		const pg = new PgLedger(cfg.databaseUrl);
-		await pg.migrate();
-		ledger = pg;
+		try {
+			await pg.migrate();
+			ledger = pg;
+			console.log("ledger: postgres");
+		} catch (err) {
+			console.warn(`ledger: postgres unreachable (${(err as Error).message}); logging only`);
+			await pg.close().catch(() => undefined);
+		}
 	} else {
-		ledger = new LogLedger();
+		console.log("ledger: log only (DATABASE_URL unset)");
 	}
 	const executor = new Executor(chain, cfg, deployment, hermes, ledger);
 
