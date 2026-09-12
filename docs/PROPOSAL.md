@@ -192,9 +192,13 @@ Node service, one loop every minute:
 
 1. Load all Active plans from chain (getProgramAccounts with a memcmp on
    status), or from the ledger cache with periodic resync.
-2. For each due plan: check the session calendar; fetch Pyth price updates
-   for its feeds from Hermes; build `execute_basket` with the price update
-   accounts and the fill accounts; send.
+2. For each due plan: check the session calendar; fetch signed Pyth price
+   updates for its feeds from Hermes (needs `PYTH_API_KEY`, see
+   `docs/NETWORK.md`); build one transaction that first posts them to the
+   Pyth receiver (`post_update`, live on devnet) and then calls
+   `execute_basket` with those fresh price update accounts and the fill
+   accounts; send. Nobody sponsors US equity feeds on devnet, so the keeper
+   must post its own updates. This is also the mainnet flow.
 3. Parse `Executed` / `Deferred` events into Postgres:
    `executions(plan, ts, sig, legs_json, usdc_in, reason)`.
 4. Retry on RPC errors with backoff; never retry a tx that landed.
@@ -241,7 +245,7 @@ bozPicks for the wallet and ledger plumbing.
 
 | Day | Deliverable | Done when |
 |---|---|---|
-| 1 Sat 12/13 | repo, skeleton copied, `.gitignore`, reachability test of Hermes + Jupiter from the host, this proposal reviewed | `anchor build` passes on an empty program |
+| 1 Sat 12/13 | repo, skeleton copied, `.gitignore`, reachability test of Hermes + Jupiter from the host, this proposal reviewed, Pyth Terminal API key obtained | `anchor build` passes on an empty program |
 | 2 Sun | `basket_dca` accounts + create/deposit/withdraw; `mock_market` mints + fill | anchor tests green on localnet |
 | 3 Mon | `execute_basket` with guard checks + events; keeper executes one plan on devnet | explorer shows a 3-leg tx |
 | 4 Tue | web: demo wallet, basket builder, plan page, portfolio | judge flow works without Phantom |
@@ -254,7 +258,7 @@ Rule: no new feature after day 5. Register on the hackathon site on day 1.
 
 | Risk | Mitigation |
 |---|---|
-| Hermes or Jupiter blocked from the host | test day 1; the devnet path never depends on Jupiter; if Hermes is blocked, the keeper reads Pyth price accounts already on devnet via RPC |
+| Hermes or Jupiter blocked from the host | tested day 1, see `docs/NETWORK.md`: neither is geo-blocked, but Hermes needs an API key (free trial on the Pyth Terminal) and the devnet push oracle has no fresh equity prices. If no key arrives by day 3, `mock_market` also writes `PriceUpdateV2`-shaped accounts and the README says the reference price is synthetic too |
 | Anchor build toolchain on Windows | bozPicks already builds Anchor 0.30.1 here; copy its config, do not upgrade |
 | Tx size with 4 legs × (price update + fill accounts) | cap legs at 4 for the demo; use an Address Lookup Table if needed |
 | Judges see "mock fills" as fake | be explicit, show the mainnet code path, keep every other part real on chain |
