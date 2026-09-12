@@ -85,8 +85,9 @@ else until the demo works end to end. No feature work on the last day; day
   built somewhere else; do not assume a WSL build works here.
   The host Rust toolchain is `stable-x86_64-pc-windows-gnu` with no MinGW
   installed, so `cargo test`/`cargo install` fail with "dlltool: program
-  not found" unless the bundled one is on PATH:
-  `~/.rustup/toolchains/stable-x86_64-pc-windows-gnu/lib/rustlib/x86_64-pc-windows-gnu/bin/self-contained`.
+  not found" unless a MinGW dlltool is on PATH.
+  The bundled one has no `as.exe` and fails with "CreateProcess"; use the
+  MSYS2 binutils in `C:\msys64\ucrt64\bin` instead (already installed).
   `tools/env.ps1` and `tools/env.sh` set this. crates.io is slow from here
   (~15 KB/s on the index); set `CARGO_HTTP_TIMEOUT=900` for installs.
 
@@ -117,9 +118,15 @@ Copy selectively, do not fork the monorepo:
 ## Environment (decided 2026-09-12)
 
 - Project name: **bozBasket**. Repo and submission URL use this name.
-- Devnet wallet (keeper + deploy authority): `EMDRLzn3vREh9wVAk1SjW2HLBmsUhRLTfH2VxLT4PfxE`,
-  keypair at `~/.config/solana/id.json` (same as bozPicks). Never copy it
-  into the repo.
+- Devnet wallets, checked 2026-09-12 (the earlier note here was wrong):
+  - `C:/msys64/home/Arash/.config/solana/id.json` -> `6n42WYSHDvz7aWdF3LqWpfepdxMgT7nQp1HNdkYDqmL`,
+    12 SOL on devnet. This is what `solana config get` points at, so it is
+    the deploy authority and keeper for bozBasket. `Anchor.toml` uses it.
+  - `~/.config/solana/id.json` -> `9SiShrw4S3o3ha9HbmQGCKRVFxReFiAoEfvhQu2f3xNc`, 0 SOL. Unused.
+  - `EMDRLzn3vREh9wVAk1SjW2HLBmsUhRLTfH2VxLT4PfxE` has 4 SOL but no keypair
+    for it exists on this machine or in bozPicks; ask the user before
+    relying on it.
+  Never copy any keypair into the repo.
 - Secrets live in `.env` (gitignored, already written): Neon Postgres
   `DATABASE_URL`, RPC URL, keeper pubkey, `PYTH_API_KEY`. `.env.example` is the committed
   template. The user rotates the DB password before submission.
