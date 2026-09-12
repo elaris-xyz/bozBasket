@@ -83,6 +83,12 @@ else until the demo works end to end. No feature work on the last day; day
   `cargo install` in `~/.cargo/bin`. WSL Ubuntu exists but does not start
   (Virtual Machine Platform is off; enabling it needs admin). bozPicks was
   built somewhere else; do not assume a WSL build works here.
+  The host Rust toolchain is `stable-x86_64-pc-windows-gnu` with no MinGW
+  installed, so `cargo test`/`cargo install` fail with "dlltool: program
+  not found" unless the bundled one is on PATH:
+  `~/.rustup/toolchains/stable-x86_64-pc-windows-gnu/lib/rustlib/x86_64-pc-windows-gnu/bin/self-contained`.
+  `tools/env.ps1` and `tools/env.sh` set this. crates.io is slow from here
+  (~15 KB/s on the index); set `CARGO_HTTP_TIMEOUT=900` for installs.
 
 ## Reuse from bozPicks (`C:\My_DEVelope\bozPicks`)
 
