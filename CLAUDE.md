@@ -72,15 +72,16 @@ else until the demo works end to end. No feature work on the last day; day
   nothing is geo-blocked, but two things changed on Pyth's side:
   - **Hermes needs an API key since 2026-08-26** (`Authorization: Bearer`,
     free trial at terminal.pyth.network). `PYTH_API_KEY` is in `.env` and
-    works for crypto/FX/metals, but **US equity feeds are not in the trial
-    tier** (`403 Not entitled ... asset type 'equity'`). Paid plans start at
-    $500/month. So there is no live Pyth equity price for us anywhere.
-  - **Neither devnet nor mainnet has fresh Pyth US equity accounts** (weeks
-    stale; BTC/SOL fresh). Decision 2026-09-13: `mock_market` owns
-    `PriceUpdateV2`-layout reference accounts on devnet, the keeper fills
-    them from a free quote source with the source timestamp, and the program
-    only checks `owner == config.reference_program`. Mainnet = Pyth receiver
-    as `reference_program`, same code path. See `docs/NETWORK.md`.
+    covers crypto/FX/metals and exactly three US equities: **TSLA, QQQ,
+    VOO**. Everything else (AAPL, NVDA, SPY...) is `403 Not entitled`. The
+    demo basket is therefore TSLA/QQQ/VOO with real signed Pyth updates.
+  - **Nobody sponsors Pyth US equity accounts on devnet or mainnet** (weeks
+    stale; BTC/SOL fresh), so the keeper posts the signed Hermes updates to
+    the Pyth receiver itself (`post_update`) in the execute transaction.
+    `config.reference_program` = receiver `rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ`
+    on both networks. `mock_market.post_reference` writes the same
+    `PriceUpdateV2` layout as a fallback for non-entitled symbols. See
+    `docs/NETWORK.md`.
 - No PHP or WordPress here; that was the previous repo.
 - **Toolchain on this Windows host (installed 2026-09-12):** Solana CLI via
   `agave-install` in `~/.local/share/solana`, `anchor-cli 0.30.1` via

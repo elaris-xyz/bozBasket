@@ -1337,6 +1337,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mock_market"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
+
+[[package]]
 name = "num-bigint"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

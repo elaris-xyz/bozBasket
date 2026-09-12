@@ -1,5 +1,5 @@
 [workspace]
-members = ["programs/basket_dca"]
+members = ["programs/basket_dca", "programs/mock_market"]
 resolver = "2"
 
 [profile.release]

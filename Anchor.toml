@@ -7,9 +7,11 @@ skip-lint = false
 
 [programs.devnet]
 basket_dca = "4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR"
+mock_market = "A6pvN8KEYn5EXcgsRbzZUqBNjA5hFqFn6Ks2Li7SPMxS"
 
 [programs.localnet]
 basket_dca = "4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR"
+mock_market = "A6pvN8KEYn5EXcgsRbzZUqBNjA5hFqFn6Ks2Li7SPMxS"
 
 [registry]
 url = "https://api.apr.dev"
@@ -19,7 +21,7 @@ cluster = "Devnet"
 wallet = "C:/msys64/home/Arash/.config/solana/id.json"
 
 [workspace]
-members = ["programs/basket_dca"]
+members = ["programs/basket_dca", "programs/mock_market"]
 
 [scripts]
 test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

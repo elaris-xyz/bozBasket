@@ -60,14 +60,27 @@ mainnet push-oracle equity accounts are not a substitute either: on
 2026-09-12 AAPL was 29 days old and SPY 17 days old there, so nobody
 sponsors them.
 
-So the demo runs path (2), built so the program never knows the difference:
+**Corrected the same day:** the trial key does entitle three US equity
+feeds, `Equity.US.TSLA/USD`, `Equity.US.QQQ/USD` and `Equity.US.VOO/USD`
+(plus VOO's id `236b30dd09a9c00dfeec156c7b1efd646c0f01825a1758e3e4a0679e3bdff179`).
+Hermes returns signed updates for those, so path (1) is back for a
+three-stock demo basket: Tesla + Nasdaq 100 + S&P 500. AAPL, NVDA, SPY and
+the rest stay `Not entitled`.
+
+Final plan: path (1) with the real Pyth receiver for TSLA/QQQ/VOO. Path (2)
+below stays built into `mock_market` as the fallback for any symbol outside
+the entitlement, and the program never knows the difference:
 
 - `execute_basket` reads a `PriceUpdateV2`-layout account per leg and checks
-  `owner == config.reference_program`. On mainnet that is the Pyth receiver;
-  on devnet it is `mock_market`, which has a `post_reference` instruction.
-- The keeper fills those devnet accounts from a free quote source with the
-  source's own timestamp as `publish_time`, so staleness off-hours is real,
-  not simulated. The README says this plainly.
+  `owner == config.reference_program`. With the entitled feeds that is the
+  Pyth receiver on devnet and mainnet alike; `mock_market` also has a
+  `post_reference` instruction that writes the same layout for symbols
+  Hermes will not serve us.
+- Keeper flow per execution: fetch the three signed updates from Hermes,
+  `post_update` them to the receiver, call `execute_basket` in the same
+  transaction. Off-hours Hermes still returns Friday's close with its real
+  `publish_time` (22 h old on Saturday), so the staleness guard fires for
+  real. The `publish_time` field is exactly what Pyth's docs say to check.
 - Session calendar comes from the free Hermes metadata endpoint, which
   carries `market_hours` and a `schedule` string with 2026 holidays.
 - Switching to real Pyth on mainnet is `init_config` with the receiver as
