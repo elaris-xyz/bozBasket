@@ -71,12 +71,16 @@ else until the demo works end to end. No feature work on the last day; day
   see `docs/NETWORK.md` and `tools/reachability.mjs`. Through the VPN
   nothing is geo-blocked, but two things changed on Pyth's side:
   - **Hermes needs an API key since 2026-08-26** (`Authorization: Bearer`,
-    free trial at terminal.pyth.network). Without it every price endpoint
-    is 401. `PYTH_API_KEY` in `.env`.
-  - **Devnet has no fresh US equity prices.** The Pyth push-oracle accounts
-    for AAPL/NVDA/TSLA/SPY exist but are months stale; BTC/SOL are fresh.
-    The keeper must post its own price updates via the Pyth receiver (live
-    on devnet) or the demo mocks the price accounts.
+    free trial at terminal.pyth.network). `PYTH_API_KEY` is in `.env` and
+    works for crypto/FX/metals, but **US equity feeds are not in the trial
+    tier** (`403 Not entitled ... asset type 'equity'`). Paid plans start at
+    $500/month. So there is no live Pyth equity price for us anywhere.
+  - **Neither devnet nor mainnet has fresh Pyth US equity accounts** (weeks
+    stale; BTC/SOL fresh). Decision 2026-09-13: `mock_market` owns
+    `PriceUpdateV2`-layout reference accounts on devnet, the keeper fills
+    them from a free quote source with the source timestamp, and the program
+    only checks `owner == config.reference_program`. Mainnet = Pyth receiver
+    as `reference_program`, same code path. See `docs/NETWORK.md`.
 - No PHP or WordPress here; that was the previous repo.
 - **Toolchain on this Windows host (installed 2026-09-12):** Solana CLI via
   `agave-install` in `~/.local/share/solana`, `anchor-cli 0.30.1` via

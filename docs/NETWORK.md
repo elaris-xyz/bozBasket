@@ -52,9 +52,26 @@ devnet:
    trust that owner on devnet. Cheaper to build, weaker story; the README
    would have to say the reference price is synthetic too.
 
-Decision: build (1). Keep (2) as the day-3 fallback if the key does not
-arrive. Either way the stale-feed demo scenario is real on devnet today:
-the sponsored equity accounts are already stale.
+Decision on day 1 was (1). **Reversed on day 2 (2026-09-13):** the key
+arrived, works for crypto, FX and metals, but every US equity feed answers
+`403 Not entitled: ... asset type 'equity'`. Equities are not in the trial
+tier; Pyth's own upgrade notice puts data plans at $500/month and up. The
+mainnet push-oracle equity accounts are not a substitute either: on
+2026-09-12 AAPL was 29 days old and SPY 17 days old there, so nobody
+sponsors them.
+
+So the demo runs path (2), built so the program never knows the difference:
+
+- `execute_basket` reads a `PriceUpdateV2`-layout account per leg and checks
+  `owner == config.reference_program`. On mainnet that is the Pyth receiver;
+  on devnet it is `mock_market`, which has a `post_reference` instruction.
+- The keeper fills those devnet accounts from a free quote source with the
+  source's own timestamp as `publish_time`, so staleness off-hours is real,
+  not simulated. The README says this plainly.
+- Session calendar comes from the free Hermes metadata endpoint, which
+  carries `market_hours` and a `schedule` string with 2026 holidays.
+- Switching to real Pyth on mainnet is `init_config` with the receiver as
+  `reference_program`, nothing else.
 
 ## Useful side finding
 
