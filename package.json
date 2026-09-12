@@ -1,0 +1,21 @@
+{
+  "name": "bozbasket",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "eslint .",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "reachability": "node tools/reachability.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  }
+}

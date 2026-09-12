@@ -9,3 +9,8 @@ target/
 dist/
 test-ledger/
 .DS_Store
+.turbo/
+*.tsbuildinfo
+id.json
+*.pem
+tmp-*/

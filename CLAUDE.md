@@ -67,11 +67,22 @@ else until the demo works end to end. No feature work on the last day; day
 - Jupiter Lend already accepts SPYx/QQQx/NVDAx as collateral, and xStocks
   handle dividends by rebasing and splits on-chain. Do not pitch lending or
   issuance as novel.
-- **The dev host is in Iran and gets 403 from many APIs.** Test Pyth Hermes
-  and Jupiter API reachability on day 1 before assuming either works. If
-  blocked, the demo is devnet-only with mock fills. See the same lesson in
-  the bozPicks project (AI providers were all geo-blocked).
+- **The dev host is in Iran and gets 403 from many APIs.** Day-1 test done,
+  see `docs/NETWORK.md` and `tools/reachability.mjs`. Through the VPN
+  nothing is geo-blocked, but two things changed on Pyth's side:
+  - **Hermes needs an API key since 2026-08-26** (`Authorization: Bearer`,
+    free trial at terminal.pyth.network). Without it every price endpoint
+    is 401. `PYTH_API_KEY` in `.env`.
+  - **Devnet has no fresh US equity prices.** The Pyth push-oracle accounts
+    for AAPL/NVDA/TSLA/SPY exist but are months stale; BTC/SOL are fresh.
+    The keeper must post its own price updates via the Pyth receiver (live
+    on devnet) or the demo mocks the price accounts.
 - No PHP or WordPress here; that was the previous repo.
+- **Toolchain on this Windows host (installed 2026-09-12):** Solana CLI via
+  `agave-install` in `~/.local/share/solana`, `anchor-cli 0.30.1` via
+  `cargo install` in `~/.cargo/bin`. WSL Ubuntu exists but does not start
+  (Virtual Machine Platform is off; enabling it needs admin). bozPicks was
+  built somewhere else; do not assume a WSL build works here.
 
 ## Reuse from bozPicks (`C:\My_DEVelope\bozPicks`)
 
@@ -104,7 +115,7 @@ Copy selectively, do not fork the monorepo:
   keypair at `~/.config/solana/id.json` (same as bozPicks). Never copy it
   into the repo.
 - Secrets live in `.env` (gitignored, already written): Neon Postgres
-  `DATABASE_URL`, RPC URL, keeper pubkey. `.env.example` is the committed
+  `DATABASE_URL`, RPC URL, keeper pubkey, `PYTH_API_KEY`. `.env.example` is the committed
   template. The user rotates the DB password before submission.
 - **Network: everything external goes through the user's VPN.** Nobody
   will use this from Iran. When Hermes, Jupiter, devnet RPC, npm, or

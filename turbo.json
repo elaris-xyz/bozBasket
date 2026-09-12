@@ -1,0 +1,24 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "SOLANA_CLUSTER",
+    "SOLANA_RPC_URL",
+    "KEEPER_PUBKEY",
+    "KEEPER_KEYPAIR",
+    "PYTH_API_KEY",
+    "PYTH_HERMES_URL",
+    "BASKET_DCA_PROGRAM_ID",
+    "NEXT_PUBLIC_SOLANA_CLUSTER",
+    "NEXT_PUBLIC_RPC_URL",
+    "NEXT_PUBLIC_BASKET_DCA_PROGRAM_ID"
+  ],
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "!.next/cache/**", "dist/**"] },
+    "dev": { "cache": false, "persistent": true },
+    "start": { "cache": false, "persistent": true },
+    "lint": {},
+    "type-check": { "dependsOn": ["^build"] },
+    "test": {}
+  }
+}
