@@ -62,3 +62,22 @@ the sponsored equity accounts are already stale.
 and a `schedule` string per feed. The keeper can use that as the session
 calendar source of truth and fall back to the static NYSE holiday list only
 when Hermes is unreachable.
+
+## Toolchain notes (same day)
+
+`anchor build` passed at 23:28 on an empty `basket_dca` program. What it took
+on this Windows host, in order:
+
+1. Solana CLI v2.1.21 via `agave-install-init` (needs no admin until it tries
+   a symlink; `active_release` was created as a junction by hand).
+2. `anchor-cli 0.30.1` via `cargo install anchor-cli --version 0.30.1`
+   **without** `--locked` (the locked `time` crate does not build on rustc
+   1.96) and with `C:\msys64\ucrt64\bin` on PATH for `dlltool`/`as`.
+3. platform-tools v1.43 downloaded with curl (425 MB, resumable) and
+   installed by `tools/install-platform-tools.ps1`, because cargo-build-sbf's
+   own installer fails with os error 1314 (symlink privilege) after the
+   download and deletes its cache.
+4. `Cargo.lock` pinned so every crate compiles on rustc 1.79. Scan for
+   offenders with: for each `[[package]]` in the lock, read its `Cargo.toml`
+   under `~/.cargo/registry/src/*/` and flag `edition = "2024"` or a
+   `rust-version` above 1.79. The list of pins is in `CLAUDE.md`.

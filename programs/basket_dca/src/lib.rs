@@ -9,7 +9,7 @@ use anchor_lang::prelude::*;
 pub mod state;
 pub use state::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR");
 
 #[program]
 pub mod basket_dca {

@@ -90,6 +90,16 @@ else until the demo works end to end. No feature work on the last day; day
   MSYS2 binutils in `C:\msys64\ucrt64\bin` instead (already installed).
   `tools/env.ps1` and `tools/env.sh` set this. crates.io is slow from here
   (~15 KB/s on the index); set `CARGO_HTTP_TIMEOUT=900` for installs.
+- **platform-tools v1.43 (rustc 1.79) is what `anchor build` compiles with.**
+  It was installed with `tools/install-platform-tools.ps1` (junction, no
+  admin). `Cargo.lock` is deliberately pinned to versions that rustc 1.79 can
+  compile: blake3 1.5.5, indexmap 2.5.0, proc-macro-crate 3.1.0, toml_edit
+  0.21.1, rayon 1.10.0, jobserver 0.1.32, unicode-segmentation 1.12.0,
+  zeroize_derive 1.4.2, bitflags 2.6.0, semver 1.0.23, serde_json 1.0.128,
+  serde_bytes 0.11.15, serde 1.0.210 (no `serde_core`, which breaks on
+  Windows verbatim paths with old rustc). **Never run a bare `cargo update`**;
+  pin with `cargo update -p <crate>@<ver> --precise <old>` and check with the
+  edition-2024 scan described in `docs/NETWORK.md`.
 
 ## Reuse from bozPicks (`C:\My_DEVelope\bozPicks`)
 
