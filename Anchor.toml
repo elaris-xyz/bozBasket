@@ -24,4 +24,4 @@ wallet = "C:/msys64/home/Arash/.config/solana/id.json"
 members = ["programs/basket_dca", "programs/mock_market"]
 
 [scripts]
-test = "pnpm exec ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "pnpm exec mocha -r tsx/cjs -t 1000000 tests/**/*.ts"

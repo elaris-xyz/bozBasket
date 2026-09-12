@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey, Keypair, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, Keypair, SystemProgram, LAMPORTS_PER_SOL, Connection } from "@solana/web3.js";
 import {
 	createMint,
 	getOrCreateAssociatedTokenAccount,
@@ -10,6 +10,22 @@ import {
 import { expect } from "chai";
 
 export const USDC_DECIMALS = 6;
+
+/** Like `AnchorProvider.env()` but pinned to "confirmed" on both the connection
+ *  and preflight. With "processed" the slow local validator on this host hands
+ *  out blockhashes its simulator has not seen yet ("Blockhash not found"). */
+export function makeProvider(): anchor.AnchorProvider {
+	const url = process.env.ANCHOR_PROVIDER_URL;
+	if (!url) throw new Error("ANCHOR_PROVIDER_URL is not defined");
+	const env = anchor.AnchorProvider.env();
+	const connection = new Connection(url, "confirmed");
+	const provider = new anchor.AnchorProvider(connection, env.wallet, {
+		commitment: "confirmed",
+		preflightCommitment: "confirmed",
+	});
+	anchor.setProvider(provider);
+	return provider;
+}
 export const usdc = (n: number) => new anchor.BN(Math.round(n * 1_000_000));
 
 /** Pyth-style price with exponent -8. */
@@ -25,13 +41,34 @@ export const FEEDS = {
 	TSLA: "16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1",
 };
 
+/** Funds `to` from the provider wallet. The local validator's faucet answers
+ *  "Internal error" on this Windows host, so a plain transfer is used. */
 export async function airdrop(provider: anchor.AnchorProvider, to: PublicKey, sol = 5) {
-	const sig = await provider.connection.requestAirdrop(to, sol * LAMPORTS_PER_SOL);
-	await provider.connection.confirmTransaction(sig, "confirmed");
+	await retry(async () => {
+		const tx = new anchor.web3.Transaction().add(
+			SystemProgram.transfer({ fromPubkey: provider.wallet.publicKey, toPubkey: to, lamports: sol * LAMPORTS_PER_SOL }),
+		);
+		await provider.sendAndConfirm(tx, [], { commitment: "confirmed" });
+	});
+}
+
+/** The local validator on this host occasionally answers "Blockhash not
+ *  found" right after a burst of transactions; retry setup steps a few times. */
+export async function retry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
+	let last: unknown;
+	for (let i = 0; i < attempts; i++) {
+		try {
+			return await fn();
+		} catch (err) {
+			last = err;
+			await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+		}
+	}
+	throw last;
 }
 
 export async function createUsdc(provider: anchor.AnchorProvider, payer: Keypair) {
-	return createMint(provider.connection, payer, payer.publicKey, null, USDC_DECIMALS);
+	return retry(() => createMint(provider.connection, payer, payer.publicKey, null, USDC_DECIMALS));
 }
 
 export async function fundUsdc(
@@ -41,8 +78,8 @@ export async function fundUsdc(
 	owner: PublicKey,
 	amount: number,
 ) {
-	const ata = await getOrCreateAssociatedTokenAccount(provider.connection, payer, mint, owner);
-	await mintTo(provider.connection, payer, mint, ata.address, payer, Math.round(amount * 1_000_000));
+	const ata = await retry(() => getOrCreateAssociatedTokenAccount(provider.connection, payer, mint, owner));
+	await retry(() => mintTo(provider.connection, payer, mint, ata.address, payer, Math.round(amount * 1_000_000)));
 	return ata.address;
 }
 

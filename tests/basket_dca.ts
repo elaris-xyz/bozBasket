@@ -12,6 +12,7 @@ import {
 	FEEDS,
 	feedId,
 	fundUsdc,
+	makeProvider,
 	planPda,
 	tokenBalance,
 	TOKEN_PROGRAM_ID,
@@ -21,8 +22,7 @@ import {
 } from "./helpers";
 
 describe("basket_dca: config, plan, vault", () => {
-	const provider = anchor.AnchorProvider.env();
-	anchor.setProvider(provider);
+	const provider = makeProvider();
 	const program = anchor.workspace.BasketDca as Program<BasketDca>;
 	const mockMarket = anchor.workspace.MockMarket as Program<MockMarket>;
 
@@ -58,7 +58,7 @@ describe("basket_dca: config, plan, vault", () => {
 				fillProgram: mockMarket.programId,
 				referenceProgram: mockMarket.programId,
 			})
-			.accounts({ config, usdcMint, admin: admin.publicKey, systemProgram: SystemProgram.programId })
+			.accountsPartial({ config, usdcMint, admin: admin.publicKey, systemProgram: SystemProgram.programId })
 			.rpc();
 		const c = await program.account.config.fetch(config);
 		expect(c.admin.equals(admin.publicKey)).to.be.true;
@@ -81,7 +81,7 @@ describe("basket_dca: config, plan, vault", () => {
 					fillProgram: mockMarket.programId,
 					referenceProgram: mockMarket.programId,
 				})
-				.accounts({ config, admin: user.publicKey })
+				.accountsPartial({ config, admin: user.publicKey })
 				.signers([user])
 				.rpc(),
 			"NotAdmin",
@@ -100,7 +100,7 @@ describe("basket_dca: config, plan, vault", () => {
 				new anchor.BN(args.end ?? 0),
 				args.legs ?? legs,
 			)
-			.accounts({
+			.accountsPartial({
 				config,
 				usdcMint,
 				plan,
@@ -156,7 +156,7 @@ describe("basket_dca: config, plan, vault", () => {
 	it("deposit moves USDC into the vault", async () => {
 		await program.methods
 			.deposit(usdc(250))
-			.accounts({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
+			.accountsPartial({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
 			.signers([user])
 			.rpc();
 		expect(await tokenBalance(provider, vault)).to.equal(250_000_000);
@@ -170,7 +170,7 @@ describe("basket_dca: config, plan, vault", () => {
 		await expectAnchorError(
 			program.methods
 				.deposit(usdc(1))
-				.accounts({ plan, vault, ownerUsdc: strangerUsdc, owner: stranger.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
+				.accountsPartial({ plan, vault, ownerUsdc: strangerUsdc, owner: stranger.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
 				.signers([stranger])
 				.rpc(),
 			"NotOwner",
@@ -180,7 +180,7 @@ describe("basket_dca: config, plan, vault", () => {
 	it("withdraw returns USDC and keeps the plan active while a period remains", async () => {
 		await program.methods
 			.withdraw(usdc(100))
-			.accounts({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
+			.accountsPartial({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
 			.signers([user])
 			.rpc();
 		expect(await tokenBalance(provider, vault)).to.equal(150_000_000);
@@ -191,7 +191,7 @@ describe("basket_dca: config, plan, vault", () => {
 	it("withdraw below one period pauses the plan", async () => {
 		await program.methods
 			.withdraw(usdc(100))
-			.accounts({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
+			.accountsPartial({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
 			.signers([user])
 			.rpc();
 		expect(await tokenBalance(provider, vault)).to.equal(50_000_000);
@@ -202,7 +202,7 @@ describe("basket_dca: config, plan, vault", () => {
 		await expectAnchorError(
 			program.methods
 				.withdraw(usdc(51))
-				.accounts({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
+				.accountsPartial({ plan, vault, ownerUsdc: userUsdc, owner: user.publicKey, tokenProgram: TOKEN_PROGRAM_ID })
 				.signers([user])
 				.rpc(),
 			"InsufficientVault",
@@ -210,13 +210,13 @@ describe("basket_dca: config, plan, vault", () => {
 	});
 
 	it("set_paused resumes and refuses a no-op", async () => {
-		await program.methods.setPaused(false).accounts({ plan, owner: user.publicKey }).signers([user]).rpc();
+		await program.methods.setPaused(false).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc();
 		expect((await program.account.plan.fetch(plan)).status).to.equal(0);
 		await expectAnchorError(
-			program.methods.setPaused(false).accounts({ plan, owner: user.publicKey }).signers([user]).rpc(),
+			program.methods.setPaused(false).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc(),
 			"NoStatusChange",
 		);
-		await program.methods.setPaused(true).accounts({ plan, owner: user.publicKey }).signers([user]).rpc();
+		await program.methods.setPaused(true).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc();
 		expect((await program.account.plan.fetch(plan)).status).to.equal(1);
 	});
 });

@@ -11,6 +11,7 @@ import {
 	FEEDS,
 	feedId,
 	fundUsdc,
+	makeProvider,
 	marketPdas,
 	px,
 	tokenBalance,
@@ -20,8 +21,7 @@ import {
 } from "./helpers";
 
 describe("mock_market: mint, reference, fill", () => {
-	const provider = anchor.AnchorProvider.env();
-	anchor.setProvider(provider);
+	const provider = makeProvider();
 	const program = anchor.workspace.MockMarket as Program<MockMarket>;
 	const admin = (provider.wallet as anchor.Wallet).payer;
 	const buyer = Keypair.generate();
@@ -42,9 +42,20 @@ describe("mock_market: mint, reference, fill", () => {
 		const { market, stockMint, treasury, reference } = pdas();
 		await program.methods
 			.initMarket(symbol, feedId(FEEDS.AAPL), 20, usdc(50_000))
-			.accounts({
+			.accountsPartial({
 				market,
 				stockMint,
+				usdcMint,
+				admin: admin.publicKey,
+				tokenProgram: TOKEN_PROGRAM_ID,
+				systemProgram: SystemProgram.programId,
+				rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+			})
+			.rpc();
+		await program.methods
+			.initMarketAccounts()
+			.accountsPartial({
+				market,
 				usdcMint,
 				treasury,
 				reference,
@@ -56,6 +67,8 @@ describe("mock_market: mint, reference, fill", () => {
 			.rpc();
 		const m = await program.account.market.fetch(market);
 		expect(m.symbol).to.equal(symbol);
+		expect(m.treasury.equals(treasury)).to.be.true;
+		expect(m.reference.equals(reference)).to.be.true;
 		expect(m.spreadBps).to.equal(20);
 		expect(m.liquidityUsdc.toNumber()).to.equal(50_000_000_000);
 		expect(m.priceOverride.toNumber()).to.equal(0);
@@ -74,12 +87,29 @@ describe("mock_market: mint, reference, fill", () => {
 		buyerStock = (await getOrCreateAssociatedTokenAccount(provider.connection, admin, stockMint, buyer.publicKey)).address;
 	});
 
+	it("init_market_accounts cannot run twice", async () => {
+		// The PDAs already exist, so the system program refuses the allocation
+		// before the handler's own AlreadyInitialized guard is reached.
+		const { market, treasury, reference } = pdas();
+		let failed = false;
+		try {
+			await program.methods
+				.initMarketAccounts()
+				.accountsPartial({ market, usdcMint, treasury, reference, admin: admin.publicKey, tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId, rent: anchor.web3.SYSVAR_RENT_PUBKEY })
+				.rpc();
+		} catch (err: any) {
+			failed = true;
+			expect(String(err)).to.match(/already in use|AlreadyInitialized/);
+		}
+		expect(failed, "second init_market_accounts must fail").to.be.true;
+	});
+
 	it("post_reference writes price, conf and the source publish time", async () => {
 		const { market, reference } = pdas();
 		const publishTime = 1_789_156_800; // a Friday 16:00 ET close, not "now"
 		await program.methods
 			.postReference(px(250), new anchor.BN(5_000_000), -8, new anchor.BN(publishTime))
-			.accounts({ market, reference, admin: admin.publicKey })
+			.accountsPartial({ market, reference, admin: admin.publicKey })
 			.rpc();
 		const r = await program.account.priceUpdateV2.fetch(reference);
 		expect(r.priceMessage.price.toNumber()).to.equal(25_000_000_000);
@@ -93,7 +123,7 @@ describe("mock_market: mint, reference, fill", () => {
 		await expectAnchorError(
 			program.methods
 				.postReference(px(1), new anchor.BN(1), -8, new anchor.BN(1))
-				.accounts({ market, reference, admin: buyer.publicKey })
+				.accountsPartial({ market, reference, admin: buyer.publicKey })
 				.signers([buyer])
 				.rpc(),
 			"NotAdmin",
@@ -105,7 +135,7 @@ describe("mock_market: mint, reference, fill", () => {
 		// $100 at $250 * 1.002 = 0.399201... units.
 		await program.methods
 			.fill(usdc(100))
-			.accounts({
+			.accountsPartial({
 				market,
 				stockMint,
 				treasury,
@@ -128,38 +158,38 @@ describe("mock_market: mint, reference, fill", () => {
 
 	it("set_price_override changes the venue price without touching the reference", async () => {
 		const { market, stockMint, treasury, reference } = pdas();
-		await program.methods.setPriceOverride(px(300)).accounts({ market, admin: admin.publicKey }).rpc();
+		await program.methods.setPriceOverride(px(300)).accountsPartial({ market, admin: admin.publicKey }).rpc();
 		const before = await tokenBalance(provider, buyerStock);
 		await program.methods
 			.fill(usdc(100))
-			.accounts({ market, stockMint, treasury, reference, payerUsdc: buyerUsdc, payerAuthority: buyer.publicKey, recipient: buyerStock, tokenProgram: TOKEN_PROGRAM_ID })
+			.accountsPartial({ market, stockMint, treasury, reference, payerUsdc: buyerUsdc, payerAuthority: buyer.publicKey, recipient: buyerStock, tokenProgram: TOKEN_PROGRAM_ID })
 			.signers([buyer])
 			.rpc();
 		const got = (await tokenBalance(provider, buyerStock)) - before;
 		expect(got).to.equal(Math.floor(100_000_000 * 1e8 / (30_000_000_000 * 1.002)));
 		const r = await program.account.priceUpdateV2.fetch(reference);
 		expect(r.priceMessage.price.toNumber()).to.equal(25_000_000_000);
-		await program.methods.setPriceOverride(new anchor.BN(0)).accounts({ market, admin: admin.publicKey }).rpc();
+		await program.methods.setPriceOverride(new anchor.BN(0)).accountsPartial({ market, admin: admin.publicKey }).rpc();
 	});
 
 	it("set_liquidity below the order makes fill fail with LowLiquidity", async () => {
 		const { market, stockMint, treasury, reference } = pdas();
-		await program.methods.setLiquidity(usdc(10)).accounts({ market, admin: admin.publicKey }).rpc();
+		await program.methods.setLiquidity(usdc(10)).accountsPartial({ market, admin: admin.publicKey }).rpc();
 		await expectAnchorError(
 			program.methods
 				.fill(usdc(100))
-				.accounts({ market, stockMint, treasury, reference, payerUsdc: buyerUsdc, payerAuthority: buyer.publicKey, recipient: buyerStock, tokenProgram: TOKEN_PROGRAM_ID })
+				.accountsPartial({ market, stockMint, treasury, reference, payerUsdc: buyerUsdc, payerAuthority: buyer.publicKey, recipient: buyerStock, tokenProgram: TOKEN_PROGRAM_ID })
 				.signers([buyer])
 				.rpc(),
 			"LowLiquidity",
 		);
-		await program.methods.setLiquidity(usdc(50_000)).accounts({ market, admin: admin.publicKey }).rpc();
+		await program.methods.setLiquidity(usdc(50_000)).accountsPartial({ market, admin: admin.publicKey }).rpc();
 	});
 
 	it("admin controls reject a non-admin", async () => {
 		const { market } = pdas();
 		await expectAnchorError(
-			program.methods.setLiquidity(usdc(1)).accounts({ market, admin: buyer.publicKey }).signers([buyer]).rpc(),
+			program.methods.setLiquidity(usdc(1)).accountsPartial({ market, admin: buyer.publicKey }).signers([buyer]).rpc(),
 			"NotAdmin",
 		);
 	});

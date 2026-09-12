@@ -28,7 +28,9 @@ pub mod mock_market {
 	use super::*;
 
 	/// Creates a market and its stock mint. `symbol` is the ticker without
-	/// suffix, at most 8 bytes; it seeds every PDA of this market.
+	/// suffix, at most 8 bytes; it seeds every PDA of this market. Call
+	/// `init_market_accounts` next; the two steps exist because four `init`
+	/// accounts in one instruction overflow the 4 KiB SBF stack frame.
 	pub fn init_market(
 		ctx: Context<InitMarket>,
 		symbol: String,
@@ -44,14 +46,24 @@ pub mod mock_market {
 		market.symbol = symbol;
 		market.stock_mint = ctx.accounts.stock_mint.key();
 		market.usdc_mint = ctx.accounts.usdc_mint.key();
-		market.treasury = ctx.accounts.treasury.key();
-		market.reference = ctx.accounts.reference.key();
+		market.treasury = Pubkey::default();
+		market.reference = Pubkey::default();
 		market.feed_id = feed_id;
 		market.spread_bps = spread_bps;
 		market.liquidity_usdc = liquidity_usdc;
 		market.price_override = 0;
 		market.bump = ctx.bumps.market;
 		market.stock_mint_bump = ctx.bumps.stock_mint;
+		Ok(())
+	}
+
+	/// Second half of market creation: the USDC treasury and the reference
+	/// price account (Pyth `PriceUpdateV2` layout, zero price until posted).
+	pub fn init_market_accounts(ctx: Context<InitMarketAccounts>) -> Result<()> {
+		let market = &mut ctx.accounts.market;
+		require!(market.treasury == Pubkey::default(), MarketError::AlreadyInitialized);
+		market.treasury = ctx.accounts.treasury.key();
+		market.reference = ctx.accounts.reference.key();
 		market.treasury_bump = ctx.bumps.treasury;
 		market.reference_bump = ctx.bumps.reference;
 
@@ -59,7 +71,7 @@ pub mod mock_market {
 		reference.write_authority = ctx.accounts.admin.key();
 		reference.verification_level = VerificationLevel::Full;
 		reference.price_message = PriceFeedMessage {
-			feed_id,
+			feed_id: market.feed_id,
 			price: 0,
 			conf: 0,
 			exponent: DEFAULT_EXPONENT,
@@ -201,7 +213,7 @@ pub struct InitMarket<'info> {
 		seeds = [MARKET_SEED, symbol.as_bytes()],
 		bump,
 	)]
-	pub market: Account<'info, Market>,
+	pub market: Box<Account<'info, Market>>,
 	#[account(
 		init,
 		payer = admin,
@@ -210,25 +222,37 @@ pub struct InitMarket<'info> {
 		mint::decimals = STOCK_DECIMALS,
 		mint::authority = market,
 	)]
-	pub stock_mint: Account<'info, Mint>,
-	pub usdc_mint: Account<'info, Mint>,
+	pub stock_mint: Box<Account<'info, Mint>>,
+	pub usdc_mint: Box<Account<'info, Mint>>,
+	#[account(mut)]
+	pub admin: Signer<'info>,
+	pub token_program: Program<'info, Token>,
+	pub system_program: Program<'info, System>,
+	pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+pub struct InitMarketAccounts<'info> {
+	#[account(mut, has_one = admin @ MarketError::NotAdmin, has_one = usdc_mint)]
+	pub market: Box<Account<'info, Market>>,
+	pub usdc_mint: Box<Account<'info, Mint>>,
 	#[account(
 		init,
 		payer = admin,
-		seeds = [TREASURY_SEED, symbol.as_bytes()],
+		seeds = [TREASURY_SEED, market.symbol.as_bytes()],
 		bump,
 		token::mint = usdc_mint,
 		token::authority = market,
 	)]
-	pub treasury: Account<'info, TokenAccount>,
+	pub treasury: Box<Account<'info, TokenAccount>>,
 	#[account(
 		init,
 		payer = admin,
 		space = 8 + PriceUpdateV2::INIT_SPACE,
-		seeds = [REFERENCE_SEED, symbol.as_bytes()],
+		seeds = [REFERENCE_SEED, market.symbol.as_bytes()],
 		bump,
 	)]
-	pub reference: Account<'info, PriceUpdateV2>,
+	pub reference: Box<Account<'info, PriceUpdateV2>>,
 	#[account(mut)]
 	pub admin: Signer<'info>,
 	pub token_program: Program<'info, Token>,
@@ -255,12 +279,12 @@ pub struct AdminMarket<'info> {
 #[derive(Accounts)]
 pub struct Fill<'info> {
 	#[account(mut, has_one = stock_mint, has_one = treasury, has_one = reference)]
-	pub market: Account<'info, Market>,
+	pub market: Box<Account<'info, Market>>,
 	#[account(mut)]
-	pub stock_mint: Account<'info, Mint>,
+	pub stock_mint: Box<Account<'info, Mint>>,
 	#[account(mut)]
-	pub treasury: Account<'info, TokenAccount>,
-	pub reference: Account<'info, PriceUpdateV2>,
+	pub treasury: Box<Account<'info, TokenAccount>>,
+	pub reference: Box<Account<'info, PriceUpdateV2>>,
 	/// USDC leaves here. Its authority signs (a user, or the plan PDA via CPI).
 	#[account(mut, token::mint = market.usdc_mint, token::authority = payer_authority)]
 	pub payer_usdc: Account<'info, TokenAccount>,
@@ -308,6 +332,8 @@ pub enum MarketError {
 	DustFill,
 	#[msg("Signer is not the market admin")]
 	NotAdmin,
+	#[msg("Market accounts already initialized")]
+	AlreadyInitialized,
 	#[msg("Arithmetic overflow")]
 	Overflow,
 }

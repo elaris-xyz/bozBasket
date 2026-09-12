@@ -150,6 +150,28 @@ Copy selectively, do not fork the monorepo:
   GitHub time out or return 403, stop and tell the user to turn the VPN
   on, then retry. Do not build workarounds for a blocked network.
 
+## Checks
+
+```
+source tools/env.sh            # or: . tools/env.ps1  (PATH, HOME, .env)
+cargo test --workspace         # host unit tests (pure Rust, fast)
+anchor build                   # SBF build; watch for "Stack offset exceeded" lines
+tools/test-local.sh            # Anchor TS tests on a local validator (add --build to rebuild)
+node tools/reachability.mjs    # network check
+```
+
+`tools/test-local.sh` exists because plain `anchor test` fails on this host:
+the validator needs `--log` (its log symlink needs a privilege we do not
+have), the local faucet answers "Internal error" so tests fund users by
+transfer from the wallet, the mocha loader is `tsx/cjs` (ts-mocha's bundled
+ts-node breaks), and the provider is pinned to "confirmed". `anchor test`
+with `cluster = Devnet` in Anchor.toml would deploy to devnet, which is slow
+and costs SOL; do not run it bare.
+
+Rules learned on day 2: box every `Account<_>` in a struct that inits two or
+more accounts (4 KiB SBF frame), use `.accountsPartial()` in tests, and keep
+the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
+
 ## Conventions
 
 - Code, comments, commit messages, UI strings, docs: English. Chat with the

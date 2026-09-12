@@ -84,7 +84,11 @@ pub mod basket_dca {
 		let next_execution = if start_ts == 0 { now } else { start_ts };
 		require!(end_ts == 0 || end_ts > next_execution, BasketError::EndBeforeStart);
 
-		let plan = &mut ctx.accounts.plan;
+		// The Plan account is ~750 bytes and the SBF stack frame is 4 KiB, so
+		// the account is boxed and every leg is written in place; no `[Leg; 8]`
+		// temporary ever lives on the stack.
+		let plan_key = ctx.accounts.plan.key();
+		let plan = &mut **ctx.accounts.plan;
 		plan.owner = ctx.accounts.owner.key();
 		plan.plan_id = plan_id;
 		plan.bump = ctx.bumps.plan;
@@ -92,12 +96,16 @@ pub mod basket_dca {
 		plan.period_seconds = period_seconds;
 		plan.next_execution = next_execution;
 		plan.end_ts = end_ts;
-		plan.legs = [Leg::default(); MAX_LEGS];
-		for (slot, input) in plan.legs.iter_mut().zip(legs.iter()) {
-			slot.mint = input.mint;
-			slot.weight_bps = input.weight_bps;
-			slot.pyth_feed_id = input.pyth_feed_id;
-			slot.units_bought = 0;
+		for (i, slot) in plan.legs.iter_mut().enumerate() {
+			match legs.get(i) {
+				Some(input) => {
+					slot.mint = input.mint;
+					slot.weight_bps = input.weight_bps;
+					slot.pyth_feed_id = input.pyth_feed_id;
+					slot.units_bought = 0;
+				}
+				None => *slot = Leg::default(),
+			}
 		}
 		plan.leg_count = legs.len() as u8;
 		plan.executions = 0;
@@ -109,7 +117,7 @@ pub mod basket_dca {
 		plan.vault_bump = ctx.bumps.vault;
 
 		emit!(PlanCreated {
-			plan: plan.key(),
+			plan: plan_key,
 			owner: plan.owner,
 			plan_id,
 			amount_per_period,
@@ -218,9 +226,11 @@ pub struct UpdateConfig<'info> {
 #[derive(Accounts)]
 #[instruction(plan_id: u16)]
 pub struct CreatePlan<'info> {
+	// Everything sizeable is boxed: this struct inits two accounts and the SBF
+	// frame limit is 4 KiB (the build prints "Stack offset exceeded" otherwise).
 	#[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = usdc_mint)]
-	pub config: Account<'info, Config>,
-	pub usdc_mint: Account<'info, Mint>,
+	pub config: Box<Account<'info, Config>>,
+	pub usdc_mint: Box<Account<'info, Mint>>,
 	#[account(
 		init,
 		payer = owner,
@@ -228,7 +238,7 @@ pub struct CreatePlan<'info> {
 		seeds = [PLAN_SEED, owner.key().as_ref(), &plan_id.to_le_bytes()],
 		bump,
 	)]
-	pub plan: Account<'info, Plan>,
+	pub plan: Box<Account<'info, Plan>>,
 	#[account(
 		init,
 		payer = owner,
@@ -237,7 +247,7 @@ pub struct CreatePlan<'info> {
 		token::mint = usdc_mint,
 		token::authority = plan,
 	)]
-	pub vault: Account<'info, TokenAccount>,
+	pub vault: Box<Account<'info, TokenAccount>>,
 	#[account(mut)]
 	pub owner: Signer<'info>,
 	pub token_program: Program<'info, Token>,
@@ -248,7 +258,7 @@ pub struct CreatePlan<'info> {
 #[derive(Accounts)]
 pub struct Deposit<'info> {
 	#[account(has_one = owner @ BasketError::NotOwner, has_one = vault)]
-	pub plan: Account<'info, Plan>,
+	pub plan: Box<Account<'info, Plan>>,
 	#[account(mut)]
 	pub vault: Account<'info, TokenAccount>,
 	#[account(mut, token::mint = vault.mint, token::authority = owner)]
@@ -260,7 +270,7 @@ pub struct Deposit<'info> {
 #[derive(Accounts)]
 pub struct Withdraw<'info> {
 	#[account(mut, has_one = owner @ BasketError::NotOwner, has_one = vault)]
-	pub plan: Account<'info, Plan>,
+	pub plan: Box<Account<'info, Plan>>,
 	#[account(mut)]
 	pub vault: Account<'info, TokenAccount>,
 	#[account(mut, token::mint = vault.mint, token::authority = owner)]
@@ -272,6 +282,6 @@ pub struct Withdraw<'info> {
 #[derive(Accounts)]
 pub struct SetPaused<'info> {
 	#[account(mut, has_one = owner @ BasketError::NotOwner)]
-	pub plan: Account<'info, Plan>,
+	pub plan: Box<Account<'info, Plan>>,
 	pub owner: Signer<'info>,
 }
