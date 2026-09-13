@@ -50,4 +50,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SOLANA_CLUSTER: devnet
           OFF_HOURS_POLICY: guarded
-        run: pnpm exec tsx src/index.ts --once ${{ inputs.plan && format('--plan {0}', inputs.plan) || '' }}
+          # Through the environment, never interpolated into the command:
+          # `run:` is a shell script and ${{ }} would splice the input into it.
+          PLAN: ${{ inputs.plan }}
+        run: |
+          if [ -n "$PLAN" ]; then
+            pnpm exec tsx src/index.ts --once --plan "$PLAN"
+          else
+            pnpm exec tsx src/index.ts --once
+          fi
