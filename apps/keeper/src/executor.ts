@@ -18,6 +18,22 @@ import type { Ledger } from "./ledger";
 
 export const PYTH_RECEIVER = new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");
 
+type EventLeg = { mint: PublicKey; usdcIn: anchor.BN; units: anchor.BN; referencePrice: anchor.BN; venuePrice: anchor.BN; exponent: number };
+
+/** Anchor's `BN.toJSON()` is a *hex* string, so storing an event's legs
+ *  verbatim puts "0215a1" in the ledger and every reader has to know that.
+ *  The ledger holds decimal strings instead. */
+function normalizeLeg(l: EventLeg) {
+	return {
+		mint: l.mint.toBase58(),
+		usdcIn: l.usdcIn.toString(10),
+		units: l.units.toString(10),
+		referencePrice: l.referencePrice.toString(10),
+		venuePrice: l.venuePrice.toString(10),
+		exponent: l.exponent,
+	};
+}
+
 export type PassResult =
 	| { kind: "skipped"; reason: number; detail: string }
 	| { kind: "executed" | "deferred"; signature: string; reason: number; detail: string }
@@ -179,8 +195,8 @@ export class Executor {
 			const logs = tx?.meta?.logMessages ?? [];
 			for (const ev of parser.parseLogs(logs)) {
 				if (ev.name === "executed") {
-					const d = ev.data as { usdcIn: anchor.BN; legs: unknown[] };
-					await this.ledger.record({ plan: plan.pubkey.toBase58(), ts: now, kind: "executed", reason: 0, detail: null, signature: sig, usdcIn: d.usdcIn.toString(), legs: d.legs });
+					const d = ev.data as { usdcIn: anchor.BN; legs: EventLeg[] };
+					await this.ledger.record({ plan: plan.pubkey.toBase58(), ts: now, kind: "executed", reason: 0, detail: null, signature: sig, usdcIn: d.usdcIn.toString(), legs: d.legs.map(normalizeLeg) });
 					return { kind: "executed", signature: sig, reason: 0, detail: "" };
 				}
 				if (ev.name === "deferred") {
