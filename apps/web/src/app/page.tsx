@@ -30,7 +30,7 @@ export default function Home() {
 							{w.busy ?? "Try with a demo wallet"}
 						</button>
 					)}
-					<a className="btn-ghost" href="https://github.com/rfkala/bozBasket" target="_blank" rel="noreferrer">
+					<a className="btn-ghost" href="https://github.com/elaris-xyz/bozBasket" target="_blank" rel="noreferrer">
 						How it works
 					</a>
 				</div>

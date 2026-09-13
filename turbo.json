@@ -19,7 +19,8 @@
     "KEEPER_POLL_SECONDS",
     "CU_PRICE_MICROLAMPORTS",
     "DEPLOYMENT_FILE",
-    "DEMO_CONTROLS"
+    "DEMO_CONTROLS",
+    "FAUCET_SECRET_KEY"
   ],
   "tasks": {
     "build": {

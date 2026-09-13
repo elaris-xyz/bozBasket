@@ -1,6 +1,9 @@
-// Funds a demo wallet: 0.05 SOL for fees/rent and 10,000 mock devnet USDC.
-// The keeper keypair holds the mock USDC mint authority. Rate-limited per
-// wallet by balance: a wallet already holding 5,000+ USDC gets nothing.
+// Funds a demo wallet: a little SOL for fees and rent, plus mock devnet USDC.
+//
+// This endpoint is public, so it signs with FAUCET_SECRET_KEY, an identity
+// that owns nothing but its own SOL and the mock USDC mint authority. It must
+// not be the keeper/admin key, which is the programs' upgrade authority.
+// See apps/keeper/scripts/setup-faucet.ts.
 
 import { NextResponse } from "next/server";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
@@ -9,9 +12,17 @@ import deployment from "@/generated/devnet.json";
 
 export const runtime = "nodejs";
 
-function keeper(): Keypair {
-	const raw = process.env.KEEPER_SECRET_KEY;
-	if (!raw) throw new Error("KEEPER_SECRET_KEY is not set");
+/** Enough for the rent on a plan, a vault and three token accounts, plus fees. */
+const DRIP_SOL = 0.04;
+/** A wallet already holding this much USDC gets nothing more. */
+const USDC_CEILING = 5_000;
+const USDC_GRANT = 10_000;
+/** Stop handing out SOL below this, so one loop cannot empty the faucet. */
+const FAUCET_FLOOR_SOL = 0.2;
+
+function faucetKeypair(): Keypair {
+	const raw = process.env.FAUCET_SECRET_KEY ?? process.env.KEEPER_SECRET_KEY;
+	if (!raw) throw new Error("FAUCET_SECRET_KEY is not set");
 	return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(raw)));
 }
 
@@ -19,27 +30,41 @@ export async function POST(req: Request) {
 	try {
 		const { wallet } = (await req.json()) as { wallet?: string };
 		if (!wallet) return NextResponse.json({ error: "wallet required" }, { status: 400 });
-		const to = new PublicKey(wallet);
+		let to: PublicKey;
+		try {
+			to = new PublicKey(wallet);
+		} catch {
+			return NextResponse.json({ error: "not a valid address" }, { status: 400 });
+		}
+
 		const conn = new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com", "confirmed");
-		const kp = keeper();
+		const payer = faucetKeypair();
 		const mint = new PublicKey(deployment.usdcMint);
 		const ata = getAssociatedTokenAddressSync(mint, to, false);
 
-		const [lamports, usdcAcc] = await Promise.all([conn.getBalance(to), getAccount(conn, ata).catch(() => null)]);
+		const [lamports, usdcAcc, faucetLamports] = await Promise.all([
+			conn.getBalance(to),
+			getAccount(conn, ata).catch(() => null),
+			conn.getBalance(payer.publicKey),
+		]);
 		const usdc = usdcAcc ? Number(usdcAcc.amount) / 1e6 : 0;
+
 		const tx = new Transaction();
-		if (lamports < 0.03 * LAMPORTS_PER_SOL) {
-			tx.add(SystemProgram.transfer({ fromPubkey: kp.publicKey, toPubkey: to, lamports: 0.05 * LAMPORTS_PER_SOL }));
+		const wantsSol = lamports < (DRIP_SOL / 2) * LAMPORTS_PER_SOL;
+		if (wantsSol && faucetLamports < (FAUCET_FLOOR_SOL + DRIP_SOL) * LAMPORTS_PER_SOL) {
+			return NextResponse.json({ error: "faucet is empty; ask the team to top it up" }, { status: 503 });
 		}
-		if (usdc < 5_000) {
-			tx.add(createAssociatedTokenAccountIdempotentInstruction(kp.publicKey, ata, to, mint));
-			tx.add(createMintToInstruction(mint, ata, kp.publicKey, 10_000_000_000));
+		if (wantsSol) tx.add(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: to, lamports: Math.round(DRIP_SOL * LAMPORTS_PER_SOL) }));
+		if (usdc < USDC_CEILING) {
+			tx.add(createAssociatedTokenAccountIdempotentInstruction(payer.publicKey, ata, to, mint));
+			tx.add(createMintToInstruction(mint, ata, payer.publicKey, USDC_GRANT * 1_000_000));
 		}
 		if (tx.instructions.length === 0) return NextResponse.json({ ok: true, skipped: true });
+
 		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash("confirmed");
 		tx.recentBlockhash = blockhash;
-		tx.feePayer = kp.publicKey;
-		tx.sign(kp);
+		tx.feePayer = payer.publicKey;
+		tx.sign(payer);
 		const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
 		await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
 		return NextResponse.json({ ok: true, signature: sig });
