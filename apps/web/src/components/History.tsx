@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { HistoryRow } from "@/app/api/history/route";
 import { EXPLORER, symbolByMint } from "@/lib/solana";
-import { fmtTs, fmtUsd, REASON_LABEL, short } from "@/lib/format";
+import { fmtTs, fmtUsd, reasonLabel, short } from "@/lib/format";
 
 const KIND: Record<HistoryRow["kind"], string> = {
 	executed: "bg-mint/15 text-mint",
@@ -40,7 +40,7 @@ export function History({ plan, refreshKey }: { plan: string; refreshKey: number
 						<li key={r.id} className="flex flex-wrap items-start justify-between gap-2 py-2 text-sm">
 							<div>
 								<span className={`pill mr-2 ${KIND[r.kind]}`}>{r.kind}</span>
-								<span className="text-slate-300">{r.kind === "executed" ? `Bought ${fmtUsd(r.usdcIn ?? 0)} across ${r.legs?.length ?? 0} legs` : REASON_LABEL[r.reason] ?? r.detail}</span>
+								<span className="text-slate-300">{r.kind === "executed" ? `Bought ${fmtUsd(r.usdcIn ?? 0)} across ${r.legs?.length ?? 0} legs` : reasonLabel(r.reason) ?? r.detail}</span>
 								{r.kind !== "executed" && r.detail && <span className="ml-2 text-xs text-slate-500">{r.detail}</span>}
 								{r.kind === "executed" && r.legs && (
 									<p className="mt-0.5 text-xs text-slate-500">

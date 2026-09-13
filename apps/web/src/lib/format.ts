@@ -24,15 +24,7 @@ export function fmtDuration(secs: number): string {
 export const cadenceLabel = (seconds: number) =>
 	seconds === 86_400 ? "daily" : seconds === 7 * 86_400 ? "weekly" : seconds === 30 * 86_400 ? "monthly" : `every ${Math.round(seconds / 3600)} h`;
 
-export const REASON_LABEL: Record<number, string> = {
-	0: "Executed",
-	1: "Reference price stale",
-	2: "Confidence too wide",
-	3: "Market closed",
-	4: "Venue diverged from reference",
-	5: "Low liquidity",
-	6: "Insufficient vault balance",
-};
+export { reasonLabel } from "@bozbasket/shared";
 
 /** Pyth price with exponent → number. */
 export const pythToNumber = (price: bigint | number | string, expo: number) => Number(price) * 10 ** expo;

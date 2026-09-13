@@ -4,12 +4,13 @@ import { use, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlan, usePrices } from "@/lib/usePlans";
 import { EXPLORER, EXPLORER_ACCOUNT, symbolByMint } from "@/lib/solana";
-import { cadenceLabel, fmtTs, fmtUsd, REASON_LABEL, short } from "@/lib/format";
+import { cadenceLabel, fmtTs, fmtUsd, reasonLabel, short } from "@/lib/format";
 import { Countdown } from "@/components/Countdown";
 import { StatusPill } from "@/components/StatusPill";
 import { PlanActions } from "@/components/PlanActions";
 import { Portfolio } from "@/components/Portfolio";
 import { History } from "@/components/History";
+import { GuardPanel } from "@/components/GuardPanel";
 
 export default function PlanPage({ params }: { params: Promise<{ address: string }> }) {
 	const { address } = use(params);
@@ -80,9 +81,11 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 
 			{a.lastReason !== 0 && (
 				<p className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-2 text-sm text-amber">
-					Last attempt was deferred: <strong>{REASON_LABEL[a.lastReason]}</strong>. The reason is recorded on chain; the keeper retries at the next safe window.
+					Last attempt was deferred: <strong>{reasonLabel(a.lastReason)}</strong>. The reason is recorded on chain; the keeper retries at the next safe window.
 				</p>
 			)}
+
+			<GuardPanel plan={address} refreshKey={refreshKey} />
 
 			<div className="grid gap-5 lg:grid-cols-[1fr_320px]">
 				<div className="space-y-5">
@@ -91,23 +94,6 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 				</div>
 				<div className="space-y-4">
 					<PlanActions plan={plan} onDone={onDone} />
-					<div className="card text-xs text-slate-400">
-						<p className="label mb-1">Guard status</p>
-						{prices?.marketHours ? (
-							<p>
-								US session is <strong className={prices.marketHours.isOpen ? "text-mint" : "text-amber"}>{prices.marketHours.isOpen ? "open" : "closed"}</strong>.{" "}
-								{prices.marketHours.isOpen ? `Closes ${fmtTs(prices.marketHours.nextClose)}.` : `Opens ${fmtTs(prices.marketHours.nextOpen)}.`}
-							</p>
-						) : (
-							<p>Session status unavailable.</p>
-						)}
-						{prices?.rows.map((p) => (
-							<p key={p.symbol} className="mt-1 font-mono">
-								{p.ticker} {fmtUsd(p.price)} · conf {p.confBps.toFixed(1)} bps · {Math.round((prices.fetchedAt - p.publishTime) / 60)} min old
-							</p>
-						))}
-						<p className="mt-2">Full per-leg guard panel arrives with the demo controls.</p>
-					</div>
 				</div>
 			</div>
 		</div>

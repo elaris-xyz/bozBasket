@@ -23,6 +23,7 @@ export function Nav() {
 					<nav className="hidden items-center gap-1 sm:flex">
 						{link("/", "Plans")}
 						{link("/build", "Build a basket")}
+						{link("/demo", "Demo controls")}
 					</nav>
 				</div>
 				<div className="flex items-center gap-2">

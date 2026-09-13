@@ -1,22 +1,19 @@
-// Mirrors ReasonCode in programs/basket_dca/src/state.rs. Change both together.
-export const REASON = {
-	OK: 0,
-	REFERENCE_STALE: 1,
-	CONFIDENCE_TOO_WIDE: 2,
-	MARKET_CLOSED: 3,
-	DIVERGENCE: 4,
-	LOW_LIQUIDITY: 5,
-	INSUFFICIENT_BALANCE: 6,
-} as const;
+// Display names for the reason codes. The codes themselves live in guard.ts
+// next to the logic that produces them, and mirror `ReasonCode` in
+// programs/basket_dca/src/state.rs. Change all three together.
 
-export type ReasonCode = (typeof REASON)[keyof typeof REASON];
+import { REASON, type ReasonCode } from "./guard";
 
 export const REASON_LABEL: Record<ReasonCode, string> = {
-	0: "Executed",
-	1: "Reference price stale",
-	2: "Confidence too wide",
-	3: "Market closed",
-	4: "Venue diverges from reference",
-	5: "Low liquidity",
-	6: "Insufficient vault balance",
+	[REASON.OK]: "Executed",
+	[REASON.REFERENCE_STALE]: "Reference price stale",
+	[REASON.CONFIDENCE_TOO_WIDE]: "Confidence too wide",
+	[REASON.MARKET_CLOSED]: "Market closed",
+	[REASON.DIVERGENCE]: "Venue diverged from reference",
+	[REASON.LOW_LIQUIDITY]: "Low liquidity",
+	[REASON.INSUFFICIENT_BALANCE]: "Insufficient vault balance",
 };
+
+/** Label for a code read off the chain, where the type is just `u8`. An
+ *  unrecognised code must not crash a page. */
+export const reasonLabel = (code: number): string => REASON_LABEL[code as ReasonCode] ?? `Unknown reason ${code}`;

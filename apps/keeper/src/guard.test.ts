@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkLeg, legAmounts, REASON } from "./guard";
+import { basketVerdict, checkLeg, legAmounts, REASON } from "@bozbasket/shared";
 
 const t = { maxStalenessSecs: 120, maxConfBps: 50, maxDivergenceBps: 150, minLiquidityUsdc: 500_000_000n };
 const now = 1_789_400_000;
@@ -13,6 +13,18 @@ test("fresh, tight, aligned, deep: OK", () => {
 	assert.equal(v.ageSecs, 10);
 	assert.equal(v.confBps, 5);
 	assert.equal(v.divergenceBps, 20);
+	// Display values carry the feed exponent, not a hardcoded scale.
+	assert.equal(v.referencePrice, 365);
+	assert.equal(v.venuePrice, 365.73);
+	assert.equal(v.legUsdc, 50);
+});
+
+test("basketVerdict reports the first failing leg, balance first", () => {
+	const ok = checkLeg(now, ref, venue, 50_000_000n, t);
+	const bad = checkLeg(now, { ...ref, publishTime: now - 9999 }, venue, 50_000_000n, t);
+	assert.deepEqual(basketVerdict([ok, bad], 500, 100), { reason: REASON.REFERENCE_STALE, legIndex: 1 });
+	assert.deepEqual(basketVerdict([ok, ok], 500, 100), { reason: REASON.OK, legIndex: null });
+	assert.deepEqual(basketVerdict([ok, bad], 50, 100), { reason: REASON.INSUFFICIENT_BALANCE, legIndex: null });
 });
 
 test("stale wins over everything else", () => {

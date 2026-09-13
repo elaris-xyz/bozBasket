@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sessionAt, secondsUntilOpen, localParts } from "./calendar";
+import { sessionAt, secondsUntilOpen, localParts } from "@bozbasket/shared";
 
 // 2026-09-14 is a Monday. 14:00 UTC = 10:00 ET (EDT).
 const monday10ET = new Date("2026-09-14T14:00:00Z");

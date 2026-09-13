@@ -12,6 +12,7 @@ import { createMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { loadConfig, type Deployment } from "../src/config";
 import { connect, configPda, marketPdas } from "../src/chain";
 import { HermesClient } from "../src/hermes";
+import { DEFAULT_MARKET, DEFAULT_THRESHOLDS } from "@bozbasket/shared";
 
 const PYTH_RECEIVER = new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");
 
@@ -21,14 +22,12 @@ const STOCKS = [
 	{ symbol: "mVOO", feedId: "236b30dd09a9c00dfeec156c7b1efd646c0f01825a1758e3e4a0679e3bdff179" },
 ];
 
-const THRESHOLDS = {
-	maxStalenessSecs: 120, // Hermes update to landed tx takes a few seconds; 2 min is generous during session
-	maxConfBps: 50,
-	maxDivergenceBps: 150,
-	minLiquidityUsdc: new anchor.BN(500_000_000), // $500 per leg
-};
-const SPREAD_BPS = 20;
-const LIQUIDITY = new anchor.BN(50_000_000_000); // $50k per market
+// Thresholds live in @bozbasket/shared so the demo "restore" control puts
+// back exactly what setup wrote. 120 s of staleness is generous during the
+// session: a Hermes update takes a few seconds to land.
+const THRESHOLDS = { ...DEFAULT_THRESHOLDS, minLiquidityUsdc: new anchor.BN(DEFAULT_THRESHOLDS.minLiquidityUsdc) };
+const SPREAD_BPS = DEFAULT_MARKET.spreadBps;
+const LIQUIDITY = new anchor.BN(DEFAULT_MARKET.liquidityUsdc);
 
 async function main() {
 	const cfg = loadConfig();

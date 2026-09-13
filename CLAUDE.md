@@ -239,6 +239,27 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   legs to decimal strings before storing them; anything else reading events
   must do the same.
 
+## Guard panel and demo controls (day 5)
+
+- The guard logic lives **once**, in `packages/shared/src/guard.ts`, with the
+  session calendar next to it. The keeper, the web guard panel and the
+  program's own Rust must agree; the shared module is the single off-chain
+  copy. `packages/shared/src/reasons.ts` holds only the labels.
+- `/api/guard?plan=…` returns what `execute_basket` would decide right now.
+  It models the keeper faithfully: in pyth mode the reference age comes from
+  Hermes (stale all weekend by design), in mock mode the keeper restamps the
+  reference in the same transaction, so the panel ages it by a few seconds
+  only. Getting this wrong made the panel predict STALE for everything.
+- `/api/demo` (needs `DEMO_CONTROLS=1`) signs real admin transactions.
+  Divergence and liquidity are genuine manipulations; staleness and
+  confidence tighten a `Config` ceiling instead, because no one can make Pyth
+  publish a bad price on demand. `docs/DEMO.md` states this plainly and the
+  UI labels it.
+- `pnpm --filter keeper exec tsx scripts/scenarios.ts <plan>` walks all six
+  reason codes end to end against the running web app, compares the panel's
+  prediction with the program's recorded reason, restores everything, and
+  writes `deploy/scenarios.json`. It is the regression test for the demo.
+
 ## Conventions
 
 - Code, comments, commit messages, UI strings, docs: English. Chat with the

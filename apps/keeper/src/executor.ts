@@ -11,9 +11,8 @@ import { createAssociatedTokenAccountIdempotentInstruction, TOKEN_PROGRAM_ID } f
 import type { Chain, LoadedPlan } from "./chain";
 import { configPda, feedHex, ownerStockAta } from "./chain";
 import type { Deployment, KeeperConfig } from "./config";
-import { sessionAt, secondsUntilOpen } from "./calendar";
 import type { HermesClient, ParsedPrice } from "./hermes";
-import { checkLeg, legAmounts, REASON } from "./guard";
+import { checkLeg, legAmounts, REASON, secondsUntilOpen, sessionAt } from "@bozbasket/shared";
 import type { Ledger } from "./ledger";
 
 export const PYTH_RECEIVER = new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");

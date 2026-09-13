@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { LoadedPlan } from "@/lib/usePlans";
 import { symbolByMint } from "@/lib/solana";
-import { cadenceLabel, fmtUsd, REASON_LABEL } from "@/lib/format";
+import { cadenceLabel, fmtUsd, reasonLabel } from "@/lib/format";
 import { Countdown } from "./Countdown";
 import { StatusPill } from "./StatusPill";
 
@@ -44,7 +44,7 @@ export function PlanCard({ plan }: { plan: LoadedPlan }) {
 					</p>
 				</div>
 			</div>
-			{a.lastReason !== 0 && <p className="mt-3 text-xs text-amber">Last attempt deferred: {REASON_LABEL[a.lastReason]}</p>}
+			{a.lastReason !== 0 && <p className="mt-3 text-xs text-amber">Last attempt deferred: {reasonLabel(a.lastReason)}</p>}
 		</Link>
 	);
 }

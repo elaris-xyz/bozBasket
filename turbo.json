@@ -18,7 +18,8 @@
     "OFF_HOURS_POLICY",
     "KEEPER_POLL_SECONDS",
     "CU_PRICE_MICROLAMPORTS",
-    "DEPLOYMENT_FILE"
+    "DEPLOYMENT_FILE",
+    "DEMO_CONTROLS"
   ],
   "tasks": {
     "build": {
