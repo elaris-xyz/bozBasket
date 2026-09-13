@@ -20,9 +20,8 @@ https://hackathons.solana.com/hackathons/stocklana
 - [ ] **Register on the hackathon site** if not already done
 - [x] ~~Create the public GitHub repo and push~~ — https://github.com/elaris-xyz/bozBasket
 - [x] ~~Deploy the web app to Vercel~~ — https://boz-basket-web.vercel.app
-- [ ] **Add two env vars in Vercel** and redeploy: `DEMO_CONTROLS=1` and
-      `KEEPER_SECRET_KEY` (contents of `~/.config/solana/id.json`). Without
-      them the demo-controls page shows a banner and its buttons do nothing.
+- [x] ~~Add `DEMO_CONTROLS=1` and `KEEPER_SECRET_KEY` in Vercel~~
+- [ ] **Create the cron-job.org job** (steps under "Keeper in production")
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
 - [ ] **Rotate the Neon database password** before the repo goes public
 - [ ] **Submit the form**: repo link, live demo link, video link
@@ -54,27 +53,29 @@ state that one click of "restore" puts back. Any future `anchor deploy` needs
 
 ## Keeper in production
 
-The keeper is a long-running process, so it does not belong on Vercel. It runs
-as a **scheduled GitHub Action** (`.github/workflows/keeper.yml`, scheduled every
-five minutes, secrets already set), which has the side benefit that every pass is a
-public log in the repository judges are reading. Trigger one by hand from the
-Actions tab.
+The keeper runs inside the web app (see "Is it running?" in the README), so the
+deployment executes plans with nothing else running, as long as someone has
+the app open. Two backstops cover the hours nobody does:
 
-**Measured on 2026-09-13, GitHub does not honour that schedule.** Over about
-seven hours the `*/5` cron fired twice, three hours apart, and every other run
-was triggered by hand. No run failed. So on the Action alone a judge can wait
-hours for an execution, and the app will truthfully show the keeper as late.
+1. **A free cron-job.org job, every five minutes.** Add a job: URL
+   `https://boz-basket-web.vercel.app/api/keeper/tick`, method GET, schedule
+   every 5 minutes, no headers. The endpoint answers at once and runs the pass
+   after responding, so the service's 30-second timeout does not matter. Five
+   minutes, not one: whenever someone has the app open it already runs a pass
+   every minute, so the scheduler only covers unattended hours, where a weekly
+   buy landing a few minutes late costs nothing and every extra run spends
+   Vercel function time.
+2. **The scheduled GitHub Action** (`.github/workflows/keeper.yml`, secrets
+   already set). Measured on 2026-09-13, GitHub fired its five-minute schedule
+   only twice in seven hours, so it is a public log and a backstop, not a clock.
 
-The fix is an always-on worker. `railpack.json` is ready for Railway: create a
-service from this repository, set `KEEPER_SECRET_KEY`, `PYTH_API_KEY`,
-`SOLANA_RPC_URL`, `DATABASE_URL`, `SOLANA_CLUSTER=devnet`,
-`OFF_HOURS_POLICY=guarded` and `KEEPER_POLL_SECONDS=60`, and deploy. Keep the
-Action as a public, occasional second keeper. Two keepers cannot double-buy:
-transactions that write the same plan account are serialized, and the second
-one fails the program's due-time check.
+Every keeper takes the same Postgres lock (`apps/keeper/src/lock.ts`): one pass
+at a time and scheduled passes at most once a minute, so two keepers never
+attempt the same plan or pay twice to post the same price. `railpack.json`
+still runs the keeper as an always-on worker on a host that has credit.
 
-Either way the app now says when the keeper last ran, in red when it is late,
-so "the guard deferred" can never be confused with "nothing is running".
+The app says when the keeper last ran, in red when it is late, so "the guard
+deferred" can never be confused with "nothing is running".
 
 ## Facts worth having at hand
 

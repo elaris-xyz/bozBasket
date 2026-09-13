@@ -2,6 +2,11 @@
   "name": "keeper",
   "version": "0.1.0",
   "private": true,
+  "exports": {
+    "./pass": "./src/pass.ts",
+    "./lock": "./src/lock.ts",
+    "./config": "./src/config.ts"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",

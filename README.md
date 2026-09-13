@@ -71,7 +71,7 @@ listed in [`docs/DEMO.md`](docs/DEMO.md).
    └─ execute_basket   (keeper signs; the program checks the guard)
    ▲                              │ CPI: take USDC, mint/receive stock tokens
    │  Executed / Deferred         ▼
- Keeper (scheduled Action)      Fill venue
+ Keeper (in-app, locked)       Fill venue
    ├─ session calendar            ├─ devnet:  mock_market
    ├─ Pyth Hermes + receiver      └─ mainnet: Jupiter (not built)
    └─ Postgres ledger  ─────────────────────►  read by the web app
@@ -138,10 +138,22 @@ necessarily mocked. Being precise about which parts:
 
 ## Is it running?
 
-The keeper is a scheduled GitHub Action, so every execution attempt is a
-public log in this repository's Actions tab, and the app itself reports when
-the keeper last ran. A plan that does not fill is either deferred with a
-reason or waiting for a keeper that is late, and the page says which.
+The keeper runs wherever it is asked to, and every copy takes the same
+Postgres lock, so there is never more than one pass at a time or more than one
+scheduled pass a minute:
+
+- **Inside the web app.** Any open page asks for a pass about once a minute,
+  and "make the plan due" in the demo controls starts one at once. The pass
+  runs in a serverless function after the response has been sent.
+- **An external scheduler** calling `/api/keeper/tick` every five minutes covers
+  the hours nobody has the app open. The endpoint is public on purpose: the lock
+  bounds it, and a pass can only attempt executions the program guards.
+- **A scheduled GitHub Action**, whose runs are public logs in this
+  repository. GitHub fires it irregularly, so it is a backstop, not the clock.
+
+The app reports when the keeper last ran, in red when it is late, so a plan
+that did not fill is visibly either deferred with a reason or waiting on a
+keeper.
 
 ## Quickstart
 

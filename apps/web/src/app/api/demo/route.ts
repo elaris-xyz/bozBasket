@@ -25,9 +25,12 @@ import { PublicKey } from "@solana/web3.js";
 import { DEFAULT_MARKET, DEFAULT_THRESHOLDS } from "@bozbasket/shared";
 import { CONFIG } from "@/lib/solana";
 import { adminPrograms, hermesLatest, MARKETS, marketPks } from "@/lib/server";
+import { schedulePass } from "@/lib/keeperRunner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// "nudge" starts a keeper pass that continues after the response.
+export const maxDuration = 300;
 
 type Action = "divergence" | "liquidity" | "staleness" | "confidence" | "restore" | "nudge";
 
@@ -118,7 +121,16 @@ export async function POST(req: Request) {
 			case "nudge": {
 				if (!plan) return NextResponse.json({ error: "plan required" }, { status: 400 });
 				const sig = await basket.methods.nudgePlan(new anchor.BN(0)).accountsPartial({ config: CONFIG, plan: new PublicKey(plan), admin }).rpc();
-				return NextResponse.json({ ok: true, signature: sig, detail: "plan is due now" });
+				// Attempt it straight away instead of waiting for the next scheduled pass.
+				const pass = await schedulePass("demo", { force: true });
+				const detail = pass.started
+					? "plan is due now and a keeper pass has started; the result appears in History within about a minute"
+					: pass.reason === "busy"
+						? "plan is due now; a keeper pass is already running, so the next one, within about a minute, attempts it"
+						: pass.reason === "unavailable"
+							? `plan is due now, but this deployment cannot run the keeper (${pass.detail})`
+							: "plan is due now; the keeper attempts it within about a minute";
+				return NextResponse.json({ ok: true, signature: sig, detail });
 			}
 			default:
 				return NextResponse.json({ error: `unknown action ${action}` }, { status: 400 });

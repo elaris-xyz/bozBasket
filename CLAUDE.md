@@ -264,9 +264,29 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
 
 - Web: https://boz-basket-web.vercel.app (Vercel project `boz-basket-web`,
   team `eldorim`, root directory `apps/web`).
-- Keeper: GitHub Actions `.github/workflows/keeper.yml`, `*/5` cron, secrets
-  `KEEPER_SECRET_KEY`, `PYTH_API_KEY`, `SOLANA_RPC_URL`, `DATABASE_URL`
-  already set. `railpack.json` is the Railway alternative.
+- Keeper: runs **inside the web app** (`apps/web/src/lib/keeperRunner.ts`),
+  started by open pages (KeeperPulse), the demo nudge, and the public
+  `/api/keeper/tick` (for a cron-job.org job). The pass runs in `after()`
+  with `maxDuration = 300`. The GitHub Action (`*/5`, fires irregularly) and
+  `railpack.json` run the same `runPass`; **every keeper shares the Postgres
+  lock in `apps/keeper/src/lock.ts`**, so there are never two passes at once.
+  The web app imports the `keeper` workspace package via `transpilePackages`:
+  keep `pass.ts` and `lock.ts` free of file reads and process-lifetime
+  assumptions, or the Vercel build breaks. Railway credit ran out 2026-09-14.
+- Never log the RPC URL: it carries the Helius API key.
+- **Never `new anchor.Wallet(...)` in code the web app bundles.** Anchor 0.30's
+  ESM build only assigns `exports.Wallet` inside an `if (!isBrowser)` block,
+  which never becomes a real ESM export, so the Next.js bundle throws "Wallet
+  is not a constructor" (found 2026-09-14). Use `keypairWallet` from
+  `apps/keeper/src/chain.ts`. It tells transaction kinds apart by shape
+  (`"version" in tx`), as Anchor's own class does, never by `instanceof`:
+  the Pyth SDK builds transactions with a different copy of web3.js.
+- **Test the keeper locally with `OFF_HOURS_POLICY=guarded`.** `.env` sets
+  `strict`, so off-hours a pass skips before building any transaction, and a
+  test "passes" without ever touching the Pyth SDK, signing or sending. Vercel
+  runs guarded. A keeper test counts only when it yields a signature confirmed
+  on devnet and a matching ledger row (learned 2026-09-14, when a skip was
+  counted as a pass).
 - Repo: https://github.com/elaris-xyz/bozBasket (public).
 - **Upgrade authority is now `deploy/upgrade-authority.keypair.json`**, not the
   keeper key. Every `anchor deploy` from here needs

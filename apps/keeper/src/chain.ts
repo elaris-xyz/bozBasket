@@ -3,7 +3,7 @@
 
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, type Transaction, type VersionedTransaction } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 // idl/ is committed; target/ is not, so a fresh checkout (CI, a worker host)
 // still has the program interface. Refresh it with tools/sync-idl.mjs.
@@ -20,9 +20,36 @@ export type Chain = {
 	market: Program<MockMarket>;
 };
 
+/** A signer with Anchor's `Wallet` interface, built by hand.
+ *
+ *  Anchor's own `Wallet` class exists only in its Node build. Bundled into
+ *  the web app, webpack resolves the browser build and `new anchor.Wallet`
+ *  throws "Wallet is not a constructor". The transaction kind is told apart
+ *  by shape, as Anchor's class does, never by `instanceof`: the Pyth SDK
+ *  builds its transactions with a different copy of web3.js, and an
+ *  `instanceof` check against ours would call `partialSign` on a versioned
+ *  transaction that has no such method. */
+export function keypairWallet(kp: Keypair): anchor.Wallet {
+	const sign = <T extends Transaction | VersionedTransaction>(tx: T): T => {
+		if ("version" in tx) (tx as VersionedTransaction).sign([kp]);
+		else (tx as Transaction).partialSign(kp);
+		return tx;
+	};
+	return {
+		publicKey: kp.publicKey,
+		payer: kp,
+		async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
+			return sign(tx);
+		},
+		async signAllTransactions<T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]> {
+			return txs.map(sign);
+		},
+	} as anchor.Wallet;
+}
+
 export function connect(rpcUrl: string, keeper: Keypair): Chain {
 	const connection = new Connection(rpcUrl, { commitment: "confirmed" });
-	const wallet = new anchor.Wallet(keeper);
+	const wallet = keypairWallet(keeper);
 	const provider = new anchor.AnchorProvider(connection, wallet, { commitment: "confirmed", preflightCommitment: "confirmed" });
 	anchor.setProvider(provider);
 	return {

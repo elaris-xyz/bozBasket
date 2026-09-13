@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { DemoWalletProvider } from "@/lib/wallet";
 import { Nav } from "@/components/Nav";
+import { KeeperPulse } from "@/components/KeeperPulse";
 
 const description = "Recurring baskets of tokenized US stocks on Solana, bought only when the reference price can be trusted.";
 
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html lang="en" className="dark">
 			<body className="min-h-screen antialiased">
 				<DemoWalletProvider>
+					<KeeperPulse />
 					<Nav />
 					<main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-4 sm:pt-6">{children}</main>
 					<footer className="mx-auto max-w-5xl px-4 pb-8 text-xs text-slate-500">
