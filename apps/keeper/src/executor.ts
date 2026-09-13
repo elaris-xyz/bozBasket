@@ -16,6 +16,8 @@ import type { HermesClient, ParsedPrice } from "./hermes";
 import { checkLeg, legAmounts, REASON } from "./guard";
 import type { Ledger } from "./ledger";
 
+export const PYTH_RECEIVER = new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");
+
 export type PassResult =
 	| { kind: "skipped"; reason: number; detail: string }
 	| { kind: "executed" | "deferred"; signature: string; reason: number; detail: string }
@@ -70,9 +72,23 @@ export class Executor {
 		});
 		const marketAccounts = await Promise.all(markets.map((m) => this.chain.market.account.market.fetch(new PublicKey(m.market))));
 
+		// Demo mode: the mock reference is stamped "now", so the guard sees a
+		// fresh price on a weekend. Everything else (price, conf, venue, fill)
+		// stays real. The program must have been pointed at mock_market with
+		// scripts/set-reference.ts, otherwise it rejects the account owner.
+		const mock = this.cfg.referenceSource === "mock";
+		if (mock && !config.referenceProgram.equals(this.chain.market.programId)) {
+			throw new Error("REFERENCE_SOURCE=mock but config.reference_program is not mock_market; run scripts/set-reference.ts mock");
+		}
+		if (!mock && !config.referenceProgram.equals(PYTH_RECEIVER)) {
+			throw new Error("config.reference_program is not the Pyth receiver; run scripts/set-reference.ts pyth (or set REFERENCE_SOURCE=mock)");
+		}
+		const refPublishTime = (ref: ParsedPrice) => (mock ? now : ref.publishTime);
+
 		const verdicts = legs.map((l, i) => {
-			const ref = byFeed.get(feedIds[i]);
-			if (!ref) throw new Error(`Hermes returned no update for ${feedIds[i]}`);
+			const ref0 = byFeed.get(feedIds[i]);
+			if (!ref0) throw new Error(`Hermes returned no update for ${feedIds[i]}`);
+			const ref = { ...ref0, publishTime: refPublishTime(ref0) };
 			const m = marketAccounts[i];
 			const override = BigInt(m.priceOverride.toString());
 			const base = override > 0n ? override : ref.price;
@@ -92,10 +108,11 @@ export class Executor {
 			return { kind: "skipped", reason: REASON.REFERENCE_STALE, detail };
 		}
 
-		// 3. Transactions.
+		// 3. Transactions. In pyth mode the receiver SDK wraps everything:
+		//    post VAAs, our instructions, close the update accounts.
 		const owner = p.owner;
 		const builder = this.receiver.newTransactionBuilder({ closeUpdateAccounts: true });
-		await builder.addPostPriceUpdates(updates.binary);
+		if (!mock) await builder.addPostPriceUpdates(updates.binary);
 		await builder.addPriceConsumerInstructions(async (getPriceUpdateAccount) => {
 			const ixs: { instruction: TransactionInstruction; signers: anchor.web3.Signer[] }[] = [];
 
@@ -103,7 +120,7 @@ export class Executor {
 			for (let i = 0; i < legs.length; i++) {
 				const ref = byFeed.get(feedIds[i]) as ParsedPrice;
 				const ix = await this.chain.market.methods
-					.postReference(new anchor.BN(ref.price.toString()), new anchor.BN(ref.conf.toString()), ref.expo, new anchor.BN(ref.publishTime))
+					.postReference(new anchor.BN(ref.price.toString()), new anchor.BN(ref.conf.toString()), ref.expo, new anchor.BN(refPublishTime(ref)))
 					.accountsPartial({ market: new PublicKey(markets[i].market), reference: new PublicKey(markets[i].reference), admin: this.chain.wallet.publicKey })
 					.instruction();
 				ixs.push({ instruction: ix, signers: [] });
@@ -117,7 +134,7 @@ export class Executor {
 					signers: [],
 				});
 				return [
-					{ pubkey: getPriceUpdateAccount(`0x${feedIds[i]}`), isSigner: false, isWritable: false },
+					{ pubkey: mock ? new PublicKey(m.reference) : getPriceUpdateAccount(`0x${feedIds[i]}`), isSigner: false, isWritable: false },
 					{ pubkey: new PublicKey(m.market), isSigner: false, isWritable: true },
 					{ pubkey: new PublicKey(m.stockMint), isSigner: false, isWritable: true },
 					{ pubkey: new PublicKey(m.treasury), isSigner: false, isWritable: true },

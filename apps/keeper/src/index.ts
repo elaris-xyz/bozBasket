@@ -6,7 +6,7 @@
 //   pnpm --filter keeper once -- --plan <pubkey>   # one plan, ignore schedule
 
 import { loadConfig, loadDeployment } from "./config";
-import { connect, loadActivePlans } from "./chain";
+import { chainNow, connect, loadActivePlans } from "./chain";
 import { HermesClient } from "./hermes";
 import { LogLedger, PgLedger, type Ledger } from "./ledger";
 import { Executor } from "./executor";
@@ -43,7 +43,9 @@ async function main() {
 	console.log(`keeper ${chain.wallet.publicKey.toBase58()} on ${cfg.cluster} (${cfg.rpcUrl}); off-hours policy: ${cfg.offHours}`);
 
 	const pass = async () => {
-		const now = Math.floor(Date.now() / 1000);
+		const now = await chainNow(chain.connection);
+		const skew = now - Math.floor(Date.now() / 1000);
+		if (Math.abs(skew) > 30) console.warn(`host clock is ${-skew} s off the cluster clock; using cluster time`);
 		let plans = await loadActivePlans(chain.basket);
 		if (onlyPlan) plans = plans.filter((p) => p.pubkey.equals(new PublicKey(onlyPlan)));
 		const due = onlyPlan ? plans : plans.filter((p) => p.account.nextExecution.toNumber() <= now);

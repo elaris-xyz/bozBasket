@@ -4,6 +4,13 @@ import { Keypair } from "@solana/web3.js";
 
 export type OffHoursPolicy = "strict" | "guarded";
 
+/** Where execute_basket reads the reference price from.
+ *  "pyth": signed Hermes updates posted to the Pyth receiver (real).
+ *  "mock": mock_market's own reference account, stamped with the current
+ *  time (synthetic; devnet demo only, and config.reference_program must be
+ *  mock_market, see scripts/set-reference.ts). */
+export type ReferenceSource = "pyth" | "mock";
+
 export type KeeperConfig = {
 	rpcUrl: string;
 	cluster: "devnet" | "localnet" | "mainnet-beta";
@@ -18,6 +25,7 @@ export type KeeperConfig = {
 	computeUnitPriceMicroLamports: number;
 	/** Do not submit at all when the reference is older than this. */
 	skipStaleOlderThanSecs: number;
+	referenceSource: ReferenceSource;
 };
 
 function required(name: string): string {
@@ -48,6 +56,7 @@ export function loadConfig(): KeeperConfig {
 		deploymentFile: process.env.DEPLOYMENT_FILE ?? path.resolve(__dirname, `../../../deploy/${cluster}.json`),
 		computeUnitPriceMicroLamports: Number(process.env.CU_PRICE_MICROLAMPORTS ?? 50_000),
 		skipStaleOlderThanSecs: Number(process.env.SKIP_STALE_OLDER_THAN_SECS ?? 7 * 86_400),
+		referenceSource: (process.env.REFERENCE_SOURCE as ReferenceSource) ?? "pyth",
 	};
 }
 

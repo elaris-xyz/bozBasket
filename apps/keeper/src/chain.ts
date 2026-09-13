@@ -61,3 +61,12 @@ export async function loadActivePlans(basket: Program<BasketDca>): Promise<Loade
 }
 
 export const feedHex = (bytes: number[] | Uint8Array) => Buffer.from(bytes).toString("hex");
+
+/** Unix time according to the cluster, not the host: the guard compares
+ *  publish_time with the on-chain clock, and this host's clock drifts. */
+export async function chainNow(connection: Connection): Promise<number> {
+	const slot = await connection.getSlot("confirmed");
+	const t = await connection.getBlockTime(slot);
+	if (t === null) throw new Error(`no block time for slot ${slot}`);
+	return t;
+}
