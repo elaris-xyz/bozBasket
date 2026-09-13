@@ -216,6 +216,29 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
 - Neon Postgres works again from the host; the ledger table `executions`
   holds every pass (skipped/deferred/executed/error).
 
+## Web app (day 4)
+
+`apps/web`, Next.js 15 on port 3200. `pnpm --filter web dev` (or `build` +
+`start`). It reads the chain directly and needs no keeper running.
+
+- **Demo wallet**: a burner keypair in `localStorage`, funded by
+  `POST /api/faucet` (0.05 SOL + 10 000 mock USDC, signed by
+  `KEEPER_SECRET_KEY`, skipped when the wallet already holds 5 000+). No
+  browser extension anywhere in the judge flow.
+- **Builder** creates the plan and deposits in one transaction. Sliders
+  rebalance the other legs so weights always sum to 10 000.
+- `/api/prices` fetches Hermes server-side so the browser never sees
+  `PYTH_API_KEY`; `/api/history` reads the keeper's Postgres ledger.
+- `src/generated/` holds copies of the IDLs, the Anchor types and
+  `deploy/devnet.json`, written by `scripts/sync-generated.mjs` on every
+  dev/build and **committed on purpose** so Vercel builds without Anchor.
+  Rerun `pnpm --filter web sync` after `anchor build` or a redeploy.
+- **US equity feeds publish with exponent -5**, not -8. Prices are
+  `price * 10^expo`; never hardcode 1e8 for equities.
+- Anchor event `BN`s serialize to **hex**. The keeper normalizes execution
+  legs to decimal strings before storing them; anything else reading events
+  must do the same.
+
 ## Conventions
 
 - Code, comments, commit messages, UI strings, docs: English. Chat with the

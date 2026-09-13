@@ -2,8 +2,10 @@ use anchor_lang::prelude::*;
 
 pub const MAX_SYMBOL_LEN: usize = 8;
 pub const STOCK_DECIMALS: u8 = 6;
-/// Pyth US equity feeds publish with exponent -8 (and so do most others).
-pub const DEFAULT_EXPONENT: i32 = -8;
+/// Placeholder until the first `post_reference`, which carries the feed's own
+/// exponent. US equity feeds publish with -5 (checked against Hermes on
+/// 2026-09-13); crypto feeds use -8. Nothing depends on this value.
+pub const DEFAULT_EXPONENT: i32 = -5;
 
 pub const MARKET_SEED: &[u8] = b"market";
 pub const STOCK_MINT_SEED: &[u8] = b"stock";
