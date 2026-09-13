@@ -188,6 +188,34 @@ Rules learned on day 2: box every `Account<_>` in a struct that inits two or
 more accounts (4 KiB SBF frame), use `.accountsPartial()` in tests, and keep
 the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
 
+## Devnet state (2026-09-13, day 3)
+
+- Programs: `basket_dca` 4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR,
+  `mock_market` A6pvN8KEYn5EXcgsRbzZUqBNjA5hFqFn6Ks2Li7SPMxS. Config, mock
+  USDC and the three markets (mTSLA, mQQQ, mVOO) are in `deploy/devnet.json`.
+- Demo plan 5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq (owner keypair in
+  `deploy/demo-user.keypair.json`, gitignored). Proof transactions:
+  - Deferred, REFERENCE_STALE, real Pyth receiver, weekend:
+    `5oiJcFzaxw6rvqmvTL2s73S1sVZgZgeAzTUdJv8qABwgLGuo1NAmYuriK9oFxqtJNhnKAmLpyNZ1dUq8TJdQrgWX`
+  - Executed, three legs in one tx (mock reference mode):
+    `Xu2vpwD6eHrYvtCCDDgsky6EHp4P4jotyhHj4WAFcy7FfthcxFJRAK6vpMoZBva179TtTZbrfPpKn9hSpeZw1nA`
+- Keeper flow: `source tools/env.sh`, then in `apps/keeper`:
+  `pnpm exec tsx scripts/nudge.ts <plan>` (make it due),
+  `pnpm exec tsx src/index.ts --once --plan <plan>`. `OFF_HOURS_POLICY=guarded`
+  submits outside the session so the on-chain deferral shows; `strict`
+  (default) skips with MARKET_CLOSED in the ledger only.
+- **Two reference modes.** Default is the real Pyth receiver: Hermes VAAs are
+  posted in the same transaction bundle and equities are stale from Friday
+  16:00 ET to Monday 09:30 ET, so weekends can only demonstrate deferrals.
+  `scripts/set-reference.ts mock` + `REFERENCE_SOURCE=mock` stamps the mock
+  reference with the cluster time so a fill can be shown any time. The
+  README must call this synthetic. Switch back with `set-reference.ts pyth`.
+- **The host clock is ~2 minutes behind real time.** The keeper takes time
+  from the cluster (`chainNow`); anything else that compares timestamps
+  must do the same, or the user should sync the Windows clock.
+- Neon Postgres works again from the host; the ledger table `executions`
+  holds every pass (skipped/deferred/executed/error).
+
 ## Conventions
 
 - Code, comments, commit messages, UI strings, docs: English. Chat with the
