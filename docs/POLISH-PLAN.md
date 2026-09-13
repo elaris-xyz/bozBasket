@@ -9,9 +9,13 @@ use?* Everything below is chosen against that, not against a feature list.
 
 ## Progress
 
-- **Day 1 — done.** The keeper runs as a scheduled GitHub Action with a public
-  log, the app reports when it last ran, the demo controls are live, and the
-  programs' upgrade authority moved to a cold key.
+- **Day 1 — done, then corrected.** The app reports when the keeper last ran,
+  the demo controls are live, and the programs' upgrade authority moved to a
+  cold key. The scheduled GitHub Action turned out to fire only a few times a
+  day and the Railway credit ran out, so on 2026-09-14 the keeper moved into
+  the web app itself: open pages, the demo nudge and a five-minute cron-job.org
+  job trigger passes, behind one Postgres lock that every keeper shares.
+  Verified on production over two spaced cycles.
 - **Day 2 — done, one item deferred.** `update_plan` is on devnet and editable
   from the plan page. The guard scorecard is unit tested and live, counting one
   blind fill per held-back buy. Deferred: the portfolio-over-time chart, which
