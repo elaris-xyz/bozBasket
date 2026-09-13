@@ -93,7 +93,7 @@ async function main() {
 				.postReference(new anchor.BN(px.price.toString()), new anchor.BN(px.conf.toString()), px.expo, new anchor.BN(px.publishTime))
 				.accountsPartial({ market: pdas.market, reference: pdas.reference, admin })
 				.rpc();
-			console.log(`market ${s.symbol} reference ${Number(px.price) / 1e8} @ ${new Date(px.publishTime * 1000).toISOString()}`);
+			console.log(`market ${s.symbol} reference ${Number(px.price) * 10 ** px.expo} (expo ${px.expo}) @ ${new Date(px.publishTime * 1000).toISOString()}`);
 		}
 		markets[s.symbol] = {
 			symbol: s.symbol,

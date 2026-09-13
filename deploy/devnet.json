@@ -1,0 +1,33 @@
+{
+  "cluster": "devnet",
+  "basketDcaProgram": "4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR",
+  "mockMarketProgram": "A6pvN8KEYn5EXcgsRbzZUqBNjA5hFqFn6Ks2Li7SPMxS",
+  "usdcMint": "2X3txP6u2uNppAT4DzT6K7NuXTvKArFDPtQAs8tWU7Vt",
+  "config": "FBsvtKfyPYihMUdneeedkHSzPqxoKpnC7bRYkrBrzR3a",
+  "markets": {
+    "mTSLA": {
+      "symbol": "mTSLA",
+      "feedId": "16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1",
+      "market": "5hRB2rqueZND9PmMH5ivHzQFSkcz8sZMnK5WyFWAZuGJ",
+      "stockMint": "UmTLX1amwswb8c5c3TSDT9DUFGWSxTyrW5FRX2p8pME",
+      "treasury": "Ath8GGD7bDQkJE3qKqKB13bCTfmK7GvsKh2ZcaKjvDiw",
+      "reference": "5EZH8TJ8k2uHUB3ihxL6vioz2de9mpqJguPBK3SCKPBn"
+    },
+    "mQQQ": {
+      "symbol": "mQQQ",
+      "feedId": "9695e2b96ea7b3859da9ed25b7a46a920a776e2fdae19a7bcfdf2b219230452d",
+      "market": "5Lb9gbQkTc2rbKxVBviSVCEp7K17Xi4n9QCfByGqfNWm",
+      "stockMint": "AaCgPx7noNqDbJdaqmqJtaLXgsXPwcYYyz2DEbxBr1RV",
+      "treasury": "AiQhmBHLhswKqAkVVBk4KW5g1Cj8PWXudBnHYvEBFEqs",
+      "reference": "FmY9U4ixXXLxVUS8gN4dfYFGL83ePZQv5BjyoGEDH2XF"
+    },
+    "mVOO": {
+      "symbol": "mVOO",
+      "feedId": "236b30dd09a9c00dfeec156c7b1efd646c0f01825a1758e3e4a0679e3bdff179",
+      "market": "3dG2nY6RQQpBkpVnVDjMnPSbStsBFxcATZfQqsi8W6Xq",
+      "stockMint": "GsMmYV1QxEt1ktB4oim81XQ63Qt58hVRF55iLvY7k8C2",
+      "treasury": "44h6AhXjSsTPPGdbsD3KnvjUeQTF7dGPq5Y647DQARZ9",
+      "reference": "CWugWuztJfcpJ4KQPk2mkJYUToFKPF34RGHU9mL3tZq5"
+    }
+  }
+}
