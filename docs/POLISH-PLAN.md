@@ -7,6 +7,19 @@ deadline, so Friday is buffer and submission only.
 Judging asks one question: *could this be a real app that people will actually
 use?* Everything below is chosen against that, not against a feature list.
 
+## Progress
+
+- **Day 1 — done.** The keeper runs as a scheduled GitHub Action with a public
+  log, the app reports when it last ran, the demo controls are live, and the
+  programs' upgrade authority moved to a cold key.
+- **Day 2 — done, one item deferred.** `update_plan` is on devnet and editable
+  from the plan page. The guard scorecard is unit tested and live, counting one
+  blind fill per held-back buy. Deferred: the portfolio-over-time chart, which
+  Day 2's done-when did not require.
+- **Watch the next US market open.** The demo plan's weekend-deferred buy fills
+  then, producing the first organic stale-savings figure. That is the number
+  the video should show.
+
 ## Where we honestly stand
 
 **Strong.** The guard is a real differentiator and it is enforced on chain,
