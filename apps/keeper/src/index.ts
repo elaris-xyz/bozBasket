@@ -7,6 +7,7 @@
 
 import { loadConfig, loadDeployment } from "./config";
 import { chainNow, connect, loadActivePlans } from "./chain";
+import { sessionAt } from "@bozbasket/shared";
 import { HermesClient } from "./hermes";
 import { LogLedger, PgLedger, type Ledger } from "./ledger";
 import { Executor } from "./executor";
@@ -44,12 +45,14 @@ async function main() {
 
 	const pass = async () => {
 		const now = await chainNow(chain.connection);
+		const session = sessionAt(new Date(now * 1000)).label;
 		const skew = now - Math.floor(Date.now() / 1000);
 		if (Math.abs(skew) > 30) console.warn(`host clock is ${-skew} s off the cluster clock; using cluster time`);
 		let plans = await loadActivePlans(chain.basket);
 		if (onlyPlan) plans = plans.filter((p) => p.pubkey.equals(new PublicKey(onlyPlan)));
 		const due = onlyPlan ? plans : plans.filter((p) => p.account.nextExecution.toNumber() <= now);
 		console.log(`[${new Date(now * 1000).toISOString()}] ${plans.length} active plan(s), ${due.length} due`);
+		await ledger.beat({ ts: now, cluster: cfg.cluster, activePlans: plans.length, duePlans: due.length, note: session });
 		for (const plan of due) {
 			try {
 				const result = await executor.run(plan, now);

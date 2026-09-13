@@ -11,6 +11,7 @@ import { PlanActions } from "@/components/PlanActions";
 import { Portfolio } from "@/components/Portfolio";
 import { History } from "@/components/History";
 import { GuardPanel } from "@/components/GuardPanel";
+import { KeeperStatus } from "@/components/KeeperStatus";
 
 export default function PlanPage({ params }: { params: Promise<{ address: string }> }) {
 	const { address } = use(params);
@@ -84,6 +85,8 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 					Last attempt was deferred: <strong>{reasonLabel(a.lastReason)}</strong>. The reason is recorded on chain; the keeper retries at the next safe window.
 				</p>
 			)}
+
+			<KeeperStatus />
 
 			<GuardPanel plan={address} refreshKey={refreshKey} />
 

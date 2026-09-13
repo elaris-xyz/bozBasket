@@ -20,7 +20,8 @@
     "CU_PRICE_MICROLAMPORTS",
     "DEPLOYMENT_FILE",
     "DEMO_CONTROLS",
-    "FAUCET_SECRET_KEY"
+    "FAUCET_SECRET_KEY",
+    "NEXT_PUBLIC_DEMO_PLAN"
   ],
   "tasks": {
     "build": {

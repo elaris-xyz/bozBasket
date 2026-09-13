@@ -13,7 +13,11 @@
 // version of those two scenarios is the weekend, when the real feed is
 // genuinely stale. The UI labels them as threshold changes.
 //
-// Disabled unless DEMO_CONTROLS=1. It is devnet play money either way.
+// Open on the deployed demo on purpose: a judge has to be able to break the
+// guard to see it work. Every action is reversible with `restore`, none of
+// them can move a user's funds, and since 2026-09-13 the programs' upgrade
+// authority is a cold key that never leaves the build machine, so the key
+// this route signs with cannot replace program code. Set DEMO_CONTROLS=1.
 
 import { NextResponse } from "next/server";
 import * as anchor from "@coral-xyz/anchor";
@@ -27,11 +31,36 @@ export const dynamic = "force-dynamic";
 
 type Action = "divergence" | "liquidity" | "staleness" | "confidence" | "restore" | "nudge";
 
+const enabled = () => process.env.DEMO_CONTROLS === "1";
+
+// Coarse per-instance limiter. Serverless means several instances and so
+// several buckets; it is a speed bump against a loop, not a security control.
+// It does not need to be one: every action here is reversible.
+const WINDOW_MS = 60_000;
+const MAX_PER_WINDOW = 20;
+const hits = new Map<string, number[]>();
+
+function rateLimited(req: Request): boolean {
+	const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+	const now = Date.now();
+	const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+	recent.push(now);
+	hits.set(ip, recent);
+	if (hits.size > 500) for (const [k, v] of hits) if (v.every((t) => now - t > WINDOW_MS)) hits.delete(k);
+	return recent.length > MAX_PER_WINDOW;
+}
+
+/** The demo page asks whether the controls are live before rendering them. */
+export async function GET() {
+	return NextResponse.json({ enabled: enabled() });
+}
+
 const FORCED_LIQUIDITY_USDC = 10_000_000; // $10, below one leg of a $100 basket
 const DIVERGENCE_MULTIPLIER = 105n; // +5%, well past the 150 bps ceiling
 
 export async function POST(req: Request) {
-	if (process.env.DEMO_CONTROLS !== "1") return NextResponse.json({ error: "demo controls are disabled" }, { status: 403 });
+	if (!enabled()) return NextResponse.json({ error: "demo controls are disabled on this deployment" }, { status: 403 });
+	if (rateLimited(req)) return NextResponse.json({ error: "too many demo actions; wait a minute" }, { status: 429 });
 	try {
 		const { action, symbol, plan } = (await req.json()) as { action?: Action; symbol?: string; plan?: string };
 		const { kp, basket, market } = adminPrograms();

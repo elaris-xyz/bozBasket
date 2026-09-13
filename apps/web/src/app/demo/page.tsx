@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DEMO_STOCKS } from "@bozbasket/shared";
 import { EXPLORER } from "@/lib/solana";
@@ -26,7 +26,15 @@ export default function DemoPage() {
 	const [busy, setBusy] = useState<string | null>(null);
 	const [result, setResult] = useState<Result | null>(null);
 	const [refreshKey, setRefreshKey] = useState(0);
+	const [enabled, setEnabled] = useState<boolean | null>(null);
 	const selected = plan || plans[0]?.address.toBase58() || "";
+
+	useEffect(() => {
+		fetch("/api/demo")
+			.then((r) => r.json())
+			.then((b) => setEnabled(!!b.enabled))
+			.catch(() => setEnabled(false));
+	}, []);
 
 	async function run(action: string, label: string) {
 		setBusy(label);
@@ -52,6 +60,13 @@ export default function DemoPage() {
 					decision change in the panel below.
 				</p>
 			</div>
+
+			{enabled === false && (
+				<p className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-3 text-sm text-amber">
+					Demo controls are switched off on this deployment, so the buttons below will not do anything. Everything else on the site is live. To drive them yourself, clone the
+					repository and run it with <code className="rounded bg-black/30 px-1">DEMO_CONTROLS=1</code>.
+				</p>
+			)}
 
 			{!selected ? (
 				<p className="card text-slate-400">
@@ -89,7 +104,7 @@ export default function DemoPage() {
 
 				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					{CONTROLS.map((c) => (
-						<button key={c.action} className={c.danger ? "btn-ghost h-full flex-col !items-start gap-1 text-left" : "btn-ghost h-full flex-col !items-start gap-1 text-left"} disabled={!!busy} onClick={() => run(c.action, c.label)}>
+						<button key={c.action} className="btn-ghost h-full flex-col !items-start gap-1 text-left" disabled={!!busy || enabled === false} onClick={() => run(c.action, c.label)}>
 							<span className="font-semibold">
 								{c.label}
 								{c.perMarket && <span className="ml-1 text-xs font-normal text-slate-500">({DEMO_STOCKS.find((s) => s.symbol === symbol)?.ticker})</span>}
@@ -97,7 +112,7 @@ export default function DemoPage() {
 							<span className="text-xs font-normal text-slate-500">{c.blurb}</span>
 						</button>
 					))}
-					<button className="btn-primary h-full flex-col !items-start gap-1 text-left" disabled={!!busy || !selected} onClick={() => run("nudge", "Make the plan due")}>
+					<button className="btn-primary h-full flex-col !items-start gap-1 text-left" disabled={!!busy || !selected || enabled === false} onClick={() => run("nudge", "Make the plan due")}>
 						<span className="font-semibold">Advance the clock</span>
 						<span className="text-xs font-normal opacity-80">Plan becomes due now; the keeper picks it up on its next pass.</span>
 					</button>

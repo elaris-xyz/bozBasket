@@ -17,6 +17,10 @@ export const BASKET_PROGRAM = new PublicKey(deployment.basketDcaProgram);
 export const MARKET_PROGRAM = new PublicKey(deployment.mockMarketProgram);
 export const USDC_MINT = new PublicKey(deployment.usdcMint);
 export const CONFIG = new PublicKey(deployment.config);
+/** A funded plan anyone can open without a wallet, so the app is worth
+ *  looking at before you connect anything. */
+export const DEMO_PLAN = process.env.NEXT_PUBLIC_DEMO_PLAN || "5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq";
+
 export const EXPLORER = (sig: string) => `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 export const EXPLORER_ACCOUNT = (addr: string) => `https://explorer.solana.com/address/${addr}?cluster=devnet`;
 

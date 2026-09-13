@@ -41,13 +41,20 @@ export function loadKeypair(file: string): Keypair {
 	return Keypair.fromSecretKey(Uint8Array.from(raw));
 }
 
+/** The keeper identity. A hosted runner has no keypair file, so
+ *  `KEEPER_SECRET_KEY` (the same JSON array, inline) wins when it is set. */
+function loadKeeper(): Keypair {
+	const inline = process.env.KEEPER_SECRET_KEY;
+	if (inline) return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(inline) as number[]));
+	return loadKeypair(process.env.KEEPER_KEYPAIR ?? "~/.config/solana/id.json");
+}
+
 export function loadConfig(): KeeperConfig {
 	const cluster = (process.env.SOLANA_CLUSTER ?? "devnet") as KeeperConfig["cluster"];
-	const keeperFile = process.env.KEEPER_KEYPAIR ?? "~/.config/solana/id.json";
 	return {
 		rpcUrl: process.env.SOLANA_RPC_URL ?? (cluster === "localnet" ? "http://127.0.0.1:8899" : "https://api.devnet.solana.com"),
 		cluster,
-		keeper: loadKeypair(keeperFile),
+		keeper: loadKeeper(),
 		hermesUrl: (process.env.PYTH_HERMES_URL ?? "https://hermes.pyth.network").replace(/\/$/, ""),
 		pythApiKey: required("PYTH_API_KEY"),
 		databaseUrl: process.env.DATABASE_URL || undefined,

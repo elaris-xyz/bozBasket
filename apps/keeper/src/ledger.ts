@@ -15,8 +15,13 @@ export type LedgerRow = {
 	legs: unknown | null; // LegFill[] for executed
 };
 
+/** Written once per keeper loop so the web app can tell "the guard deferred"
+ *  apart from "nothing is running". */
+export type Heartbeat = { ts: number; cluster: string; activePlans: number; duePlans: number; note: string };
+
 export interface Ledger {
 	record(row: LedgerRow): Promise<void>;
+	beat(h: Heartbeat): Promise<void>;
 	close(): Promise<void>;
 }
 
@@ -42,6 +47,14 @@ export class PgLedger implements Ledger {
 				created_at timestamptz NOT NULL DEFAULT now()
 			);
 			CREATE INDEX IF NOT EXISTS executions_plan_ts ON executions (plan, ts DESC);
+			CREATE TABLE IF NOT EXISTS keeper_heartbeat (
+				id           smallint PRIMARY KEY,
+				ts           bigint  NOT NULL,
+				cluster      text    NOT NULL,
+				active_plans int     NOT NULL DEFAULT 0,
+				due_plans    int     NOT NULL DEFAULT 0,
+				note         text
+			);
 		`);
 	}
 
@@ -62,6 +75,18 @@ export class PgLedger implements Ledger {
 		);
 	}
 
+	async beat(h: Heartbeat) {
+		try {
+			await this.pool.query(
+				`INSERT INTO keeper_heartbeat (id, ts, cluster, active_plans, due_plans, note) VALUES (1,$1,$2,$3,$4,$5)
+				 ON CONFLICT (id) DO UPDATE SET ts = EXCLUDED.ts, cluster = EXCLUDED.cluster, active_plans = EXCLUDED.active_plans, due_plans = EXCLUDED.due_plans, note = EXCLUDED.note`,
+				[h.ts, h.cluster, h.activePlans, h.duePlans, h.note],
+			);
+		} catch (err) {
+			console.warn(`ledger: heartbeat failed (${(err as Error).message})`);
+		}
+	}
+
 	async close() {
 		await this.pool.end();
 	}
@@ -71,6 +96,9 @@ export class PgLedger implements Ledger {
 export class LogLedger implements Ledger {
 	async record(r: LedgerRow) {
 		console.log(`[ledger] ${r.kind} plan=${r.plan} reason=${r.reason} ${r.detail ?? ""} ${r.signature ?? ""}`);
+	}
+	async beat(h: Heartbeat) {
+		console.log(`[ledger] heartbeat ${new Date(h.ts * 1000).toISOString()} ${h.activePlans} active, ${h.duePlans} due`);
 	}
 	async close() {}
 }

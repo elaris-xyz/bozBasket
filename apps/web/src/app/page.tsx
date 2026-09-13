@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useDemoWallet } from "@/lib/wallet";
 import { usePlans } from "@/lib/usePlans";
 import { PlanCard } from "@/components/PlanCard";
+import { KeeperStatus } from "@/components/KeeperStatus";
+import { DEMO_PLAN } from "@/lib/solana";
 
 export default function Home() {
 	const w = useDemoWallet();
@@ -30,9 +32,15 @@ export default function Home() {
 							{w.busy ?? "Try with a demo wallet"}
 						</button>
 					)}
+					<Link className="btn-ghost" href={`/plan/${DEMO_PLAN}`}>
+						Watch a live plan
+					</Link>
 					<a className="btn-ghost" href="https://github.com/elaris-xyz/bozBasket" target="_blank" rel="noreferrer">
 						How it works
 					</a>
+				</div>
+				<div className="mt-4">
+					<KeeperStatus compact />
 				</div>
 			</section>
 

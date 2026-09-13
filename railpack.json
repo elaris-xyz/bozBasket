@@ -1,0 +1,9 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "node",
+  "packages": { "node": "20" },
+  "steps": {
+    "install": { "commands": ["corepack enable", "pnpm install --frozen-lockfile"] }
+  },
+  "deploy": { "startCommand": "pnpm --filter keeper start" }
+}
