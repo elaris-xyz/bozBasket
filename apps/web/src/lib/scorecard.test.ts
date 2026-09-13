@@ -138,3 +138,27 @@ test("scaledPrice is exact for Pyth integer prices", () => {
 	assert.equal(scaledPrice("12345", 0), 12345);
 	assert.equal(scaledPrice("5", 2), 500);
 });
+
+test("a period opened by a row from before snapshots existed scores from its first stale snapshot", () => {
+	// The opener came from an older keeper and has no guard snapshot; a later
+	// stale retry in the same period has one, quoting the same frozen price.
+	const s = buildScorecard([deferred(100, STALE, []), deferred(200, STALE, [guardLeg(TSLA, 100, 50)]), executed(500, [fill("TSLAmint", 50, 95)])], MINTS);
+	near(s.staleSavedUsdc, 2.5);
+	assert.equal(s.heldBackBuys, 1);
+});
+
+test("a stale snapshot never crosses into the next period", () => {
+	// Period two opens without a snapshot and has no later one, so it scores
+	// zero rather than borrowing period one's price.
+	const s = buildScorecard(
+		[deferred(100, STALE, [guardLeg(TSLA, 100, 50)]), executed(200, [fill("TSLAmint", 50, 95)]), deferred(300, STALE, []), executed(400, [fill("TSLAmint", 50, 80)])],
+		MINTS,
+	);
+	near(s.staleSavedUsdc, 2.5);
+});
+
+test("a forced stale opener is excluded even when a later snapshot exists", () => {
+	const s = buildScorecard([deferred(100, STALE, [], { forced: true }), deferred(200, STALE, [guardLeg(TSLA, 100, 50)]), executed(500, [fill("TSLAmint", 50, 95)])], MINTS);
+	near(s.staleSavedUsdc, 0);
+	assert.equal(s.heldBackBuys, 0);
+});

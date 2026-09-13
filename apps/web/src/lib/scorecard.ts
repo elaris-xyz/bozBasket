@@ -75,6 +75,8 @@ export function scaledPrice(price: string | number, exponent: number): number {
 
 const normFeed = (feedId: string) => feedId.replace(/^0x/i, "").toLowerCase();
 
+const hasSnapshot = (r: HistoryRow) => Array.isArray(r.legs) && (r.legs as unknown[]).some(isGuardLeg);
+
 /** The stale-price outcome of one held-back buy.
  *
  *  Legs are matched to the fill that closed the period by **mint**, never by
@@ -114,6 +116,12 @@ export function buildScorecard(rows: HistoryRow[], mintByFeed: Record<string, st
 	// The first deferral of the open period, forced or not. A period opened by
 	// a demo control is not credited, even if a later retry was organic.
 	let opener: HistoryRow | null = null;
+	// The earliest organic stale deferral in the period that carries a guard
+	// snapshot. Rows written before the keeper stored snapshots have none, and
+	// a period opened by one would otherwise always score zero. While a feed is
+	// stale its price does not move, so a later snapshot in the same period
+	// quotes the same frozen price the opener saw. It never crosses periods.
+	let staleSnapshot: HistoryRow | null = null;
 
 	for (const r of ascending) {
 		if (r.kind === "deferred") {
@@ -127,10 +135,15 @@ export function buildScorecard(rows: HistoryRow[], mintByFeed: Record<string, st
 					if (r.reason === REASON.DIVERGENCE) card.avoidedUsdc += r.avoidedUsdc ?? 0;
 				}
 			}
+			if (!staleSnapshot && !r.forced && r.reason === REASON.REFERENCE_STALE && hasSnapshot(r)) staleSnapshot = r;
 		} else if (r.kind === "executed") {
 			card.executions++;
-			if (opener && !opener.forced && opener.reason === REASON.REFERENCE_STALE) card.staleSavedUsdc += staleOutcome(opener, r, mints);
+			if (opener && !opener.forced && opener.reason === REASON.REFERENCE_STALE) {
+				const source = hasSnapshot(opener) ? opener : staleSnapshot;
+				if (source) card.staleSavedUsdc += staleOutcome(source, r, mints);
+			}
 			opener = null;
+			staleSnapshot = null;
 		}
 	}
 	return card;
