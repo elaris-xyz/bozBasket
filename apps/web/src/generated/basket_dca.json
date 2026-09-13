@@ -1,0 +1,1300 @@
+{
+  "address": "4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR",
+  "metadata": {
+    "name": "basket_dca",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "bozBasket - session-aware DCA into baskets of tokenized US stocks"
+  },
+  "instructions": [
+    {
+      "name": "create_plan",
+      "docs": [
+        "Creates a plan and its USDC vault. Weights must sum to 10_000.",
+        "`start_ts` of 0 means \"as soon as the keeper runs\"."
+      ],
+      "discriminator": [
+        77,
+        43,
+        141,
+        254,
+        212,
+        118,
+        41,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "plan",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "arg",
+                "path": "plan_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "plan"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "plan_id",
+          "type": "u16"
+        },
+        {
+          "name": "amount_per_period",
+          "type": "u64"
+        },
+        {
+          "name": "period_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "start_ts",
+          "type": "i64"
+        },
+        {
+          "name": "end_ts",
+          "type": "i64"
+        },
+        {
+          "name": "legs",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "LegInput"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "docs": [
+        "Moves USDC from the owner into the plan vault."
+      ],
+      "discriminator": [
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "plan"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "plan"
+          ]
+        },
+        {
+          "name": "owner_usdc",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "plan"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "execute_basket",
+      "docs": [
+        "Keeper-only. Checks the guard for every leg and either fills the whole",
+        "basket atomically or records a deferral with a reason code. See",
+        "`execute.rs`; remaining accounts are 6 per leg in leg order."
+      ],
+      "discriminator": [
+        41,
+        166,
+        15,
+        16,
+        73,
+        118,
+        95,
+        138
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "plan"
+          ]
+        },
+        {
+          "name": "keeper",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "fill_program",
+          "address": "A6pvN8KEYn5EXcgsRbzZUqBNjA5hFqFn6Ks2Li7SPMxS",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_config",
+      "docs": [
+        "One-time global parameters. The signer becomes admin."
+      ],
+      "discriminator": [
+        23,
+        235,
+        115,
+        232,
+        168,
+        96,
+        1,
+        231
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "ConfigParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "nudge_plan",
+      "docs": [
+        "Admin-only demo control: make a plan due at `ts` (0 = now)."
+      ],
+      "discriminator": [
+        50,
+        234,
+        95,
+        55,
+        200,
+        143,
+        219,
+        202
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "ts",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "set_paused",
+      "docs": [
+        "Owner toggles between Active and Paused. Ended plans stay ended."
+      ],
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "plan"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "update_config",
+      "docs": [
+        "Admin can retune thresholds (demo controls use this too)."
+      ],
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "ConfigParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "docs": [
+        "Pulls USDC out of the vault. Non-custodial: only the owner can, at any",
+        "time. If less than one period remains, the plan pauses itself so the",
+        "keeper does not burn a deferral on INSUFFICIENT_BALANCE."
+      ],
+      "discriminator": [
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "relations": [
+            "plan"
+          ]
+        },
+        {
+          "name": "owner_usdc",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "plan"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Plan",
+      "discriminator": [
+        161,
+        231,
+        251,
+        119,
+        2,
+        12,
+        162,
+        2
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ConfigInitialized",
+      "discriminator": [
+        181,
+        49,
+        200,
+        156,
+        19,
+        167,
+        178,
+        91
+      ]
+    },
+    {
+      "name": "Deferred",
+      "discriminator": [
+        30,
+        90,
+        217,
+        202,
+        191,
+        30,
+        219,
+        96
+      ]
+    },
+    {
+      "name": "Deposited",
+      "discriminator": [
+        111,
+        141,
+        26,
+        45,
+        161,
+        35,
+        100,
+        57
+      ]
+    },
+    {
+      "name": "Executed",
+      "discriminator": [
+        8,
+        232,
+        139,
+        132,
+        197,
+        45,
+        29,
+        164
+      ]
+    },
+    {
+      "name": "PlanCreated",
+      "discriminator": [
+        215,
+        11,
+        135,
+        121,
+        208,
+        119,
+        149,
+        149
+      ]
+    },
+    {
+      "name": "PlanEnded",
+      "discriminator": [
+        109,
+        136,
+        86,
+        232,
+        168,
+        90,
+        131,
+        2
+      ]
+    },
+    {
+      "name": "StatusChanged",
+      "discriminator": [
+        146,
+        235,
+        222,
+        125,
+        145,
+        246,
+        34,
+        240
+      ]
+    },
+    {
+      "name": "Withdrawn",
+      "discriminator": [
+        20,
+        89,
+        223,
+        198,
+        194,
+        124,
+        219,
+        13
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BadLegCount",
+      "msg": "A plan needs between 1 and 8 legs"
+    },
+    {
+      "code": 6001,
+      "name": "WeightsDoNotSum",
+      "msg": "Leg weights must sum to 10000 basis points"
+    },
+    {
+      "code": 6002,
+      "name": "ZeroWeight",
+      "msg": "A leg weight must be greater than zero"
+    },
+    {
+      "code": 6003,
+      "name": "DuplicateMint",
+      "msg": "The same mint appears twice in the basket"
+    },
+    {
+      "code": 6004,
+      "name": "ZeroAmount",
+      "msg": "Amount per period must be greater than zero"
+    },
+    {
+      "code": 6005,
+      "name": "PeriodTooShort",
+      "msg": "Period is shorter than the minimum"
+    },
+    {
+      "code": 6006,
+      "name": "EndBeforeStart",
+      "msg": "End timestamp is before the first execution"
+    },
+    {
+      "code": 6007,
+      "name": "ZeroTransfer",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6008,
+      "name": "InsufficientVault",
+      "msg": "Vault balance is too low for this withdrawal"
+    },
+    {
+      "code": 6009,
+      "name": "PlanEnded",
+      "msg": "Plan has ended and cannot be resumed"
+    },
+    {
+      "code": 6010,
+      "name": "NoStatusChange",
+      "msg": "Plan is already in that state"
+    },
+    {
+      "code": 6011,
+      "name": "NotOwner",
+      "msg": "Signer is not the plan owner"
+    },
+    {
+      "code": 6012,
+      "name": "NotAdmin",
+      "msg": "Signer is not the config admin"
+    },
+    {
+      "code": 6013,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6014,
+      "name": "NotKeeper",
+      "msg": "Signer is not the configured keeper"
+    },
+    {
+      "code": 6015,
+      "name": "PlanNotActive",
+      "msg": "Plan is not active"
+    },
+    {
+      "code": 6016,
+      "name": "NotDue",
+      "msg": "Plan is not due yet"
+    },
+    {
+      "code": 6017,
+      "name": "WrongLegAccountCount",
+      "msg": "Remaining accounts must be 6 per leg, in leg order"
+    },
+    {
+      "code": 6018,
+      "name": "BadReference",
+      "msg": "Reference price account is not a valid PriceUpdateV2 for this leg"
+    },
+    {
+      "code": 6019,
+      "name": "BadVenue",
+      "msg": "Venue account does not match this leg or the config"
+    },
+    {
+      "code": 6020,
+      "name": "MismatchedExponent",
+      "msg": "Venue and reference prices use different exponents"
+    }
+  ],
+  "types": [
+    {
+      "name": "Config",
+      "docs": [
+        "Global parameters, admin-only. PDA: [\"config\"]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "keeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "docs": [
+              "The only mint plans may be funded with."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "max_staleness_secs",
+            "docs": [
+              "Max age of a reference price during session, seconds (e.g. 60)."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "max_conf_bps",
+            "docs": [
+              "Confidence / price ceiling, basis points (e.g. 50)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "max_divergence_bps",
+            "docs": [
+              "|venue - reference| / reference ceiling, basis points (e.g. 150)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "min_liquidity_usdc",
+            "docs": [
+              "Minimum venue depth per leg, USDC base units."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "fill_program",
+            "docs": [
+              "Where fills happen: mock_market on devnet, Jupiter on mainnet."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "reference_program",
+            "docs": [
+              "Who may own reference price accounts: the Pyth receiver on mainnet,",
+              "mock_market on devnet. Accounts use the Pyth `PriceUpdateV2` layout."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ConfigInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "keeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ConfigParams",
+      "docs": [
+        "Arguments to `init_config`."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "keeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_staleness_secs",
+            "type": "u32"
+          },
+          {
+            "name": "max_conf_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_divergence_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_liquidity_usdc",
+            "type": "u64"
+          },
+          {
+            "name": "fill_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "reference_program",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Deferred",
+      "docs": [
+        "The guard said no. `detail` depends on the reason: publish age in seconds",
+        "for REFERENCE_STALE, basis points for CONFIDENCE_TOO_WIDE and DIVERGENCE,",
+        "remaining USDC for LOW_LIQUIDITY and INSUFFICIENT_BALANCE."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          },
+          {
+            "name": "reason",
+            "type": "u8"
+          },
+          {
+            "name": "leg_index",
+            "type": "u8"
+          },
+          {
+            "name": "detail",
+            "type": "i64"
+          },
+          {
+            "name": "next_execution",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Deposited",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "vault_balance",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Executed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          },
+          {
+            "name": "usdc_in",
+            "type": "u64"
+          },
+          {
+            "name": "vault_balance",
+            "type": "u64"
+          },
+          {
+            "name": "next_execution",
+            "type": "i64"
+          },
+          {
+            "name": "legs",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "LegFill"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Leg",
+      "docs": [
+        "One stock in a basket."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "docs": [
+              "Stock token mint (mock on devnet, xStocks on mainnet)."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "weight_bps",
+            "docs": [
+              "Share of `amount_per_period`, in basis points. Sums to 10_000 across legs."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "pyth_feed_id",
+            "docs": [
+              "Pyth price feed id, identical on devnet and mainnet."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "units_bought",
+            "docs": [
+              "Cumulative units received, for average cost."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LegFill",
+      "docs": [
+        "One leg of a completed execution."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_in",
+            "type": "u64"
+          },
+          {
+            "name": "units",
+            "type": "u64"
+          },
+          {
+            "name": "reference_price",
+            "type": "i64"
+          },
+          {
+            "name": "venue_price",
+            "type": "i64"
+          },
+          {
+            "name": "exponent",
+            "type": "i32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LegInput",
+      "docs": [
+        "What the user passes to `create_plan` for each leg."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "weight_bps",
+            "type": "u16"
+          },
+          {
+            "name": "pyth_feed_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Plan",
+      "docs": [
+        "One recurring basket order. PDA: [\"plan\", owner, plan_id]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "amount_per_period",
+            "docs": [
+              "USDC base units (6 decimals) spent per period."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "period_seconds",
+            "docs": [
+              "604_800 for weekly; the demo also allows daily."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "next_execution",
+            "docs": [
+              "Unix timestamp of the next allowed execution."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "docs": [
+              "0 = open-ended."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "legs",
+            "docs": [
+              "Fixed array; entries past `leg_count` are zeroed."
+            ],
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Leg"
+                  }
+                },
+                8
+              ]
+            }
+          },
+          {
+            "name": "leg_count",
+            "type": "u8"
+          },
+          {
+            "name": "executions",
+            "type": "u32"
+          },
+          {
+            "name": "deferrals",
+            "type": "u32"
+          },
+          {
+            "name": "last_reason",
+            "docs": [
+              "`ReasonCode` of the last attempt."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "total_invested",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "docs": [
+              "`PlanStatus`."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "vault",
+            "docs": [
+              "USDC vault token account, authority = this plan PDA."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlanCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "plan_id",
+            "type": "u16"
+          },
+          {
+            "name": "amount_per_period",
+            "type": "u64"
+          },
+          {
+            "name": "period_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "next_execution",
+            "type": "i64"
+          },
+          {
+            "name": "leg_count",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlanEnded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StatusChanged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Withdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "vault_balance",
+            "type": "u64"
+          },
+          {
+            "name": "paused",
+            "docs": [
+              "True when the withdrawal left less than one period and paused the plan."
+            ],
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ]
+}

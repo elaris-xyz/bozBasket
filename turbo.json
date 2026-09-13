@@ -11,14 +11,40 @@
     "BASKET_DCA_PROGRAM_ID",
     "NEXT_PUBLIC_SOLANA_CLUSTER",
     "NEXT_PUBLIC_RPC_URL",
-    "NEXT_PUBLIC_BASKET_DCA_PROGRAM_ID"
+    "NEXT_PUBLIC_BASKET_DCA_PROGRAM_ID",
+    "KEEPER_SECRET_KEY",
+    "REFERENCE_SOURCE",
+    "SKIP_STALE_OLDER_THAN_SECS",
+    "OFF_HOURS_POLICY",
+    "KEEPER_POLL_SECONDS",
+    "CU_PRICE_MICROLAMPORTS",
+    "DEPLOYMENT_FILE"
   ],
   "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": [".next/**", "!.next/cache/**", "dist/**"] },
-    "dev": { "cache": false, "persistent": true },
-    "start": { "cache": false, "persistent": true },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
     "lint": {},
-    "type-check": { "dependsOn": ["^build"] },
+    "type-check": {
+      "dependsOn": [
+        "^build"
+      ]
+    },
     "test": {}
   }
 }
