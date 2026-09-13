@@ -3,7 +3,7 @@
   "provider": "node",
   "packages": { "node": "20" },
   "steps": {
-    "install": { "commands": ["corepack enable", "pnpm install --frozen-lockfile"] }
+    "install": { "commands": ["corepack enable", "pnpm install --frozen-lockfile --prod=false"] }
   },
   "deploy": { "startCommand": "pnpm --filter keeper start" }
 }
