@@ -1,0 +1,53 @@
+# The bozBasket keeper, running in the open.
+#
+# A hackathon judge should be able to see the thing that executes plans, not
+# just be told it exists. Every run here is a public log: which plans were
+# due, what the guard decided, and the transaction it sent.
+#
+# GitHub's cron is best-effort and can be several minutes late, so this is the
+# fallback for an always-on worker rather than the ideal. Run the keeper on a
+# real host for a live demo; see docs/SUBMISSION.md.
+
+name: keeper
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      plan:
+        description: "Execute only this plan address (optional)"
+        required: false
+
+concurrency:
+  group: keeper
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: One keeper pass
+        working-directory: apps/keeper
+        env:
+          KEEPER_SECRET_KEY: ${{ secrets.KEEPER_SECRET_KEY }}
+          PYTH_API_KEY: ${{ secrets.PYTH_API_KEY }}
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SOLANA_CLUSTER: devnet
+          OFF_HOURS_POLICY: guarded
+        run: pnpm exec tsx src/index.ts --once ${{ inputs.plan && format('--plan {0}', inputs.plan) || '' }}
