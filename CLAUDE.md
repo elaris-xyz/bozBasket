@@ -150,6 +150,11 @@ Copy selectively, do not fork the monorepo:
   `DATABASE_URL` is unset or the database does not answer, and never lets a
   ledger error block an execution. `.env.example` is the committed
   template. The user rotates the DB password before submission.
+- **Devnet RPC:** `api.devnet.solana.com` answers 429 (connection rate
+  limit) from the VPN exit IP, and one stuck `solana program deploy` makes it
+  worse. `.env` points `SOLANA_RPC_URL` at the Helius devnet endpoint reused
+  from bozPicks; pass `-u "$SOLANA_RPC_URL"` to every solana CLI call. Kill
+  orphaned `solana.exe` before retrying a deploy.
 - **Network: everything external goes through the user's VPN.** Nobody
   will use this from Iran. When Hermes, Jupiter, devnet RPC, npm, or
   GitHub time out or return 403, stop and tell the user to turn the VPN
