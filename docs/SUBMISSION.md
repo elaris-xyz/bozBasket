@@ -55,15 +55,23 @@ state that one click of "restore" puts back. Any future `anchor deploy` needs
 ## Keeper in production
 
 The keeper is a long-running process, so it does not belong on Vercel. It runs
-as a **scheduled GitHub Action** (`.github/workflows/keeper.yml`, every five
-minutes, secrets already set), which has the side benefit that every pass is a
+as a **scheduled GitHub Action** (`.github/workflows/keeper.yml`, scheduled every
+five minutes, secrets already set), which has the side benefit that every pass is a
 public log in the repository judges are reading. Trigger one by hand from the
 Actions tab.
 
-Five-minute granularity is the one weakness: after clicking "advance the
-clock" a judge waits a few minutes. An always-on worker polling every 60 s is
-better. `railpack.json` is the Railway config for it — root directory the
-repository, start command `pnpm --filter keeper start`, same four secrets.
+**Measured on 2026-09-13, GitHub does not honour that schedule.** Over about
+seven hours the `*/5` cron fired twice, three hours apart, and every other run
+was triggered by hand. No run failed. So on the Action alone a judge can wait
+hours for an execution, and the app will truthfully show the keeper as late.
+
+The fix is an always-on worker. `railpack.json` is ready for Railway: create a
+service from this repository, set `KEEPER_SECRET_KEY`, `PYTH_API_KEY`,
+`SOLANA_RPC_URL`, `DATABASE_URL`, `SOLANA_CLUSTER=devnet`,
+`OFF_HOURS_POLICY=guarded` and `KEEPER_POLL_SECONDS=60`, and deploy. Keep the
+Action as a public, occasional second keeper. Two keepers cannot double-buy:
+transactions that write the same plan account are serialized, and the second
+one fails the program's due-time check.
 
 Either way the app now says when the keeper last ran, in red when it is late,
 so "the guard deferred" can never be confused with "nothing is running".

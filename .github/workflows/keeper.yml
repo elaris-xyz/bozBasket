@@ -4,9 +4,10 @@
 # just be told it exists. Every run here is a public log: which plans were
 # due, what the guard decided, and the transaction it sent.
 #
-# GitHub's cron is best-effort and can be several minutes late, so this is the
-# fallback for an always-on worker rather than the ideal. Run the keeper on a
-# real host for a live demo; see docs/SUBMISSION.md.
+# GitHub's cron is best-effort. Measured on 2026-09-13 it fired this five-minute
+# schedule twice in seven hours, so this is a public, occasional second keeper,
+# not one a live demo can rely on. Run an always-on worker (railpack.json);
+# see docs/SUBMISSION.md.
 
 name: keeper
 
