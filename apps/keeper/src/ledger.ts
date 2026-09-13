@@ -12,7 +12,13 @@ export type LedgerRow = {
 	detail: string | null;
 	signature: string | null;
 	usdcIn: string | null; // base units as string
-	legs: unknown | null; // LegFill[] for executed
+	/** LegFill[] for an execution, the guard's per-leg snapshot for a deferral. */
+	legs: unknown | null;
+	/** True when a demo control caused this deferral rather than the market.
+	 *  Forced deferrals are never counted as savings. */
+	forced?: boolean;
+	/** USDC the deferral avoided overpaying, where that is computable. */
+	avoidedUsdc?: number | null;
 };
 
 /** Written once per keeper loop so the web app can tell "the guard deferred"
@@ -46,6 +52,8 @@ export class PgLedger implements Ledger {
 				legs       jsonb,
 				created_at timestamptz NOT NULL DEFAULT now()
 			);
+			ALTER TABLE executions ADD COLUMN IF NOT EXISTS forced boolean NOT NULL DEFAULT false;
+			ALTER TABLE executions ADD COLUMN IF NOT EXISTS avoided_usdc numeric;
 			CREATE INDEX IF NOT EXISTS executions_plan_ts ON executions (plan, ts DESC);
 			CREATE TABLE IF NOT EXISTS keeper_heartbeat (
 				id           smallint PRIMARY KEY,
@@ -68,10 +76,10 @@ export class PgLedger implements Ledger {
 
 	private async insert(r: LedgerRow) {
 		await this.pool.query(
-			`INSERT INTO executions (plan, ts, kind, reason, detail, signature, usdc_in, legs)
-			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+			`INSERT INTO executions (plan, ts, kind, reason, detail, signature, usdc_in, legs, forced, avoided_usdc)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 			 ON CONFLICT (signature) DO NOTHING`,
-			[r.plan, r.ts, r.kind, r.reason, r.detail, r.signature, r.usdcIn, r.legs === null ? null : JSON.stringify(r.legs)],
+			[r.plan, r.ts, r.kind, r.reason, r.detail, r.signature, r.usdcIn, r.legs === null ? null : JSON.stringify(r.legs), r.forced ?? false, r.avoidedUsdc ?? null],
 		);
 	}
 

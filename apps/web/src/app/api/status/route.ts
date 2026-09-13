@@ -8,7 +8,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** A keeper polling every 60 s is late after this long. */
-const STALE_AFTER_SECS = 240;
+/** When the keeper counts as late. The GitHub Actions schedule is nominally
+ *  every five minutes but routinely fires several minutes behind, so anything
+ *  tighter than about fifteen minutes reports a healthy keeper as down. An
+ *  always-on worker can set KEEPER_STALE_AFTER_SECS lower. */
+const STALE_AFTER_SECS = Number(process.env.KEEPER_STALE_AFTER_SECS ?? 900);
 
 let pool: Pool | null = null;
 function db(): Pool | null {

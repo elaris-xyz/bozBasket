@@ -10,6 +10,8 @@ import { StatusPill } from "@/components/StatusPill";
 import { PlanActions } from "@/components/PlanActions";
 import { Portfolio } from "@/components/Portfolio";
 import { History } from "@/components/History";
+import { GuardScorecard } from "@/components/GuardScorecard";
+import { useHistory } from "@/lib/useHistory";
 import { GuardPanel } from "@/components/GuardPanel";
 import { KeeperStatus } from "@/components/KeeperStatus";
 
@@ -19,6 +21,7 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 	const { plan, error, reload } = usePlan(address);
 	const prices = usePrices();
 	const [refreshKey, setRefreshKey] = useState(0);
+	const history = useHistory(address, refreshKey);
 	const onDone = () => {
 		reload();
 		setRefreshKey((k) => k + 1);
@@ -92,8 +95,9 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 
 			<div className="grid gap-5 lg:grid-cols-[1fr_320px]">
 				<div className="space-y-5">
+					<GuardScorecard scorecard={history.scorecard} />
 					<Portfolio plan={plan} prices={prices} />
-					<History plan={address} refreshKey={refreshKey} />
+					<History rows={history.rows} note={history.note} />
 				</div>
 				<div className="space-y-4">
 					<PlanActions plan={plan} onDone={onDone} />

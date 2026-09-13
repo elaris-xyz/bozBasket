@@ -209,6 +209,52 @@ describe("basket_dca: config, plan, vault", () => {
 		);
 	});
 
+	it("update_plan changes amount, cadence and end date but not the basket", async () => {
+		const before = await program.account.plan.fetch(plan);
+		await program.methods
+			.updatePlan(usdc(250), new anchor.BN(86_400), new anchor.BN(0))
+			.accountsPartial({ plan, owner: user.publicKey })
+			.signers([user])
+			.rpc();
+		const after = await program.account.plan.fetch(plan);
+		expect(after.amountPerPeriod.toNumber()).to.equal(250_000_000);
+		expect(after.periodSeconds.toNumber()).to.equal(86_400);
+		// The basket, the counters and the cost basis are untouched.
+		expect(after.legCount).to.equal(before.legCount);
+		expect(after.legs[0].weightBps).to.equal(before.legs[0].weightBps);
+		expect(after.legs[0].mint.equals(before.legs[0].mint)).to.be.true;
+		expect(after.totalInvested.toNumber()).to.equal(before.totalInvested.toNumber());
+		expect(after.executions).to.equal(before.executions);
+		expect(after.nextExecution.toNumber()).to.equal(before.nextExecution.toNumber());
+		// Put it back so the later assertions keep their arithmetic.
+		await program.methods
+			.updatePlan(usdc(100), week, new anchor.BN(0))
+			.accountsPartial({ plan, owner: user.publicKey })
+			.signers([user])
+			.rpc();
+	});
+
+	it("update_plan validates its inputs and the signer", async () => {
+		await expectAnchorError(
+			program.methods.updatePlan(usdc(0), week, new anchor.BN(0)).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc(),
+			"ZeroAmount",
+		);
+		await expectAnchorError(
+			program.methods.updatePlan(usdc(100), new anchor.BN(30), new anchor.BN(0)).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc(),
+			"PeriodTooShort",
+		);
+		await expectAnchorError(
+			program.methods.updatePlan(usdc(100), week, new anchor.BN(1_000_000_000)).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc(),
+			"EndBeforeStart",
+		);
+		const stranger = Keypair.generate();
+		await airdrop(provider, stranger.publicKey, 1);
+		await expectAnchorError(
+			program.methods.updatePlan(usdc(100), week, new anchor.BN(0)).accountsPartial({ plan, owner: stranger.publicKey }).signers([stranger]).rpc(),
+			"NotOwner",
+		);
+	});
+
 	it("set_paused resumes and refuses a no-op", async () => {
 		await program.methods.setPaused(false).accountsPartial({ plan, owner: user.publicKey }).signers([user]).rpc();
 		expect((await program.account.plan.fetch(plan)).status).to.equal(0);

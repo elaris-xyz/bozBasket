@@ -21,7 +21,8 @@
     "DEPLOYMENT_FILE",
     "DEMO_CONTROLS",
     "FAUCET_SECRET_KEY",
-    "NEXT_PUBLIC_DEMO_PLAN"
+    "NEXT_PUBLIC_DEMO_PLAN",
+    "KEEPER_STALE_AFTER_SECS"
   ],
   "tasks": {
     "build": {

@@ -471,6 +471,53 @@ export type BasketDca = {
       ]
     },
     {
+      "name": "updatePlan",
+      "docs": [
+        "Changes what a plan buys *with*, never what it buys. Amount, cadence",
+        "and end date are the knobs a recurring investor actually reaches for;",
+        "weights are deliberately immutable, because per-leg cost basis is",
+        "derived as weight x total_invested and that is only exact while the",
+        "split never moves. Changing a basket means starting a new plan."
+      ],
+      "discriminator": [
+        119,
+        112,
+        58,
+        60,
+        76,
+        205,
+        1,
+        100
+      ],
+      "accounts": [
+        {
+          "name": "plan",
+          "writable": true
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "plan"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "amountPerPeriod",
+          "type": "u64"
+        },
+        {
+          "name": "periodSeconds",
+          "type": "u64"
+        },
+        {
+          "name": "endTs",
+          "type": "i64"
+        }
+      ]
+    },
+    {
       "name": "withdraw",
       "docs": [
         "Pulls USDC out of the vault. Non-custodial: only the owner can, at any",
@@ -628,6 +675,19 @@ export type BasketDca = {
         90,
         131,
         2
+      ]
+    },
+    {
+      "name": "planUpdated",
+      "discriminator": [
+        49,
+        51,
+        198,
+        31,
+        170,
+        70,
+        253,
+        195
       ]
     },
     {
@@ -1254,6 +1314,30 @@ export type BasketDca = {
           },
           {
             "name": "ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "planUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "plan",
+            "type": "pubkey"
+          },
+          {
+            "name": "amountPerPeriod",
+            "type": "u64"
+          },
+          {
+            "name": "periodSeconds",
+            "type": "u64"
+          },
+          {
+            "name": "endTs",
             "type": "i64"
           }
         ]

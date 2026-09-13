@@ -79,3 +79,11 @@ pub struct PlanEnded {
 	pub plan: Pubkey,
 	pub ts: i64,
 }
+
+#[event]
+pub struct PlanUpdated {
+	pub plan: Pubkey,
+	pub amount_per_period: u64,
+	pub period_seconds: u64,
+	pub end_ts: i64,
+}

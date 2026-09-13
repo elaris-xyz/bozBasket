@@ -190,6 +190,27 @@ pub mod basket_dca {
 		Ok(())
 	}
 
+	/// Changes what a plan buys *with*, never what it buys. Amount, cadence
+	/// and end date are the knobs a recurring investor actually reaches for;
+	/// weights are deliberately immutable, because per-leg cost basis is
+	/// derived as weight x total_invested and that is only exact while the
+	/// split never moves. Changing a basket means starting a new plan.
+	pub fn update_plan(ctx: Context<UpdatePlan>, amount_per_period: u64, period_seconds: u64, end_ts: i64) -> Result<()> {
+		require!(amount_per_period > 0, BasketError::ZeroAmount);
+		require!(period_seconds >= MIN_PERIOD_SECONDS, BasketError::PeriodTooShort);
+		let now = Clock::get()?.unix_timestamp;
+		require!(end_ts == 0 || end_ts > now, BasketError::EndBeforeStart);
+
+		let plan_key = ctx.accounts.plan.key();
+		let plan = &mut **ctx.accounts.plan;
+		require!(plan.status != PlanStatus::Ended as u8, BasketError::PlanEnded);
+		plan.amount_per_period = amount_per_period;
+		plan.period_seconds = period_seconds;
+		plan.end_ts = end_ts;
+		emit!(PlanUpdated { plan: plan_key, amount_per_period, period_seconds, end_ts });
+		Ok(())
+	}
+
 	/// Owner toggles between Active and Paused. Ended plans stay ended.
 	pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
 		let plan = &mut ctx.accounts.plan;
@@ -291,6 +312,13 @@ pub struct Withdraw<'info> {
 	pub owner_usdc: Account<'info, TokenAccount>,
 	pub owner: Signer<'info>,
 	pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct UpdatePlan<'info> {
+	#[account(mut, has_one = owner @ BasketError::NotOwner)]
+	pub plan: Box<Account<'info, Plan>>,
+	pub owner: Signer<'info>,
 }
 
 #[derive(Accounts)]

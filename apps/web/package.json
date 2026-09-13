@@ -8,7 +8,8 @@
     "build": "node scripts/sync-generated.mjs && next build",
     "start": "next start -p 3200",
     "lint": "next lint",
-    "type-check": "node scripts/sync-generated.mjs && tsc --noEmit"
+    "type-check": "node scripts/sync-generated.mjs && tsc --noEmit",
+    "test": "tsx --test src/lib/scorecard.test.ts"
   },
   "dependencies": {
     "@bozbasket/shared": "workspace:*",

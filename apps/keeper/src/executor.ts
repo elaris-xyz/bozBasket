@@ -12,10 +12,23 @@ import type { Chain, LoadedPlan } from "./chain";
 import { configPda, feedHex, ownerStockAta } from "./chain";
 import type { Deployment, KeeperConfig } from "./config";
 import type { HermesClient, ParsedPrice } from "./hermes";
-import { checkLeg, legAmounts, REASON, secondsUntilOpen, sessionAt } from "@bozbasket/shared";
+import { checkLeg, DEFAULT_MARKET, DEFAULT_THRESHOLDS, legAmounts, REASON, secondsUntilOpen, sessionAt, type LegVerdict } from "@bozbasket/shared";
 import type { Ledger } from "./ledger";
 
 export const PYTH_RECEIVER = new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");
+
+/** What the user would have overpaid, versus the reference price, had this
+ *  leg filled at the venue's quote. Only divergence gives a number you can
+ *  defend: for thin liquidity the slippage is unknowable, and for a stale or
+ *  uncertain price the cost only becomes visible once the market reopens,
+ *  which the history API works out afterwards by pairing it with the next
+ *  execution. */
+function avoidedByDeferring(reason: number, leg: LegVerdict | undefined): number | null {
+	if (!leg || leg.venuePrice === null || reason !== REASON.DIVERGENCE) return null;
+	const overpay = leg.venuePrice - leg.referencePrice;
+	if (overpay <= 0) return null;
+	return (leg.legUsdc * overpay) / leg.referencePrice;
+}
 
 type EventLeg = { mint: PublicKey; usdcIn: anchor.BN; units: anchor.BN; referencePrice: anchor.BN; venuePrice: anchor.BN; exponent: number };
 
@@ -201,7 +214,28 @@ export class Executor {
 				if (ev.name === "deferred") {
 					const d = ev.data as { reason: number; legIndex: number; detail: anchor.BN };
 					const detail = `leg ${d.legIndex}: ${d.detail.toString()}`;
-					await this.ledger.record({ plan: plan.pubkey.toBase58(), ts: now, kind: "deferred", reason: d.reason, detail, signature: sig, usdcIn: null, legs: null });
+					const leg = verdicts[d.legIndex];
+					const m = marketAccounts[d.legIndex];
+					// A deferral caused by a demo control is not a saving, and
+					// counting it as one would be a lie. Only the market's own
+					// behaviour is credited.
+					const forced =
+						(d.reason === REASON.DIVERGENCE && BigInt(m?.priceOverride.toString() ?? "0") > 0n) ||
+						(d.reason === REASON.LOW_LIQUIDITY && Number(m?.liquidityUsdc.toString() ?? 0) < DEFAULT_MARKET.liquidityUsdc) ||
+						(d.reason === REASON.REFERENCE_STALE && config.maxStalenessSecs < DEFAULT_THRESHOLDS.maxStalenessSecs) ||
+						(d.reason === REASON.CONFIDENCE_TOO_WIDE && config.maxConfBps < DEFAULT_THRESHOLDS.maxConfBps);
+					await this.ledger.record({
+						plan: plan.pubkey.toBase58(),
+						ts: now,
+						kind: "deferred",
+						reason: d.reason,
+						detail,
+						signature: sig,
+						usdcIn: null,
+						legs: verdicts,
+						forced,
+						avoidedUsdc: forced ? null : avoidedByDeferring(d.reason, leg),
+					});
 					return { kind: "deferred", signature: sig, reason: d.reason, detail };
 				}
 			}

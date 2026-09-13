@@ -65,6 +65,10 @@ describe("mock_market: mint, reference, fill", () => {
 				rent: anchor.web3.SYSVAR_RENT_PUBKEY,
 			})
 			.rpc();
+		// Before any assertion, so one failing check cannot cascade into every
+		// later test that needs the buyer's stock account.
+		buyerStock = (await getOrCreateAssociatedTokenAccount(provider.connection, admin, stockMint, buyer.publicKey)).address;
+
 		const m = await program.account.market.fetch(market);
 		expect(m.symbol).to.equal(symbol);
 		expect(m.treasury.equals(treasury)).to.be.true;
@@ -75,7 +79,8 @@ describe("mock_market: mint, reference, fill", () => {
 
 		const r = await program.account.priceUpdateV2.fetch(reference);
 		expect(Buffer.from(r.priceMessage.feedId).toString("hex")).to.equal(FEEDS.AAPL);
-		expect(r.priceMessage.exponent).to.equal(-8);
+		// The placeholder until the first post_reference; US equity feeds use -5.
+		expect(r.priceMessage.exponent).to.equal(-5);
 		expect(r.priceMessage.publishTime.toNumber()).to.equal(0);
 
 		// Raw layout: 8-byte discriminator, then write_authority at offset 8.
@@ -83,8 +88,6 @@ describe("mock_market: mint, reference, fill", () => {
 		expect(info!.data.length).to.equal(134);
 		expect(Buffer.from(info!.data.subarray(0, 8))).to.deep.equal(Buffer.from([34, 241, 35, 99, 157, 126, 244, 205]));
 		expect(new PublicKey(info!.data.subarray(8, 40)).equals(admin.publicKey)).to.be.true;
-
-		buyerStock = (await getOrCreateAssociatedTokenAccount(provider.connection, admin, stockMint, buyer.publicKey)).address;
 	});
 
 	it("init_market_accounts cannot run twice", async () => {
