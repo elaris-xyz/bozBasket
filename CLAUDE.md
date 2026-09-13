@@ -276,6 +276,25 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   module; `target/` does not exist on a fresh checkout.
 - The faucet signs with `deploy/faucet.keypair.json` (mock USDC mint
   authority + 2 SOL), never the admin key.
+- **Deploy with a resumable buffer:** `solana program deploy <so> --program-id
+  <keypair> --upgrade-authority deploy/upgrade-authority.keypair.json --buffer
+  deploy/deploy-buffer.keypair.json --use-rpc --max-sign-attempts 1000`.
+  Without `--buffer`, a network failure mid-write strands a buffer you cannot
+  resume (one held 1.96 SOL on 2026-09-13 and had to be closed with
+  `solana program close <buffer> --authority deploy/upgrade-authority.keypair.json`).
+  With it, rerunning the same command resumes the write.
+- **Never push web code that calls an instruction before it is on devnet.**
+  Vercel deploys on push, so the button would fail for every visitor until
+  the program caught up.
+- `update_plan` (2026-09-13) changes amount, cadence and end date. Weights are
+  immutable by design: per-leg cost basis is weight x total invested.
+- The guard scorecard lives in `apps/web/src/lib/scorecard.ts` and is unit
+  tested (`pnpm --filter web test`). Its unit is the *held-back buy*: one per
+  period between executions, so hourly retries are never multiplied. Stale
+  legs pair with the next fill by mint and compare reference to reference, so
+  `update_plan` and the venue spread cannot distort it; losses are shown too.
+  Ledger columns `forced` and `avoided_usdc` back it. The keeper migrates
+  them on start; they were also applied to Neon by hand before the push.
 
 ## Conventions
 
