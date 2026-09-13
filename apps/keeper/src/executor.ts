@@ -84,9 +84,9 @@ export class Executor {
 
 		// Stale off-hours prices are exactly the scenario the demo must show
 		// on chain, so a failing preview is submitted anyway: the program
-		// records the deferral with its reason. Only a wildly stale update
-		// (older than a day) is not worth the fee.
-		if (preview && preview.reason === REASON.REFERENCE_STALE && preview.ageSecs > 86_400) {
+		// records the deferral with its reason. A weekend reference is two
+		// days old, so the "not worth a fee" cutoff defaults to a week.
+		if (preview && preview.reason === REASON.REFERENCE_STALE && preview.ageSecs > this.cfg.skipStaleOlderThanSecs) {
 			const detail = `reference ${Math.round(preview.ageSecs / 3600)} h old; not submitting`;
 			await this.ledger.record({ plan: plan.pubkey.toBase58(), ts: now, kind: "skipped", reason: REASON.REFERENCE_STALE, detail, signature: null, usdcIn: null, legs: null });
 			return { kind: "skipped", reason: REASON.REFERENCE_STALE, detail };

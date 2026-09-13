@@ -16,6 +16,8 @@ export type KeeperConfig = {
 	/** Path to deploy/<cluster>.json written by setup-devnet. */
 	deploymentFile: string;
 	computeUnitPriceMicroLamports: number;
+	/** Do not submit at all when the reference is older than this. */
+	skipStaleOlderThanSecs: number;
 };
 
 function required(name: string): string {
@@ -45,6 +47,7 @@ export function loadConfig(): KeeperConfig {
 		pollSeconds: Number(process.env.KEEPER_POLL_SECONDS ?? 60),
 		deploymentFile: process.env.DEPLOYMENT_FILE ?? path.resolve(__dirname, `../../../deploy/${cluster}.json`),
 		computeUnitPriceMicroLamports: Number(process.env.CU_PRICE_MICROLAMPORTS ?? 50_000),
+		skipStaleOlderThanSecs: Number(process.env.SKIP_STALE_OLDER_THAN_SECS ?? 7 * 86_400),
 	};
 }
 
