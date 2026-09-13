@@ -5,10 +5,12 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import basketIdl from "../../../target/idl/basket_dca.json";
-import marketIdl from "../../../target/idl/mock_market.json";
-import type { BasketDca } from "../../../target/types/basket_dca";
-import type { MockMarket } from "../../../target/types/mock_market";
+// idl/ is committed; target/ is not, so a fresh checkout (CI, a worker host)
+// still has the program interface. Refresh it with tools/sync-idl.mjs.
+import basketIdl from "../../../idl/basket_dca.json";
+import marketIdl from "../../../idl/mock_market.json";
+import type { BasketDca } from "../../../idl/basket_dca";
+import type { MockMarket } from "../../../idl/mock_market";
 
 export type Chain = {
 	connection: Connection;

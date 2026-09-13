@@ -5,5 +5,5 @@
     "types": ["node"],
     "lib": ["es2022"]
   },
-  "include": ["src/**/*.ts", "scripts/**/*.ts", "../../target/types/*.ts", "../../packages/shared/src/**/*.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "../../idl/*.ts", "../../packages/shared/src/**/*.ts"]
 }
