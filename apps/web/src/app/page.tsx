@@ -5,6 +5,7 @@ import { useDemoWallet } from "@/lib/wallet";
 import { usePlans } from "@/lib/usePlans";
 import { PlanCard } from "@/components/PlanCard";
 import { KeeperStatus } from "@/components/KeeperStatus";
+import { LiveProof } from "@/components/LiveProof";
 import { DEMO_PLAN } from "@/lib/solana";
 
 export default function Home() {
@@ -12,17 +13,19 @@ export default function Home() {
 	const { plans, loading } = usePlans(w.publicKey);
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-6 sm:space-y-8">
 			<section className="card overflow-hidden bg-gradient-to-br from-ink-800 to-ink-700">
 				<p className="label">Tokenized stocks trade 24/7. A trustworthy price does not.</p>
-				<h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">
+				<h1 className="mt-2 text-2xl font-bold leading-tight sm:text-4xl">
 					Buy a basket of US stocks on a schedule, <span className="text-mint">only when the price can be trusted.</span>
 				</h1>
-				<p className="mt-3 max-w-2xl text-slate-300">
+				{/* Short on a phone, so the live proof below stays on the first screen. */}
+				<p className="mt-3 text-slate-300 sm:hidden">One basket, one atomic Solana transaction per period, and no buy when the reference price fails the guard.</p>
+				<p className="mt-3 hidden max-w-2xl text-slate-300 sm:block">
 					Define a basket once. A keeper buys every leg in one atomic Solana transaction each period, after checking the Pyth reference price for staleness and
 					confidence, the market session, and the venue for divergence and depth. If anything fails, the buy is deferred with a reason written on chain.
 				</p>
-				<div className="mt-5 flex flex-wrap gap-3">
+				<div className="mt-5 flex flex-wrap gap-2 sm:gap-3">
 					{w.publicKey ? (
 						<Link href="/build" className="btn-primary">
 							Build a basket
@@ -44,6 +47,8 @@ export default function Home() {
 				</div>
 			</section>
 
+			<LiveProof />
+
 			<section>
 				<div className="mb-3 flex items-center justify-between">
 					<h2 className="text-lg font-semibold">Your plans</h2>
@@ -56,7 +61,10 @@ export default function Home() {
 				{!w.publicKey ? (
 					<p className="card text-slate-400">Create a demo wallet to see your plans. It lives in this browser; the vault is a program account only your key controls.</p>
 				) : loading && plans.length === 0 ? (
-					<p className="card text-slate-400">Loading…</p>
+					<div className="grid gap-4 sm:grid-cols-2" aria-busy="true" aria-label="Loading your plans">
+						<div className="skeleton h-44" />
+						<div className="skeleton hidden h-44 sm:block" />
+					</div>
 				) : plans.length === 0 ? (
 					<p className="card text-slate-400">No plans yet. Build one: pick a basket, an amount and a cadence, and deposit devnet USDC.</p>
 				) : (

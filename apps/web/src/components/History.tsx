@@ -36,7 +36,11 @@ export function History({ rows, note }: { rows: HistoryRow[] | null; note: strin
 		<div className="card">
 			<h3 className="font-semibold">History</h3>
 			<p className="text-xs text-slate-500">Every keeper pass: executions, deferrals with their reason, and off-hours skips.</p>
-			{note && <p className="mt-2 text-xs text-amber">{note}</p>}
+			{note && (
+				<p className="mt-2 text-xs text-amber" title={note}>
+					{note === "ledger not configured" ? "History is not configured on this deployment." : "History is temporarily unavailable. The plan's on-chain state above is unaffected."}
+				</p>
+			)}
 			{rows === null ? (
 				<p className="mt-3 text-sm text-slate-400">Loading…</p>
 			) : rows.length === 0 ? (

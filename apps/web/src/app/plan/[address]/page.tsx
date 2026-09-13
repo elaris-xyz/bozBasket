@@ -27,8 +27,30 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 		setRefreshKey((k) => k + 1);
 	};
 
-	if (error) return <p className="card text-rose">Could not load plan {short(address)}: {error}</p>;
-	if (!plan) return <p className="card text-slate-400">Loading plan…</p>;
+	// A failed refresh keeps the loaded plan on screen. Only a plan that has
+	// never loaded shows the error, so one slow RPC call cannot blank the page.
+	if (error && !plan)
+		return (
+			<div className="card space-y-2">
+				<p className="font-semibold">This plan could not be loaded.</p>
+				<p className="text-sm text-slate-400">The address may be wrong, or the devnet RPC is slow. The page retries every 20 seconds.</p>
+				<p className="break-all font-mono text-xs text-slate-500">
+					{short(address, 8)} · {error}
+				</p>
+			</div>
+		);
+	if (!plan)
+		return (
+			<div className="space-y-5" aria-busy="true" aria-label="Loading plan">
+				<div className="skeleton h-8 w-56" />
+				<div className="grid gap-4 sm:grid-cols-4">
+					{[0, 1, 2, 3].map((i) => (
+						<div key={i} className="skeleton h-20" />
+					))}
+				</div>
+				<div className="skeleton h-40" />
+			</div>
+		);
 	const a = plan.account;
 
 	return (

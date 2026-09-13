@@ -28,7 +28,7 @@
 
 @layer components {
 	.card {
-		@apply rounded-card border bg-ink-800 p-5;
+		@apply rounded-card border bg-ink-800 p-4 sm:p-5;
 		border-color: var(--line);
 	}
 	.btn {
@@ -54,11 +54,49 @@
 	.pill {
 		@apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
 	}
+	/* Placeholder blocks while data loads; sized by the caller. */
+	.skeleton {
+		@apply animate-pulse rounded-lg bg-white/5;
+	}
 }
 
+@media (prefers-reduced-motion: reduce) {
+	.skeleton {
+		animation: none;
+	}
+}
+
+/* Weight sliders. The visible track is 8 px, but the element is 28 px tall and
+   the thumb 22 px, so a thumb on a phone can actually grab it. pan-y keeps a
+   vertical swipe scrolling the page instead of nudging a weight. */
 input[type="range"] {
-	@apply h-2 w-full cursor-pointer appearance-none rounded-full bg-ink-600;
+	@apply w-full cursor-pointer appearance-none bg-transparent;
+	height: 28px;
+	touch-action: pan-y;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+	@apply h-2 rounded-full bg-ink-600;
 }
 input[type="range"]::-webkit-slider-thumb {
-	@apply h-4 w-4 appearance-none rounded-full bg-white shadow;
+	@apply appearance-none rounded-full bg-white shadow;
+	width: 22px;
+	height: 22px;
+	margin-top: -7px; /* centres a 22 px thumb on the 8 px track */
+}
+input[type="range"]::-moz-range-track {
+	@apply h-2 rounded-full bg-ink-600;
+}
+input[type="range"]::-moz-range-thumb {
+	@apply rounded-full border-0 bg-white shadow;
+	width: 22px;
+	height: 22px;
+}
+input[type="range"]:focus-visible {
+	outline: none;
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+	box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35);
+}
+input[type="range"]:focus-visible::-moz-range-thumb {
+	box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35);
 }

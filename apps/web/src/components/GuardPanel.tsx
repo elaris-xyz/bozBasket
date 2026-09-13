@@ -7,6 +7,16 @@ import { fmtDuration, fmtUsd, reasonLabel } from "@/lib/format";
 const verdictClass = (reason: number) => (reason === 0 ? "bg-mint/15 text-mint" : "bg-amber/15 text-amber");
 const cell = (bad: boolean) => `text-right font-mono ${bad ? "text-amber" : "text-slate-300"}`;
 
+/** One labelled number in the stacked phone layout. */
+function Stat({ k, v, bad = false }: { k: string; v: string; bad?: boolean }) {
+	return (
+		<>
+			<dt className="text-slate-500">{k}</dt>
+			<dd className={`text-right font-mono ${bad ? "text-amber" : "text-slate-300"}`}>{v}</dd>
+		</>
+	);
+}
+
 /** The visual proof of the differentiator: every number `execute_basket`
  *  will check, and the verdict those numbers produce. */
 export function GuardPanel({ plan, refreshKey }: { plan: string; refreshKey: number }) {
@@ -26,11 +36,35 @@ export function GuardPanel({ plan, refreshKey }: { plan: string; refreshKey: num
 		return () => clearInterval(t);
 	}, [load, refreshKey]);
 
-	if (error) return <div className="card text-sm text-rose">Guard unavailable: {error}</div>;
-	if (!data) return <div className="card text-sm text-slate-400">Reading the guard…</div>;
+	// A failed refresh keeps the last good reading on screen; only a guard that
+	// has never loaded shows the error.
+	if (error && !data) {
+		return (
+			<div className="card text-sm">
+				<p className="font-semibold">The guard can&apos;t be read right now.</p>
+				<p className="mt-1 text-slate-400">Usually the devnet RPC or the price service is slow. This panel retries every 15 seconds.</p>
+				<p className="mt-1 break-all font-mono text-xs text-slate-500">{error}</p>
+			</div>
+		);
+	}
+	if (!data) {
+		return (
+			<div className="card" aria-busy="true" aria-label="Loading the guard">
+				<div className="skeleton h-5 w-40" />
+				<div className="skeleton mt-2 h-3 w-2/3" />
+				<div className="skeleton mt-4 h-28" />
+			</div>
+		);
+	}
 
 	const t = data.thresholds;
 	const blocked = data.verdict.reason !== 0;
+	const legBad = (l: GuardResponse["legs"][number]) => ({
+		conf: l.confBps > t.maxConfBps,
+		age: l.ageSecs > t.maxStalenessSecs,
+		div: (l.divergenceBps ?? 0) > t.maxDivergenceBps,
+		depth: l.liquidityUsdc !== null && (l.liquidityUsdc < l.legUsdc || l.liquidityUsdc < t.minLiquidityUsdc),
+	});
 
 	return (
 		<div className="card">
@@ -53,15 +87,41 @@ export function GuardPanel({ plan, refreshKey }: { plan: string; refreshKey: num
 					US session {data.session.open ? "open" : `closed · ${data.session.label}`}
 					{data.session.secondsUntilOpen !== null && ` · opens in ${fmtDuration(data.session.secondsUntilOpen)}`}
 				</span>
-				<span className="pill bg-white/5 text-slate-400">
-					reference: {data.referenceMode === "pyth" ? "Pyth receiver" : "mock, restamped by the keeper (devnet demo)"}
-				</span>
+				<span className="pill bg-white/5 text-slate-400">reference: {data.referenceMode === "pyth" ? "Pyth receiver" : "mock, restamped by the keeper (devnet demo)"}</span>
 				<span className="pill bg-white/5 text-slate-400">
 					vault {fmtUsd(data.vaultUsdc)} / {fmtUsd(data.amountPerPeriod)} per period
 				</span>
 			</div>
 
-			<div className="mt-3 overflow-x-auto">
+			{/* Phones: one card per leg. */}
+			<ul className="mt-3 space-y-2 sm:hidden">
+				{data.legs.map((l) => {
+					const bad = legBad(l);
+					return (
+						<li key={l.symbol} className="rounded-xl border border-white/10 bg-ink-900/60 p-3">
+							<div className="flex items-center justify-between gap-2">
+								<span className="font-semibold">
+									{l.ticker}
+									{l.overridden && <span className="ml-1 text-xs font-normal text-amber">forced</span>}
+								</span>
+								<span className={`pill ${verdictClass(l.reason)}`}>{l.reason === 0 ? "pass" : reasonLabel(l.reason)}</span>
+							</div>
+							<dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+								<Stat k="Reference" v={fmtUsd(l.referencePrice)} />
+								<Stat k="Venue" v={l.venuePrice === null ? "—" : fmtUsd(l.venuePrice)} />
+								<Stat k="Age" v={fmtDuration(l.ageSecs)} bad={bad.age} />
+								<Stat k="Confidence" v={`${l.confBps.toFixed(1)} bps`} bad={bad.conf} />
+								<Stat k="Divergence" v={l.divergenceBps === null ? "—" : `${l.divergenceBps} bps`} bad={bad.div} />
+								<Stat k="Depth" v={l.liquidityUsdc === null ? "—" : fmtUsd(l.liquidityUsdc, 0)} bad={bad.depth} />
+								<Stat k="Buys" v={fmtUsd(l.legUsdc)} />
+							</dl>
+						</li>
+					);
+				})}
+			</ul>
+
+			{/* Wider screens: the full table. */}
+			<div className="mt-3 hidden overflow-x-auto sm:block">
 				<table className="w-full text-sm">
 					<thead className="text-left text-xs uppercase text-slate-500">
 						<tr>
@@ -77,26 +137,27 @@ export function GuardPanel({ plan, refreshKey }: { plan: string; refreshKey: num
 						</tr>
 					</thead>
 					<tbody>
-						{data.legs.map((l) => (
-							<tr key={l.symbol} className="border-t border-white/5">
-								<td className="py-2 font-semibold">
-									{l.ticker}
-									{l.overridden && <span className="ml-1 text-xs font-normal text-amber">forced</span>}
-								</td>
-								<td className={cell(false)}>{fmtUsd(l.referencePrice)}</td>
-								<td className={cell(l.confBps > t.maxConfBps)}>{l.confBps.toFixed(1)} bps</td>
-								<td className={cell(l.ageSecs > t.maxStalenessSecs)}>{fmtDuration(l.ageSecs)}</td>
-								<td className={cell(false)}>{l.venuePrice === null ? "—" : fmtUsd(l.venuePrice)}</td>
-								<td className={cell((l.divergenceBps ?? 0) > t.maxDivergenceBps)}>{l.divergenceBps === null ? "—" : `${l.divergenceBps} bps`}</td>
-								<td className={cell(l.liquidityUsdc !== null && (l.liquidityUsdc < l.legUsdc || l.liquidityUsdc < t.minLiquidityUsdc))}>
-									{l.liquidityUsdc === null ? "—" : fmtUsd(l.liquidityUsdc, 0)}
-								</td>
-								<td className={cell(false)}>{fmtUsd(l.legUsdc)}</td>
-								<td className="text-right">
-									<span className={`pill ${verdictClass(l.reason)}`}>{l.reason === 0 ? "pass" : reasonLabel(l.reason)}</span>
-								</td>
-							</tr>
-						))}
+						{data.legs.map((l) => {
+							const bad = legBad(l);
+							return (
+								<tr key={l.symbol} className="border-t border-white/5">
+									<td className="py-2 font-semibold">
+										{l.ticker}
+										{l.overridden && <span className="ml-1 text-xs font-normal text-amber">forced</span>}
+									</td>
+									<td className={cell(false)}>{fmtUsd(l.referencePrice)}</td>
+									<td className={cell(bad.conf)}>{l.confBps.toFixed(1)} bps</td>
+									<td className={cell(bad.age)}>{fmtDuration(l.ageSecs)}</td>
+									<td className={cell(false)}>{l.venuePrice === null ? "—" : fmtUsd(l.venuePrice)}</td>
+									<td className={cell(bad.div)}>{l.divergenceBps === null ? "—" : `${l.divergenceBps} bps`}</td>
+									<td className={cell(bad.depth)}>{l.liquidityUsdc === null ? "—" : fmtUsd(l.liquidityUsdc, 0)}</td>
+									<td className={cell(false)}>{fmtUsd(l.legUsdc)}</td>
+									<td className="text-right">
+										<span className={`pill ${verdictClass(l.reason)}`}>{l.reason === 0 ? "pass" : reasonLabel(l.reason)}</span>
+									</td>
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
 			</div>
