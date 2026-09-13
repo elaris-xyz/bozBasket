@@ -102,6 +102,11 @@ export function LiveProof() {
 					);
 				})}
 			</ul>
+			{data.tightened && (
+				<p className="mt-3 rounded-lg bg-amber/10 px-3 py-2 text-xs text-amber">
+					The on-chain limits are tighter than normal right now because someone is using the demo controls. The verdict above reflects those limits, not the market alone.
+				</p>
+			)}
 			<p className="mt-3 text-xs text-slate-500">
 				The guard defers when a price is older than {thresholds.maxStalenessSecs} s or its confidence band is wider than {thresholds.maxConfBps} bps. Both limits are read from
 				the program&apos;s on-chain config.

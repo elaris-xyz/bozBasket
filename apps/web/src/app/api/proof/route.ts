@@ -6,7 +6,7 @@
 // market, whichever reference mode the devnet program happens to be in.
 
 import { NextResponse } from "next/server";
-import { checkLeg, DEMO_STOCKS, REASON, secondsUntilOpen, sessionAt } from "@bozbasket/shared";
+import { checkLeg, DEFAULT_THRESHOLDS, DEMO_STOCKS, REASON, secondsUntilOpen, sessionAt } from "@bozbasket/shared";
 import { CONFIG, readPrograms } from "@/lib/solana";
 import { hermesLatest } from "@/lib/server";
 
@@ -22,6 +22,8 @@ export type ProofResponse = {
 	feeds: ProofFeed[];
 	/** The first failing check across the feeds, as the guard would report it; 0 when all pass. */
 	verdict: number;
+	/** The on-chain limits are stricter than the defaults, which means a demo control is active. */
+	tightened: boolean;
 };
 
 const BODY_TTL_MS = 15_000;
@@ -63,6 +65,7 @@ export async function GET() {
 			thresholds: { maxStalenessSecs: t.maxStalenessSecs, maxConfBps: t.maxConfBps },
 			feeds,
 			verdict: feeds.find((f) => f.reason !== REASON.OK)?.reason ?? REASON.OK,
+			tightened: t.maxStalenessSecs < DEFAULT_THRESHOLDS.maxStalenessSecs || t.maxConfBps < DEFAULT_THRESHOLDS.maxConfBps,
 		};
 		bodyCache = { at: Date.now(), body };
 		return NextResponse.json(body);
