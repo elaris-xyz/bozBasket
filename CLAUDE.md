@@ -295,6 +295,13 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   `update_plan` and the venue spread cannot distort it; losses are shown too.
   Ledger columns `forced` and `avoided_usdc` back it. The keeper migrates
   them on start; they were also applied to Neon by hand before the push.
+- **Demo controls persist until Restore.** On 2026-09-13 a TSLA price override,
+  $10 depth and a 0 bps confidence ceiling were found still active, which
+  would have blocked every execution of the demo plan. Before relying on it,
+  run `pnpm --filter keeper exec tsx scripts/status.ts <plan>`, and restore
+  with `POST /api/demo {"action":"restore"}` on the live site.
+- Link previews: `app/opengraph-image.tsx` must stay free of custom fonts and
+  emoji, which `next/og` fetches while rendering.
 
 ## Conventions
 

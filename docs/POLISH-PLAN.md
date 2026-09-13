@@ -16,6 +16,16 @@ use?* Everything below is chosen against that, not against a feature list.
   from the plan page. The guard scorecard is unit tested and live, counting one
   blind fill per held-back buy. Deferred: the portfolio-over-time chart, which
   Day 2's done-when did not require.
+- **Day 3 — done in code; phone checks still to do.** The landing page shows
+  the live proof (US session, and each feed's price, confidence and age from
+  Pyth) on the first screen of a phone. Tables become cards below 640 px, the
+  sliders have a thumb-sized hit area, a failed refresh no longer blanks a
+  loaded plan, and link previews have an Open Graph card.
+- **Found on day 3: demo controls stay on until someone presses Restore.** A
+  TSLA price override, $10 depth and a 0 bps confidence ceiling were still
+  active on devnet, which would have stopped Monday's execution. Restored.
+  During judging this will happen again: an automatic restore after a few idle
+  minutes would stop one judge breaking the demo for the next.
 - **Watch the next US market open.** The demo plan's weekend-deferred buy fills
   then, producing the first organic stale-savings figure. That is the number
   the video should show.
