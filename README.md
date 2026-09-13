@@ -10,7 +10,7 @@ reference price, the market session and the venue. If anything is off, the buy
 is **deferred with a reason code written on chain** instead of filled blind.
 
 - Repository: https://github.com/elaris-xyz/bozBasket
-- Live demo: _add the deployed URL_
+- Live demo: https://boz-basket-web.vercel.app
 - Video: _add the video link_
 - Devnet program: [`4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR`](https://explorer.solana.com/address/4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR?cluster=devnet)
 
@@ -71,7 +71,7 @@ listed in [`docs/DEMO.md`](docs/DEMO.md).
    └─ execute_basket   (keeper signs; the program checks the guard)
    ▲                              │ CPI: take USDC, mint/receive stock tokens
    │  Executed / Deferred         ▼
- Keeper (Node, once a minute)   Fill venue
+ Keeper (scheduled Action)      Fill venue
    ├─ session calendar            ├─ devnet:  mock_market
    ├─ Pyth Hermes + receiver      └─ mainnet: Jupiter (not built)
    └─ Postgres ledger  ─────────────────────►  read by the web app
@@ -136,6 +136,13 @@ necessarily mocked. Being precise about which parts:
   publish time travels with the price.
 - The tokenized stocks already live here.
 
+## Is it running?
+
+The keeper is a scheduled GitHub Action, so every execution attempt is a
+public log in this repository's Actions tab, and the app itself reports when
+the keeper last ran. A plan that does not fill is either deferred with a
+reason or waiting for a keeper that is late, and the page says which.
+
 ## Quickstart
 
 Requires Node 20+, pnpm 9, Rust, the Solana CLI and Anchor 0.30.1.
@@ -168,6 +175,7 @@ Build and test the programs:
 
 ```bash
 anchor build
+node tools/sync-idl.mjs         # refresh the committed interface in idl/
 cargo test --workspace          # 9 pure-Rust tests
 tools/test-local.sh             # 30 Anchor tests on a local validator
 pnpm --filter keeper test       # 11 guard and calendar tests

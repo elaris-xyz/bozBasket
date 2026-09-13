@@ -19,7 +19,10 @@ https://hackathons.solana.com/hackathons/stocklana
 
 - [ ] **Register on the hackathon site** if not already done
 - [x] ~~Create the public GitHub repo and push~~ — https://github.com/elaris-xyz/bozBasket
-- [ ] **Deploy the web app to Vercel** (settings below) and put the URL in the README
+- [x] ~~Deploy the web app to Vercel~~ — https://boz-basket-web.vercel.app
+- [ ] **Add two env vars in Vercel** and redeploy: `DEMO_CONTROLS=1` and
+      `KEEPER_SECRET_KEY` (contents of `~/.config/solana/id.json`). Without
+      them the demo-controls page shows a banner and its buttons do nothing.
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
 - [ ] **Rotate the Neon database password** before the repo goes public
 - [ ] **Submit the form**: repo link, live demo link, video link
@@ -39,19 +42,31 @@ Environment variables:
 | `PYTH_HERMES_URL` | `https://hermes.pyth.network` |
 | `FAUCET_SECRET_KEY` | contents of `deploy/faucet.keypair.json` |
 | `DATABASE_URL` | Neon connection string, for the history panel |
-| `DEMO_CONTROLS` | leave **unset** in production unless you want the controls public |
+| `DEMO_CONTROLS` | `1`, so judges can break the guard and watch it react |
+| `KEEPER_SECRET_KEY` | contents of `~/.config/solana/id.json`, for the demo controls |
 
-`DEMO_CONTROLS=1` also needs `KEEPER_SECRET_KEY`, which is the programs'
-upgrade authority. Enable both only for a live demo you are driving, and
-unset them afterwards. The video does not need them: record locally.
+`KEEPER_SECRET_KEY` is the config admin, but since 2026-09-13 it is **not**
+the programs' upgrade authority: that moved to
+`deploy/upgrade-authority.keypair.json`, which never leaves the build machine.
+So the worst anyone can do through the demo controls is change devnet market
+state that one click of "restore" puts back. Any future `anchor deploy` needs
+`--upgrade-authority deploy/upgrade-authority.keypair.json`.
 
 ## Keeper in production
 
-The keeper is a long-running process, so it does not belong on Vercel. Either
-run it locally during judging, or deploy `apps/keeper` to a small worker host
-with `KEEPER_KEYPAIR`, `PYTH_API_KEY`, `SOLANA_RPC_URL` and `DATABASE_URL`.
-Without it, plans simply never execute and the app still shows everything
-else — which is the honest failure mode, and one a judge can verify.
+The keeper is a long-running process, so it does not belong on Vercel. It runs
+as a **scheduled GitHub Action** (`.github/workflows/keeper.yml`, every five
+minutes, secrets already set), which has the side benefit that every pass is a
+public log in the repository judges are reading. Trigger one by hand from the
+Actions tab.
+
+Five-minute granularity is the one weakness: after clicking "advance the
+clock" a judge waits a few minutes. An always-on worker polling every 60 s is
+better. `railpack.json` is the Railway config for it — root directory the
+repository, start command `pnpm --filter keeper start`, same four secrets.
+
+Either way the app now says when the keeper last ran, in red when it is late,
+so "the guard deferred" can never be confused with "nothing is running".
 
 ## Facts worth having at hand
 

@@ -260,6 +260,23 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   prediction with the program's recorded reason, restores everything, and
   writes `deploy/scenarios.json`. It is the regression test for the demo.
 
+## Deployed (day 7, 2026-09-13)
+
+- Web: https://boz-basket-web.vercel.app (Vercel project `boz-basket-web`,
+  team `eldorim`, root directory `apps/web`).
+- Keeper: GitHub Actions `.github/workflows/keeper.yml`, `*/5` cron, secrets
+  `KEEPER_SECRET_KEY`, `PYTH_API_KEY`, `SOLANA_RPC_URL`, `DATABASE_URL`
+  already set. `railpack.json` is the Railway alternative.
+- Repo: https://github.com/elaris-xyz/bozBasket (public).
+- **Upgrade authority is now `deploy/upgrade-authority.keypair.json`**, not the
+  keeper key. Every `anchor deploy` from here needs
+  `--upgrade-authority deploy/upgrade-authority.keypair.json`.
+- **`idl/` is committed and is what the keeper and the web build read.** Run
+  `node tools/sync-idl.mjs` after `anchor build` or CI breaks on a missing
+  module; `target/` does not exist on a fresh checkout.
+- The faucet signs with `deploy/faucet.keypair.json` (mock USDC mint
+  authority + 2 SOL), never the admin key.
+
 ## Conventions
 
 - Code, comments, commit messages, UI strings, docs: English. Chat with the
