@@ -9,6 +9,7 @@ atomic transaction every period. Before each buy the program checks the Pyth
 reference price, the market session and the venue. If anything is off, the buy
 is **deferred with a reason code written on chain** instead of filled blind.
 
+- Repository: https://github.com/elaris-xyz/bozBasket
 - Live demo: _add the deployed URL_
 - Video: _add the video link_
 - Devnet program: [`4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR`](https://explorer.solana.com/address/4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR?cluster=devnet)
@@ -140,7 +141,7 @@ necessarily mocked. Being precise about which parts:
 Requires Node 20+, pnpm 9, Rust, the Solana CLI and Anchor 0.30.1.
 
 ```bash
-git clone <this repo> && cd bozBasket
+git clone https://github.com/elaris-xyz/bozBasket.git && cd bozBasket
 pnpm install
 cp .env.example .env        # fill in PYTH_API_KEY and SOLANA_RPC_URL at least
 ```

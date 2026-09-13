@@ -18,11 +18,7 @@ https://hackathons.solana.com/hackathons/stocklana
 ## Needs you
 
 - [ ] **Register on the hackathon site** if not already done
-- [ ] **Create the public GitHub repo** and push:
-      ```bash
-      git remote add origin https://github.com/elaris-xyz/bozBasket.git
-      git push -u origin main
-      ```
+- [x] ~~Create the public GitHub repo and push~~ — https://github.com/elaris-xyz/bozBasket
 - [ ] **Deploy the web app to Vercel** (settings below) and put the URL in the README
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
 - [ ] **Rotate the Neon database password** before the repo goes public
