@@ -18,9 +18,13 @@ is **deferred with a reason code written on chain** instead of filled blind.
 
 ## The problem
 
-Tokenized stocks trade 24/7. The underlying market is open about 32 hours a
-week. The other 136 hours the reference price is stale *by design*, on-chain
-liquidity is thinner, and spreads widen.
+Tokenized stocks trade 24/7. The price they are measured against does not.
+Pyth publishes US equity prices well beyond the regular session, but from
+Friday 20:00 ET to Sunday 20:00 ET nothing is published and the last price
+just ages: two days in every seven, plus holidays, while the tokens keep
+trading on thinner on-chain liquidity. On this deployment, attempts at 19:00 ET
+on a Sunday read a TSLA price 169,215 seconds old; at 20:26 ET the same feed
+was fresh again and the basket filled.
 
 Existing recurring-buy tools fire on a timer. A Saturday 03:00 order fills at
 whatever the pool says, with no check that the price means anything. And
@@ -39,7 +43,7 @@ everything from the accounts in the transaction and decides for itself.
 |---|---|---|
 | Publish time | the reference is older than `max_staleness_secs` | `1 REFERENCE_STALE` |
 | Confidence | `conf / price` exceeds `max_conf_bps` | `2 CONFIDENCE_TOO_WIDE` |
-| Session | US equities are closed and the keeper holds off | `3 MARKET_CLOSED` |
+| Session | outside the regular session, if the keeper runs `strict` | `3 MARKET_CLOSED` |
 | Venue price | it differs from the reference by more than `max_divergence_bps` | `4 DIVERGENCE` |
 | Venue depth | it is below the leg size or `min_liquidity_usdc` | `5 LOW_LIQUIDITY` |
 | Vault | it cannot cover one period | `6 INSUFFICIENT_BALANCE` |
@@ -51,12 +55,32 @@ If every check passes, all legs fill by CPI in that same transaction, or none
 of them do.
 
 Codes 1, 2, 4, 5 and 6 are enforced by the program from data in the
-transaction. Code 3 is the keeper's: it simply does not submit outside the
-session, because paying a fee to record "the market is closed" — something any
-calendar knows — would be theatre.
+transaction. Code 3 is the keeper's, and only under its `strict` policy, which
+does not submit outside the regular session. The deployment runs `guarded`: it
+submits whenever a plan is due and lets the program judge the price itself,
+because the calendar is the wrong test. Outside the regular session Pyth still
+publishes: at 02:38 ET on a Monday the three feeds were seconds old, with
+confidence under 1 bp. On a weekend the price is stale, and the program defers
+with code 1, on chain.
 
 Every code has been reproduced end to end on devnet; the transactions are
 listed in [`docs/DEMO.md`](docs/DEMO.md).
+
+## One weekend on devnet
+
+Four plans on the deployment were due on Sunday 2026-09-13. (A new plan is due
+at once, and the demo's "make the plan due" control moves only the schedule,
+never a price.) The TSLA, QQQ and VOO feeds had last published on Friday at
+20:00 ET. Between 07:27 and 19:00 ET the keepers attempted the four plans 25
+times, and every attempt was a transaction that deferred with code 1 on prices
+35 to 47 hours old. None was forced by a demo control. At 20:26 ET the feeds
+were publishing again, and one keeper pass filled all four baskets.
+
+Each plan page scores its held-back buys against the stale price it refused,
+reference to reference: the four fills came in $1.10 to $1.20 per $100 below
+it. That was one weekend in which prices happened to drift down; when they
+open higher, the same card shows the cost, in red. The guard exists to refuse
+prices nobody can vouch for, not to time the market.
 
 ## Architecture
 
@@ -106,12 +130,12 @@ necessarily mocked. Being precise about which parts:
   reference price plus a configurable spread. There is no counterparty and no
   real share behind the token.
 - Mock USDC, minted by a faucet so judges do not have to source devnet tokens.
-- An optional *mock reference* mode. With the real Pyth receiver, US equity
-  prices are stale from Friday 16:00 ET to Monday 09:30 ET, so a weekend demo
-  can only ever show deferrals. `scripts/set-reference.ts mock` points the
-  program at a reference account the keeper restamps, so a fill can be shown
-  at any hour. The guard panel states which mode is live, and the program
-  enforces the account's owner either way.
+- An optional *mock reference* mode. With the real Pyth receiver, nothing is
+  published for US equities from Friday 20:00 ET to Sunday 20:00 ET, so a demo
+  in that window can only ever show deferrals. `scripts/set-reference.ts mock`
+  points the program at a reference account the keeper restamps, so a fill can
+  be shown at any hour. The guard panel states which mode is live, and the
+  program enforces the account's owner either way.
 - Two demo controls tighten a `Config` ceiling rather than corrupting a feed,
   because nobody can make Pyth publish a bad price on demand. The other two
   change the venue's real quote and depth. `docs/DEMO.md` spells out which is
@@ -189,8 +213,9 @@ Build and test the programs:
 anchor build
 node tools/sync-idl.mjs         # refresh the committed interface in idl/
 cargo test --workspace          # 9 pure-Rust tests
-tools/test-local.sh             # 30 Anchor tests on a local validator
+tools/test-local.sh             # 32 Anchor tests on a local validator
 pnpm --filter keeper test       # 11 guard and calendar tests
+pnpm --filter web test          # 13 scorecard tests
 ```
 
 Deploy your own copy:
@@ -229,6 +254,7 @@ identical on devnet and mainnet.
 | `init_config` / `update_config` | admin | global thresholds, keeper, fill and reference programs |
 | `create_plan` | user | validates weights sum to 10 000, creates the Plan and its vault |
 | `deposit` / `withdraw` | user | move USDC; a withdrawal below one period pauses the plan |
+| `update_plan` | user | change the amount, cadence or end date; weights are fixed |
 | `set_paused` | user | pause or resume |
 | `execute_basket` | keeper | the guard, then all legs or none |
 | `nudge_plan` | admin | demo control: make a plan due now |
@@ -240,9 +266,9 @@ cumulative units bought, which is what makes average cost exact.
 ## Limitations
 
 - Devnet only, with the mocks described above.
-- The keeper is a single process. It holds no user funds and cannot move them,
-  so the worst it can do by failing is not execute; another instance can take
-  over from chain state alone.
+- Keepers coordinate through one Postgres lock, not consensus. A keeper holds
+  no user funds and cannot move them, so the worst a failing one can do is not
+  execute; any other instance takes over from chain state alone.
 - This is a self-custody tool. It does not address eligibility or compliance
   for tokenized securities, which are issuer and jurisdiction specific.
 - Not audited. Nothing here should hold real money.

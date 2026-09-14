@@ -1,29 +1,34 @@
 # Video script (2:30)
 
-Record at 1920×1080. Two windows: the browser at `http://localhost:3200` and a
-terminal running the keeper. Put the terminal in the bottom third so the
-keeper's verdict lines are readable while the page is on screen.
+Record at 1920×1080 on the live site, https://boz-basket-web.vercel.app. The
+keeper runs inside the app, so there is no terminal to show: every attempt
+lands in the plan's History within about a minute.
+
+**When:** between Sunday 20:00 ET and Friday 20:00 ET, while Pyth publishes US
+equity prices and the guard can pass on real data. Outside that window every
+attempt defers as stale, and mock reference mode does not rescue the deployed
+app, whose keeper posts real Pyth updates.
 
 Before recording:
 
-```bash
-source tools/env.sh
-pnpm --filter keeper exec tsx scripts/set-reference.ts mock   # so a fill can be shown off-hours
-pnpm --filter web build && pnpm --filter web start
-KEEPER_POLL_SECONDS=10 OFF_HOURS_POLICY=guarded pnpm --filter keeper start
-```
-
-Have a funded demo wallet with **no plans yet**, and the demo controls tab open
-in a second browser tab. Afterwards run `scripts/set-reference.ts pyth`.
+- `OFF_HOURS_POLICY` must be unset in Vercel, or the keeper skips every
+  attempt outside the regular session (see `docs/SUBMISSION.md`).
+- Open `/demo` and click **Restore everything**. The guard panel should show
+  the real Pyth reference with every check passing.
+- Open the demo plan in a second tab:
+  `/plan/5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq`. Its "What the guard
+  did" card is the 1:55 shot.
+- Use a fresh browser profile, so "Try with a demo wallet" starts empty.
 
 ---
 
 **0:00 — The problem.** *Home page on screen.*
 
-> Tokenized stocks trade 24 hours a day. A trustworthy price does not.
-> The US market is open about 32 hours a week. For the other 136, the
-> reference price is stale by design, and the pools are thin. Every recurring
-> buy tool on chain fires on a timer anyway.
+> Tokenized stocks trade around the clock, seven days a week. The price they
+> are measured against does not. From Friday evening to Sunday evening no US
+> equity price is published at all. The last one just sits there, aging, for
+> two days, while the tokens keep trading. Recurring-buy tools on chain fire
+> on a timer anyway.
 
 **0:15 — Build a basket.** *Click "Try with a demo wallet", then "Build a basket".*
 
@@ -37,64 +42,59 @@ in a second browser tab. Afterwards run `scripts/set-reference.ts pyth`.
 > One transaction creates the plan, creates the vault, and funds it. The vault
 > is a program account whose only withdrawal authority is my key.
 
-**0:45 — The guard.** *Plan page, scroll to the guard panel.*
+*A new plan is due at once, so its first buy appears in History within a
+minute. Let it; the 1:35 execution is the second period.*
 
-> This is the part that is not a timer. Before every buy the program checks
-> four things per leg: how old the Pyth price is, how wide its confidence band
-> is, how far the venue's quote has drifted from it, and whether there is
-> enough depth to fill my leg.
+**0:40 — The guard.** *Plan page, scroll to the guard panel.*
+
+> Before every buy the program checks four things per leg: how old the Pyth
+> price is, how wide its confidence band is, how far the venue's quote has
+> drifted from it, and whether there is enough depth to fill my leg.
 > Right now everything passes, so it would execute.
 
-**1:00 — Break it.** *Demo controls tab, "Force divergence" on TSLA.*
+**0:55 — Break it.** *Demo controls tab, "Force divergence" on mTSLA.*
 
-> Let me make the venue quote five percent away from the reference. That is a
-> real transaction changing the venue's real price.
+> Let me push the venue's quote five percent away from the reference. That is
+> a real transaction changing the venue's real price.
 
 *Back to the plan page; the panel turns amber.*
 
 > The panel agrees: it would defer, because Tesla's venue price has diverged.
 
-**1:20 — The keeper tries anyway.** *Click "Advance the clock". Point at the terminal.*
+**1:10 — The keeper tries anyway.** *Demo controls: select the plan, "Make the plan due". Back to History.*
 
-> The keeper does not take the panel's word for it. It builds the transaction
-> and submits it, and the program decides.
+> The keeper runs inside the app, and it does not take the panel's word for
+> it. It builds the transaction, submits it, and the program decides.
 
-*History row appears.*
+*The History row appears.*
 
-> Deferred. Reason four, divergence. And this is the part I care about: the
-> deferral is a successful transaction. The reason code is stored in the plan
-> account and emitted as an event. Here it is on the explorer. My money did
-> not move.
+> Deferred. Reason four, divergence. The deferral is a successful transaction:
+> the reason is stored in the plan account and emitted as an event. Here it is
+> on the explorer. My money did not move.
 
-**1:45 — Restore and execute.** *"Restore everything", then "Advance the clock".*
+**1:35 — Restore and execute.** *"Restore everything", then "Make the plan due" again.*
 
 > Put the venue back and try again.
 
-*Execution lands.*
+*The execution lands.*
 
-> One transaction, three legs, all or nothing. The portfolio fills in:
-> units, average cost, profit and loss against the live reference price.
-> Notice the average cost sits about twenty basis points above the reference.
-> That is the venue spread, not a rounding error.
+> One transaction, three legs, all or nothing. Units, average cost, and profit
+> and loss against the live reference. The average cost sits about twenty
+> basis points above the reference: that is the venue spread, not rounding.
 
-**2:10 — The honest part.** *Scroll to the "synthetic" note in the footer or the README.*
+**1:55 — A real weekend.** *Second tab: the demo plan's "What the guard did" card, then its History.*
+
+> This plan was due last Sunday, while its prices were up to two days old. The
+> keeper kept trying, and every time the program said no, on chain, reason
+> one. None of it was forced. At 8:26 that evening prices were live again, and
+> it filled, a dollar twenty per hundred below the stale price it refused.
+> That is one weekend, and it could have gone the other way. The card would
+> show that, in red.
+
+**2:15 — The honest part, and close.** *Footer "synthetic" note.*
 
 > On devnet there are no xStocks and no Jupiter liquidity, so the stock tokens
-> and the fills are mocked, and it says so on every page. The program, the
-> vaults, the schedule, the guard arithmetic, the atomic execution and the
-> reason codes are all real on chain. Every one of the six reason codes has
-> been reproduced on devnet; the transactions are in the README.
-
-**2:25 — Close.**
-
-> Tokenized stocks made the market 24/7. bozBasket makes the *buying* wait for
-> a price worth trusting.
-
----
-
-## If you are recording during US market hours
-
-Skip the mock reference mode. Use the real Pyth receiver for the whole video
-and force the divergence and liquidity scenarios, which are genuine
-manipulations. That is the strongest version of the demo. The weekend
-deferral transaction in `docs/DEMO.md` can be shown as a still.
+> and the fills are mocked, and every page says so. The program, the vaults,
+> the Pyth prices, the guard and the reason codes are real.
+> Tokenized stocks made the market 24/7. bozBasket makes the buying wait for a
+> price worth trusting.

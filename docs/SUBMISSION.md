@@ -9,7 +9,7 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] All six guard reason codes reproduced on chain, transactions in `docs/DEMO.md`
 - [x] Web app: demo wallet, basket builder, plan page, portfolio, history, guard panel, demo controls
 - [x] Keeper: session calendar, Hermes, Pyth receiver posting, Postgres ledger
-- [x] Tests: 9 Rust, 30 Anchor integration, 11 guard and calendar
+- [x] Tests: 9 Rust, 32 Anchor integration, 11 guard and calendar, 13 scorecard (all re-run 2026-09-14)
 - [x] README: problem, architecture, quickstart, what is synthetic, why Solana
 - [x] MIT license
 - [x] No keypairs in git history (`*.keypair.json` and `.env` ignored from the first commit)
@@ -21,9 +21,17 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] ~~Create the public GitHub repo and push~~ — https://github.com/elaris-xyz/bozBasket
 - [x] ~~Deploy the web app to Vercel~~ — https://boz-basket-web.vercel.app
 - [x] ~~Add `DEMO_CONTROLS=1` and `KEEPER_SECRET_KEY` in Vercel~~
-- [ ] **Create the cron-job.org job** (steps under "Keeper in production")
+- [x] ~~Create the cron-job.org job~~ — its passes are in the ledger every five minutes on 2026-09-14
+- [ ] **Delete `OFF_HOURS_POLICY` from the Vercel environment variables**, then
+  redeploy. It is set to `strict` there: at 02:42 ET on Monday 2026-09-14
+  production skipped a due plan as "outside regular hours" while the Pyth
+  price was seconds old. Unset, the web app runs `guarded`, like the GitHub
+  Action, and the program judges the price rather than the calendar.
+- [ ] **Take two screenshots** for the README, 1600 px wide: the demo plan page
+  (scorecard and history) as `docs/img/plan.png`, and a plan's guard panel
+  with a demo control applied as `docs/img/guard.png`
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
-- [ ] **Rotate the Neon database password** before the repo goes public
+- [ ] **Rotate the Neon database password**; the repo is already public
 - [ ] **Submit the form**: repo link, live demo link, video link
 
 ## Vercel settings
@@ -43,6 +51,7 @@ Environment variables:
 | `DATABASE_URL` | Neon connection string, for the history panel |
 | `DEMO_CONTROLS` | `1`, so judges can break the guard and watch it react |
 | `KEEPER_SECRET_KEY` | contents of `~/.config/solana/id.json`, for the demo controls |
+| `OFF_HOURS_POLICY` | leave unset, so the in-app keeper runs `guarded` |
 
 `KEEPER_SECRET_KEY` is the config admin, but since 2026-09-13 it is **not**
 the programs' upgrade authority: that moved to

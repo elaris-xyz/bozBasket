@@ -129,6 +129,24 @@ amount can be changed without creating a second plan.
 - Record the video from `docs/VIDEO.md`, adjusted for whatever changed.
 - **Submit on Thursday.** Friday is for the thing that goes wrong.
 
+Progress (Monday 2026-09-14):
+
+- Every suite re-run green: 9 Rust, 32 Anchor, 11 keeper, 13 web, both
+  type-checks, the web build.
+- The first organic numbers are in the README: 25 stale deferrals on Sunday,
+  all four plans filled at 20:26 ET, $1.10 to $1.20 per $100 against the stale
+  reference.
+- Found: Pyth publishes US equities outside the regular session; only Friday
+  20:00 to Sunday 20:00 ET is stale. The "136 stale hours" claim is gone from
+  the README, DEMO and VIDEO.
+- Found: production has `OFF_HOURS_POLICY=strict` (skipped rows every five
+  minutes). The user removes it in Vercel.
+- `scenarios.ts` now holds the shared keeper lock, since "nudge" starts an
+  in-app pass that would race it, and restores the deployment in `finally`.
+  Not yet run against the deployment: Vercel's security checkpoint challenges
+  about half the requests from the dev host's VPN address.
+- `docs/VIDEO.md` rewritten for the live site, with the weekend scorecard.
+
 ## Not doing
 
 - Mainnet or Jupiter. The program is shaped for it and the README says it is

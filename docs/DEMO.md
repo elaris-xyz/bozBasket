@@ -79,12 +79,13 @@ Honesty matters more than a slick demo, so, precisely:
   is linked above.
 - **Fills are synthetic.** Devnet has no xStocks and no Jupiter liquidity, so
   `mock_market` mints mock tokens at the reference price plus a spread.
-- **Reference prices have two modes.** With the real Pyth receiver, US
-  equities are stale from Friday 16:00 ET to Monday 09:30 ET, so a weekend
-  demo can only show deferrals. `scripts/set-reference.ts mock` points the
-  program at `mock_market`, whose reference the keeper restamps with the
-  current time, so a fill can be shown at any hour. The guard panel says
-  which mode is active and the program enforces the account owner either way.
+- **Reference prices have two modes.** With the real Pyth receiver, nothing
+  is published for US equities from Friday 20:00 ET to Sunday 20:00 ET, so a
+  demo in that window can only show deferrals. `scripts/set-reference.ts mock`
+  points the program at `mock_market`, whose reference the keeper restamps
+  with the current time, so a fill can be shown at any hour. The guard panel
+  says which mode is active and the program enforces the account owner either
+  way.
 - **Everything else is real on chain**: the plan account, the vault PDA, the
   schedule, the guard arithmetic, the atomic multi-leg CPI, the reason codes,
   the deferral counter.

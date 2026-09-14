@@ -62,8 +62,12 @@ else until the demo works end to end. No feature work on the last day; day
   mock SPL stock tokens, a faucet, and our own fill mechanism (fill at Pyth
   price, or a tiny own pool). Label it clearly in the README.
 - Pyth pull feeds (Hermes) use the same feed IDs on devnet and mainnet.
-  Pyth documents that US equity feeds go stale outside market hours; the
-  SDK has staleness checks. This is the core of our guard logic.
+  **Pyth publishes US equities outside the regular session too** (measured
+  2026-09-14: seconds old at Sun 20:26 ET and Mon 02:38 ET, confidence under
+  1 bp). Nothing publishes from Friday 20:00 ET to Sunday 20:00 ET, when the
+  last price just ages. The feed metadata's `market_hours` still lists regular
+  hours only, so the calendar is not the staleness test; the program's
+  publish-time check is. This is the core of our guard logic.
 - Jupiter Lend already accepts SPYx/QQQx/NVDAx as collateral, and xStocks
   handle dividends by rebasing and splits on-chain. Do not pitch lending or
   issuance as novel.
@@ -206,7 +210,7 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   (default) skips with MARKET_CLOSED in the ledger only.
 - **Two reference modes.** Default is the real Pyth receiver: Hermes VAAs are
   posted in the same transaction bundle and equities are stale from Friday
-  16:00 ET to Monday 09:30 ET, so weekends can only demonstrate deferrals.
+  20:00 ET to Sunday 20:00 ET, so weekends can only demonstrate deferrals.
   `scripts/set-reference.ts mock` + `REFERENCE_SOURCE=mock` stamps the mock
   reference with the cluster time so a fill can be shown any time. The
   README must call this synthetic. Switch back with `set-reference.ts pyth`.
@@ -283,8 +287,11 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   the Pyth SDK builds transactions with a different copy of web3.js.
 - **Test the keeper locally with `OFF_HOURS_POLICY=guarded`.** `.env` sets
   `strict`, so off-hours a pass skips before building any transaction, and a
-  test "passes" without ever touching the Pyth SDK, signing or sending. Vercel
-  runs guarded. A keeper test counts only when it yields a signature confirmed
+  test "passes" without ever touching the Pyth SDK, signing or sending. The
+  web app runs guarded only while `OFF_HOURS_POLICY` is unset in Vercel; on
+  2026-09-14 it was `strict` there, visible only as `skipped 3` ledger rows
+  every five minutes, so check the ledger, not the code default. A keeper test
+  counts only when it yields a signature confirmed
   on devnet and a matching ledger row (learned 2026-09-14, when a skip was
   counted as a pass).
 - Repo: https://github.com/elaris-xyz/bozBasket (public).
