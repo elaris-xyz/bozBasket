@@ -14,6 +14,8 @@ is **deferred with a reason code written on chain** instead of filled blind.
 - Video: _add the video link_
 - Devnet program: [`4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR`](https://explorer.solana.com/address/4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR?cluster=devnet)
 
+![The landing page during the US session: live Pyth prices, and the read-only check of TSLAx and QQQx on Solana mainnet](docs/img/home.png)
+
 ---
 
 ## The problem
@@ -65,6 +67,12 @@ with code 1, on chain.
 
 Every code has been reproduced end to end on devnet; the transactions are
 listed in [`docs/DEMO.md`](docs/DEMO.md).
+
+![Demo controls with TSLA's venue depth drained to $10: the guard panel predicts a low-liquidity deferral for the TSLA leg](docs/img/guard.png)
+
+The demo controls change real devnet state, and the panel above recomputes
+the program's decision from it. Pressing **Make the plan due** then sends the
+transaction, and the program records its own verdict.
 
 ## One weekend on devnet
 

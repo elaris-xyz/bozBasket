@@ -29,9 +29,9 @@ https://hackathons.solana.com/hackathons/stocklana
   2026-09-14. It had been `strict`: at 02:42 ET production skipped a due plan
   as "outside regular hours" while the Pyth price was seconds old. After the
   redeploy, at 03:37 ET, production filled that plan.
-- [ ] **Take two screenshots** for the README, 1600 px wide: the demo plan page
-  (scorecard and history) as `docs/img/plan.png`, and a plan's guard panel
-  with a demo control applied as `docs/img/guard.png`
+- [x] ~~Screenshots for the README~~ — `docs/img/home.png` (the landing page
+  with the mainnet check) and `docs/img/guard.png` (a demo control applied)
+- [ ] Optional: the demo plan page (scorecard and History) as `docs/img/plan.png`
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
 - [ ] **Rotate the Neon database password**; the repo is already public
 - [ ] **Submit the form**: repo link, live demo link, video link
