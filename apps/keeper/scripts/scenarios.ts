@@ -5,13 +5,22 @@
 //   source tools/env.sh
 //   pnpm --filter web start                       # the demo API must be up
 //   pnpm --filter keeper exec tsx scripts/scenarios.ts <plan>
+//   WEB_URL=https://boz-basket-web.vercel.app ...  # against the deployment
 //
 // Runs in mock reference mode so each cause can be isolated (with the real
 // Pyth receiver every weekend attempt is stale before anything else is
-// reached). Restores the config and every market before exiting.
+// reached). Restores the config and every market before exiting, including
+// when a scenario throws.
+//
+// Holds the shared keeper lock for the whole sweep. Every keeper (the web
+// app's passes, which "nudge" now starts too, the scheduler, the GitHub
+// Action) takes that lock, and any of them running meanwhile would race this
+// script's own executor for the same plan, using the Pyth receiver while the
+// config points at the mock reference.
 
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
@@ -21,6 +30,7 @@ import { chainNow, configPda, connect } from "../src/chain";
 import { HermesClient } from "../src/hermes";
 import { LogLedger } from "../src/ledger";
 import { Executor, PYTH_RECEIVER } from "../src/executor";
+import { LOCK_TIMING, PassLock } from "../src/lock";
 
 const WEB = process.env.WEB_URL ?? "http://localhost:3200";
 
@@ -28,7 +38,14 @@ type Outcome = { name: string; expected: number; predicted: number | string; act
 
 async function demo(action: string, body: Record<string, unknown> = {}) {
 	const res = await fetch(`${WEB}/api/demo`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ...body }), signal: AbortSignal.timeout(120_000) });
-	const json = (await res.json()) as { ok?: boolean; detail?: string; error?: string; signature?: string };
+	const text = await res.text();
+	let json: { ok?: boolean; detail?: string; error?: string; signature?: string };
+	try {
+		json = JSON.parse(text);
+	} catch {
+		// Vercel answers some networks with an HTML security checkpoint instead.
+		throw new Error(`demo ${action}: HTTP ${res.status}, not JSON: ${text.slice(0, 80).replace(/\s+/g, " ")}`);
+	}
 	if (!res.ok) throw new Error(`demo ${action}: ${json.error}`);
 	return json;
 }
@@ -90,7 +107,24 @@ async function main() {
 		if (p.status === 1) await ownerChain.basket.methods.setPaused(false).accountsPartial({ plan, owner: owner.publicKey }).signers([owner]).rpc();
 	};
 
+	// Taken with `force`, so the once-a-minute spacing does not delay the sweep,
+	// and renewed before every scenario. A crash frees it when the hold expires.
+	const lock = cfg.databaseUrl ? new PassLock(cfg.databaseUrl) : null;
+	const holder = `scenarios:${randomUUID()}`;
+	const hold = async () => {
+		if (!lock) return;
+		const giveUpAt = Date.now() + (LOCK_TIMING.holdSecs + 30) * 1000;
+		for (;;) {
+			const got = await lock.acquire(holder, { holdSecs: 600, force: true });
+			if (got.acquired) return;
+			if (Date.now() > giveUpAt) throw new Error("a keeper pass is still holding the lock; try again shortly");
+			console.log("waiting for the running keeper pass to finish");
+			await new Promise((r) => setTimeout(r, 10_000));
+		}
+	};
+
 	const run = async (name: string, expected: number, setup: () => Promise<void>, teardown: () => Promise<void>): Promise<Outcome> => {
+		await hold();
 		await setup();
 		await resume();
 		await demo("nudge", { plan: plan.toBase58() });
@@ -105,34 +139,58 @@ async function main() {
 		return outcome;
 	};
 
-	console.log(`plan ${plan.toBase58()} on ${cfg.cluster}; switching to mock reference mode`);
-	await setReference("mock");
-	await demo("restore");
+	console.log(`plan ${plan.toBase58()} on ${cfg.cluster}, demo API ${WEB}`);
+	if (lock) await hold();
+	else console.warn("no DATABASE_URL: the keeper lock cannot be held, so a running keeper may race this sweep");
+	console.log("switching to mock reference mode");
 
 	const results: Outcome[] = [];
-	results.push(await run("baseline execute", REASON.OK, async () => undefined, async () => undefined));
-	results.push(await run("divergence", REASON.DIVERGENCE, async () => void (await demo("divergence", { symbol: "mTSLA" })), async () => void (await demo("restore"))));
-	results.push(await run("low liquidity", REASON.LOW_LIQUIDITY, async () => void (await demo("liquidity", { symbol: "mQQQ" })), async () => void (await demo("restore"))));
-	results.push(await run("confidence too wide", REASON.CONFIDENCE_TOO_WIDE, async () => void (await demo("confidence")), async () => void (await demo("restore"))));
-	results.push(await run("reference stale", REASON.REFERENCE_STALE, async () => void (await demo("staleness")), async () => void (await demo("restore"))));
-	results.push(
-		await run(
-			"insufficient balance",
-			REASON.INSUFFICIENT_BALANCE,
-			async () => {
-				const p = await chain.basket.account.plan.fetch(plan);
-				const vault = await chain.connection.getTokenAccountBalance(p.vault);
-				const keep = p.amountPerPeriod.toNumber() / 1e6 - 1;
-				await vaultMove("withdraw", Number(vault.value.amount) / 1e6 - keep);
-			},
-			async () => vaultMove("deposit", 300),
-		),
-	);
-
-	await demo("restore");
-	await setReference("pyth");
-	await resume();
-	console.log("\nrestored: thresholds, markets, and the real Pyth receiver as reference_program");
+	try {
+		await setReference("mock");
+		await demo("restore");
+		results.push(await run("baseline execute", REASON.OK, async () => undefined, async () => undefined));
+		results.push(await run("divergence", REASON.DIVERGENCE, async () => void (await demo("divergence", { symbol: "mTSLA" })), async () => void (await demo("restore"))));
+		results.push(await run("low liquidity", REASON.LOW_LIQUIDITY, async () => void (await demo("liquidity", { symbol: "mQQQ" })), async () => void (await demo("restore"))));
+		results.push(await run("confidence too wide", REASON.CONFIDENCE_TOO_WIDE, async () => void (await demo("confidence")), async () => void (await demo("restore"))));
+		results.push(await run("reference stale", REASON.REFERENCE_STALE, async () => void (await demo("staleness")), async () => void (await demo("restore"))));
+		results.push(
+			await run(
+				"insufficient balance",
+				REASON.INSUFFICIENT_BALANCE,
+				async () => {
+					const p = await chain.basket.account.plan.fetch(plan);
+					const vault = await chain.connection.getTokenAccountBalance(p.vault);
+					const keep = p.amountPerPeriod.toNumber() / 1e6 - 1;
+					await vaultMove("withdraw", Number(vault.value.amount) / 1e6 - keep);
+				},
+				async () => vaultMove("deposit", 300),
+			),
+		);
+	} finally {
+		// Put the deployment back even when a scenario threw. Left in mock
+		// reference mode, every real keeper attempt fails; left tightened, every
+		// plan defers. The reference goes first because it does not depend on the
+		// demo API being reachable.
+		const restore = async (label: string, step: () => Promise<unknown>) => {
+			try {
+				await step();
+				return true;
+			} catch (err) {
+				console.error(`RESTORE FAILED: ${label}: ${(err as Error).message}`);
+				return false;
+			}
+		};
+		const ok = [
+			await restore("reference_program back to the Pyth receiver (scripts/set-reference.ts pyth)", () => setReference("pyth")),
+			await restore('thresholds and markets ("restore" in the demo controls)', () => demo("restore")),
+			await restore("resume the plan", resume),
+		].every(Boolean);
+		if (ok) console.log("\nrestored: thresholds, markets, and the real Pyth receiver as reference_program");
+		if (lock) {
+			await lock.release(holder, LOCK_TIMING.spacingSecs).catch((err) => console.error("lock release failed; it expires on its own:", (err as Error).message));
+			await lock.close();
+		}
+	}
 
 	const failed = results.filter((r) => !r.ok);
 	console.log(`\n${results.length - failed.length}/${results.length} scenarios matched on both the panel and the chain`);

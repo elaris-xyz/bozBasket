@@ -144,8 +144,9 @@ Progress (Monday 2026-09-14):
   at 03:37 ET, with no GitHub Action run in that window.
 - `scenarios.ts` now holds the shared keeper lock, since "nudge" starts an
   in-app pass that would race it, and restores the deployment in `finally`.
-  Not yet run against the deployment: Vercel's security checkpoint challenges
-  about half the requests from the dev host's VPN address.
+  Run against the deployment once the VPN exit changed (Vercel's checkpoint
+  had been challenging the old one): 6/6, config and markets restored, and no
+  other keeper wrote a ledger row for the plan during the sweep.
 - `docs/VIDEO.md` rewritten for the live site, with the weekend scorecard.
 
 ## Not doing

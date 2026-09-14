@@ -28,9 +28,9 @@ shows nothing on chain.
 | 0:45 | Plan page. Guard panel is green: prices fresh, confidence tight, venue within 20 bps, depth deep | The panel runs the same shared code the program runs, against the same on-chain thresholds |
 | 0:55 | **Demo controls → Force divergence (TSLA)** | `set_price_override` makes the venue quote 5% off the reference. Real state |
 | 1:05 | Guard panel turns amber: "Would defer: venue diverged from reference" | Recomputed from the changed account |
-| 1:10 | **Advance the clock**, the keeper fires | `nudge_plan` makes the plan due; the keeper builds the transaction anyway |
+| 1:10 | **Make the plan due**, the keeper fires | `nudge_plan` makes the plan due; the keeper builds the transaction anyway |
 | 1:20 | History shows **deferred · venue diverged from reference**, with an explorer link | `execute_basket` wrote `last_reason = 4`, incremented `deferrals`, emitted `Deferred`, and returned Ok. Nothing was bought |
-| 1:35 | **Restore**, advance the clock again | Override cleared |
+| 1:35 | **Restore everything**, make the plan due again | Override cleared |
 | 1:45 | History shows **executed**, portfolio fills in | One transaction, three `Fill` CPIs, all legs or none |
 | 2:05 | Portfolio: units, average cost, P&L against the live reference | Average cost sits ~20 bps above the reference: that is the venue spread, not a rounding artefact |
 | 2:20 | Architecture slide, why Solana, what is synthetic on devnet | — |
@@ -41,29 +41,34 @@ Reproduce with:
 
 ```bash
 pnpm --filter keeper exec tsx scripts/scenarios.ts <plan>
+WEB_URL=https://boz-basket-web.vercel.app pnpm --filter keeper exec tsx scripts/scenarios.ts <plan>
 ```
 
 For each row it changes real state through the demo API, asks the guard panel
 what it predicts, submits the transaction, and compares the reason code the
-program recorded. Run twice on 2026-09-13, 6/6 both times.
+program recorded. It holds the shared keeper lock throughout, so no other
+keeper touches the plan mid-sweep, and restores everything when it ends. Run
+twice on 2026-09-13 against a local web app, 6/6 both times, and on 2026-09-14
+against the deployment, 6/6. The table is the deployment run.
 
 | Scenario | Reason | Transaction |
 |---|---|---|
-| Baseline, everything passes | 0 Executed | `VT19p5raPMW6D23wpsMjgMc3DHb8bB3f4oPxQzNe3z4ZpLk8EesPfBWdkPDBQj5ef9gUZubp2bkmGHBHnwAbg41` |
-| Venue quotes 5% off | 4 Divergence | `3VFYckaKjqVtsr7BWnBW6BFihtj2FGqfkR5Wf1wBfpy3t3qkgDTNzcMMZcdNhFRCBAuWBaoCKhnYqVXDBWYeSR96` |
-| Depth drained to $10 | 5 Low liquidity | `2TN9Dm2eiBuhrYHASYqjmu7TK9aBMkzWNXfDvKX5ZC8WnTbCFDJMBuHsN2K7HEGUGuBBwDgr1T3sKTgPGSxBqpvi` |
-| Confidence ceiling tightened | 2 Confidence too wide | `268EwwDzFBYSLJSB6eu6AWv5FzSkZ4B2DzeDQk113WiPCQa4Zotmpw3g9ViyWTWDuReiwABoXErBcagRGYUGkiim` |
-| Staleness ceiling tightened | 1 Reference stale | `3MjXnVyNywnsSCjoiHPVhy8boPzHbNWGuRZTXHq9zQecxe5S9uWuS8cKDqdruSMJQEx5DDy1TKkSzWCUjtWr4fQH` |
-| Vault below one period | 6 Insufficient balance | `Vu6haBqxsgZHyrdG8DHktaedhAdRSjCrgf2KZyRDKkpqYPYZbj1DYpK1vbMxg3BRtfJCg6TDE5ybUsUC7tCCwvk` |
+| Baseline, everything passes | 0 Executed | `2NnPMYZzvm9NkqFxc7dr4ZNm3tVD8bXDVBnwee6dBTraSrCdaowUJFHhpptWQjAHtLx746GWVRo5aqyrmjQ4gBeW` |
+| Venue quotes 5% off | 4 Divergence | `2Xxo9jTohaFbosohf5kBYa3KALpJidGEhqtHqDD1cz8P4KDKRAhTDvMRgPwShQM4DSEqxTp8ZVtPtP1MGyBZN4ok` |
+| Depth drained to $10 | 5 Low liquidity | `3L6wUm2iLrCUdhbW6yc1kprh3SiRc2osjKPLeByHet2CXSS8qDjUNboC4mgzsAtpncCP1mXLg551vKL77ViW3TGy` |
+| Confidence ceiling tightened | 2 Confidence too wide | `2zMYKdQX2wKrtBovKsgjxQtaVWWLHwuMD9sR2bwdRdEGBwLn1BpNbxB8yrDU6noBjCGmKUPDoHp4d98jJQ16s2C7` |
+| Staleness ceiling tightened | 1 Reference stale | `2Gq8xKwiQswLygQSL7wzZnAPoifBMUUE5cViXGeaWJapEP2CA4ksK6MXe9mCx2gHGdvrbsdkGcX4E8nZnNq1cBeD` |
+| Vault below one period | 6 Insufficient balance | `2aCaKfysb81BcPFytAKLWZeeH464o2j86KKtTXFUbgT5nK6MEhsqiAHSXzQi9j5HZA2A4HCzqPf5qvNPeC8QLpFr` |
 
 The genuine, unforced version of reason 1, from the real Pyth receiver on a
 Saturday with a 31-hour-old AAPL-class equity price:
 `5oiJcFzaxw6rvqmvTL2s73S1sVZgZgeAzTUdJv8qABwgLGuo1NAmYuriK9oFxqtJNhnKAmLpyNZ1dUq8TJdQrgWX`
 
-Reason 3, `MARKET_CLOSED`, is the keeper's alone: under `strict` it does not
-submit off-hours, so it appears in the ledger as a skip and never on chain.
-That is deliberate. Paying a fee to record "the market is closed", something
-any calendar knows, would be theatre.
+Reason 3, `MARKET_CLOSED`, is the keeper's alone, and only under `strict`,
+which does not submit outside the regular session and records a skip in the
+ledger, never on chain. The deployment runs `guarded`: Pyth publishes outside
+the regular session, so the calendar is the wrong test, and the program's own
+staleness check decides.
 
 ## What is forced and what is real
 
