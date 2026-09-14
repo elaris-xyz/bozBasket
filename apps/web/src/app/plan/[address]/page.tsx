@@ -94,6 +94,8 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 					<div key={k} className="card !p-4">
 						<p className="label">{k}</p>
 						<p className="mt-1 text-lg font-bold">{v}</p>
+						{/* The chain counts demo-control tests too, which History does not list. */}
+						{k === "Executions / deferrals" && <p className="text-xs text-slate-500">on chain, demo tests included</p>}
 					</div>
 				))}
 				<div className="card !p-4">
@@ -119,7 +121,7 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 				<div className="space-y-5">
 					<GuardScorecard scorecard={history.scorecard} />
 					<Portfolio plan={plan} prices={prices} />
-					<History rows={history.rows} note={history.note} />
+					<History rows={history.rows} note={history.note} legTickers={a.legs.slice(0, a.legCount).map((l) => symbolByMint(l.mint.toBase58()).replace(/^m/, ""))} />
 				</div>
 				<div className="space-y-4">
 					<PlanActions plan={plan} onDone={onDone} />

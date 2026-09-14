@@ -3,6 +3,7 @@
 import { DEMO_STOCKS, REASON } from "@bozbasket/shared";
 import { isFillLeg, isGuardLeg, scaledPrice, type GuardLeg, type HistoryRow } from "@/lib/scorecard";
 import { EXPLORER, symbolByMint } from "@/lib/solana";
+import { deferralDetail, fmtAge } from "@/lib/deferral";
 import { fmtTs, fmtUsd, reasonLabel, short } from "@/lib/format";
 
 const KIND: Record<HistoryRow["kind"], string> = {
@@ -19,7 +20,7 @@ function whyDeferred(leg: GuardLeg): string {
 	const t = tickerOf(leg.feedId);
 	switch (leg.reason) {
 		case REASON.REFERENCE_STALE:
-			return `${t} price ${leg.ageSecs >= 7200 ? `${Math.round(leg.ageSecs / 3600)} h` : `${Math.round(leg.ageSecs / 60)} min`} old`;
+			return `${t} price ${fmtAge(leg.ageSecs)} old`;
 		case REASON.CONFIDENCE_TOO_WIDE:
 			return `${t} confidence ${leg.confBps} bps`;
 		case REASON.DIVERGENCE:
@@ -31,7 +32,9 @@ function whyDeferred(leg: GuardLeg): string {
 	}
 }
 
-export function History({ rows, note }: { rows: HistoryRow[] | null; note: string | null }) {
+/** `legTickers` are the plan's legs in order, for deferrals whose only detail
+ *  is the on-chain "leg <index>: <value>". */
+export function History({ rows, note, legTickers = [] }: { rows: HistoryRow[] | null; note: string | null; legTickers?: string[] }) {
 	return (
 		<div className="card">
 			<h3 className="font-semibold">History</h3>
@@ -51,13 +54,15 @@ export function History({ rows, note }: { rows: HistoryRow[] | null; note: strin
 						const legs: unknown[] = Array.isArray(r.legs) ? r.legs : [];
 						const fills = r.kind === "executed" ? legs.filter(isFillLeg) : [];
 						const failing = r.kind === "deferred" ? legs.filter(isGuardLeg).find((l) => l.reason !== REASON.OK) : undefined;
+						const fromDetail = r.kind === "deferred" && !failing ? deferralDetail(r.reason, r.detail, legTickers) : null;
 						return (
 							<li key={r.id} className="flex flex-wrap items-start justify-between gap-2 py-2 text-sm">
 								<div>
 									<span className={`pill mr-2 ${KIND[r.kind]}`}>{r.kind}</span>
 									<span className="text-slate-300">{r.kind === "executed" ? `Bought ${fmtUsd(r.usdcIn ?? 0)} across ${fills.length} legs` : reasonLabel(r.reason) ?? r.detail}</span>
 									{r.forced && <span className="pill ml-2 bg-white/5 text-slate-400">demo control</span>}
-									{r.kind !== "executed" && !failing && r.detail && <span className="ml-2 text-xs text-slate-500">{r.detail}</span>}
+									{r.kind !== "executed" && !failing && !fromDetail && r.detail && <span className="ml-2 text-xs text-slate-500">{r.detail}</span>}
+									{fromDetail && <p className="mt-0.5 text-xs text-slate-500">{fromDetail}</p>}
 									{fills.length > 0 && (
 										<p className="mt-0.5 text-xs text-slate-500">
 											{fills.map((l) => `${symbolByMint(l.mint).replace(/^m/, "")} ${(Number(l.units) / 1e6).toFixed(4)} @ ${fmtUsd(scaledPrice(l.venuePrice, l.exponent))}`).join(" · ")}
