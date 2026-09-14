@@ -82,6 +82,29 @@ it. That was one weekend in which prices happened to drift down; when they
 open higher, the same card shows the cost, in red. The guard exists to refuse
 prices nobody can vouch for, not to time the market.
 
+## The real market, read-only
+
+The fills above are synthetic; the problem is not, so it is measured on the
+real market. Every keeper pass, at most once every four minutes, asks Jupiter
+what $100 of USDC buys in TSLAx and QQQx, the xStocks on Solana mainnet, and
+runs that price and the Pyth price through the same `checkLeg` the keeper
+uses, with the default limits. Nothing is signed or sent. The landing page
+shows the latest verdict for each, the gap between the pool and Pyth over the
+last week, and how often the guard would have bought or deferred.
+
+Two details decide whether the number means anything:
+
+- xStocks are Token-2022 mints whose scaled UI amount carries the issuer's
+  share multiplier, which folds dividends into the share count. The check
+  reads it from the mint. Without it, QQQx read 44 bps above Pyth on
+  2026-09-14; with it, 17.
+- The reference age is Pyth's own publish time, never restamped.
+
+The window that matters is the weekend, when the pools keep quoting against a
+price that stopped on Friday. The first one on record starts on Friday
+2026-09-18 at 20:00 ET, after submission, and the page keeps collecting
+through judging. VOOx is left out because Jupiter reports it not tradable.
+
 ## Architecture
 
 ```
@@ -144,7 +167,8 @@ necessarily mocked. Being precise about which parts:
 **Not built**
 - Mainnet execution through Jupiter. The program is structured for it — the
   fill venue and the reference program are both `Config` fields — but it is
-  not implemented, so it is not claimed.
+  not implemented, so it is not claimed. What does run against mainnet is the
+  read-only check described in [The real market](#the-real-market-read-only).
 
 ## Why Solana
 
@@ -271,6 +295,8 @@ cumulative units bought, which is what makes average cost exact.
   execute; any other instance takes over from chain state alone.
 - This is a self-custody tool. It does not address eligibility or compliance
   for tokenized securities, which are issuer and jurisdiction specific.
+- The mainnet check compares a quote, not a fill: the price can move between
+  a quote and a swap, and $100 is small enough that depth rarely binds.
 - Not audited. Nothing here should hold real money.
 
 ## Repository layout

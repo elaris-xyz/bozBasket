@@ -264,6 +264,24 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   prediction with the program's recorded reason, restores everything, and
   writes `deploy/scenarios.json`. It is the regression test for the demo.
 
+## Mainnet shadow check (2026-09-14)
+
+- `apps/keeper/src/shadow.ts` runs at the end of `runPass`, at most once per
+  240 s (`ledger.shadowDue`), never for a `--plan` run, and never fails the
+  pass. Read-only: a Jupiter quote for $100 USDC into TSLAx and QQQx, the
+  Hermes price, `checkLeg` with `DEFAULT_THRESHOLDS`, one row per stock in
+  `mainnet_shadow`. Like pass.ts, it must stay free of file reads.
+- xStocks are Token-2022 mints with `scaledUiAmountConfig`: shares are raw
+  units times the multiplier (QQQx 1.0027). Skipping it overstates QQQx by
+  about 27 bps.
+- The mainnet RPC is the Helius devnet URL with the host swapped
+  (`mainnetRpcFor`), so it carries the API key: never log it.
+  `MAINNET_RPC_URL`, `JUPITER_API_URL` and `MAINNET_SHADOW=0` override.
+- VOOx is TOKEN_NOT_TRADABLE on Jupiter, and the Pyth key covers only TSLA,
+  QQQ and VOO, so the mainnet basket is two stocks.
+- `/api/shadow` summarises the last seven days; `components/MainnetShadow.tsx`
+  renders it under the live proof on the landing page.
+
 ## Deployed (day 7, 2026-09-13)
 
 - Web: https://boz-basket-web.vercel.app (Vercel project `boz-basket-web`,

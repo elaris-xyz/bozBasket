@@ -91,10 +91,13 @@ minute. Let it; the 1:35 execution is the second period.*
 > That is one weekend, and it could have gone the other way. The card would
 > show that, in red.
 
-**2:15 — The honest part, and close.** *Footer "synthetic" note.*
+**2:15 — The honest part, and close.** *Home page: the mainnet panel, then the footer "synthetic" note.*
 
 > On devnet there are no xStocks and no Jupiter liquidity, so the stock tokens
 > and the fills are mocked, and every page says so. The program, the vaults,
-> the Pyth prices, the guard and the reason codes are real.
+> the Pyth prices, the guard and the reason codes are real. And the problem is
+> measured on the real market: every five minutes the keeper asks Jupiter what
+> a hundred dollars buys in real xStocks on mainnet, and runs the same guard on
+> it. Nothing is bought; the verdicts are right here.
 > Tokenized stocks made the market 24/7. bozBasket makes the buying wait for a
 > price worth trusting.

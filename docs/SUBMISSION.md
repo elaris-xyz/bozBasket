@@ -9,7 +9,10 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] All six guard reason codes reproduced on chain, transactions in `docs/DEMO.md`
 - [x] Web app: demo wallet, basket builder, plan page, portfolio, history, guard panel, demo controls
 - [x] Keeper: session calendar, Hermes, Pyth receiver posting, Postgres ledger
-- [x] Tests: 9 Rust, 32 Anchor integration, 11 guard and calendar, 13 scorecard (all re-run 2026-09-14)
+- [x] Tests: 9 Rust, 32 Anchor integration, 19 keeper (guard, calendar, mainnet check), 19 web (scorecard, mainnet summary), all re-run 2026-09-14
+- [x] Mainnet check: every keeper pass prices $100 of TSLAx and QQQx on Jupiter
+  against Pyth, read-only, and records the guard's verdict; the landing page
+  charts it
 - [x] README: problem, architecture, quickstart, what is synthetic, why Solana
 - [x] MIT license
 - [x] No keypairs in git history (`*.keypair.json` and `.env` ignored from the first commit)
@@ -89,6 +92,9 @@ deferred" can never be confused with "nothing is running".
 
 - Devnet program: `4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR`
 - The three Pyth equity feeds in use: TSLA, QQQ, VOO
+- Mainnet xStocks in the read-only check: TSLAx
+  `XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB`, QQQx
+  `Xs8S1uUs1zvS2p7iwtsG3b6fkhpvmwz4GYU3gWAmWHZ`
 - One-line pitch: a recurring-buy robo-investor for tokenized US stocks that
   defers the buy, with a reason on chain, when the reference price cannot be
   trusted.

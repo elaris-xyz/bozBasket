@@ -25,6 +25,12 @@ use?* Everything below is chosen against that, not against a feature list.
   Pyth) on the first screen of a phone. Tables become cards below 640 px, the
   sliders have a thumb-sized hit area, a failed refresh no longer blanks a
   loaded plan, and link previews have an Open Graph card.
+- **Added 2026-09-14: the mainnet check.** The weakest point was that
+  everything runs on devnet. Every keeper pass now also prices $100 of TSLAx
+  and QQQx on Jupiter against Pyth, read-only and with the issuer's share
+  multiplier, and the landing page charts the verdicts. The first weekend on
+  record starts Friday 20:00 ET, after submission; the page keeps collecting
+  through judging, which ends 2 October.
 - **Found on day 3: demo controls stay on until someone presses Restore.** A
   TSLA price override, $10 depth and a 0 bps confidence ceiling were still
   active on devnet, which would have stopped Monday's execution. Restored.
