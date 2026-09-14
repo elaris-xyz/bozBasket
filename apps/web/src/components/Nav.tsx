@@ -9,6 +9,7 @@ const LINKS: [string, string][] = [
 	["/", "Plans"],
 	["/build", "Build a basket"],
 	["/demo", "Demo controls"],
+	["/developers", "API"],
 ];
 
 export function Nav() {

@@ -21,6 +21,7 @@ import { createKeeper, runPass } from "keeper/pass";
 import { LOCK_TIMING, PassLock } from "keeper/lock";
 import type { Deployment, KeeperConfig } from "keeper/config";
 import deployment from "@/generated/devnet.json";
+import { autoRestoreDemo } from "./demoState";
 
 export type Trigger = "visitor" | "cron" | "demo";
 
@@ -88,6 +89,8 @@ export async function schedulePass(trigger: Trigger, opts: { force?: boolean } =
 			} finally {
 				await keeper.ledger.close().catch(() => undefined);
 			}
+			// Still under the lock, so it cannot interleave with a pass or the scenario sweep.
+			await autoRestoreDemo(log);
 		} catch (err) {
 			console.error(`[keeper:${trigger}] pass failed:`, (err as Error).message);
 		} finally {

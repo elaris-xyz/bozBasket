@@ -5,7 +5,9 @@
   "exports": {
     "./pass": "./src/pass.ts",
     "./lock": "./src/lock.ts",
-    "./config": "./src/config.ts"
+    "./config": "./src/config.ts",
+    "./shadow": "./src/shadow.ts",
+    "./hermes": "./src/hermes.ts"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",

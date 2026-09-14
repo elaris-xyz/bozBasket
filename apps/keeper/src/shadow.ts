@@ -74,7 +74,11 @@ export function effectiveMultiplier(c: ScaledUiAmountConfig, now: number): numbe
 	return Number(from > 0 && now >= from ? c.newMultiplier : c.multiplier);
 }
 
-const thresholds = () => ({ ...DEFAULT_THRESHOLDS, minLiquidityUsdc: BigInt(DEFAULT_THRESHOLDS.minLiquidityUsdc) });
+/** The guard's limits, depth in USDC base units as the on-chain config stores
+ *  it. The recorded check uses the defaults; Guard API callers may pass their own. */
+export type GuardLimits = { maxStalenessSecs: number; maxConfBps: number; maxDivergenceBps: number; minLiquidityUsdc: number };
+
+const thresholds = (l: GuardLimits = DEFAULT_THRESHOLDS) => ({ ...l, minLiquidityUsdc: BigInt(Math.round(l.minLiquidityUsdc)) });
 
 const sessionLabel = (now: number) => sessionAt(new Date(now * 1000)).label;
 
@@ -93,6 +97,7 @@ export function shadowRow(i: {
 	priceImpactPct: number;
 	route: string;
 	liquidityUsd: number | null;
+	limits?: GuardLimits;
 }): ShadowRow {
 	// Without the multiplier a dividend-paying xStock reads as a premium: on
 	// 2026-09-14 QQQx was 44 bps over Pyth raw, and 17 bps with it applied.
@@ -102,7 +107,7 @@ export function shadowRow(i: {
 	// Unknown depth must not read as shallow; the quote already proves a route.
 	const depth = i.liquidityUsd === null ? BigInt(Number.MAX_SAFE_INTEGER) : BigInt(Math.round(i.liquidityUsd * 1e6));
 	const venue = { price: BigInt(Math.round(venuePrice / 10 ** i.ref.expo)), expo: i.ref.expo, liquidityUsdc: depth };
-	const v = checkLeg(i.now, i.ref, venue, BigInt(Math.round(i.usdcIn * 1e6)), thresholds());
+	const v = checkLeg(i.now, i.ref, venue, BigInt(Math.round(i.usdcIn * 1e6)), thresholds(i.limits));
 	return {
 		ts: i.now,
 		symbol: i.stock.symbol,
@@ -126,12 +131,12 @@ export function shadowRow(i: {
 
 /** A check that produced no price. `reason` is LOW_LIQUIDITY when Jupiter
  *  found no pool, which is the market's answer; null when the failure was ours. */
-export function failedRow(now: number, stock: Pick<StockRef, "symbol" | "mint">, error: string, reason: number | null): ShadowRow {
+export function failedRow(now: number, stock: Pick<StockRef, "symbol" | "mint">, error: string, reason: number | null, usdcIn: number = SHADOW_USDC_IN): ShadowRow {
 	return {
 		ts: now,
 		symbol: stock.symbol,
 		mint: stock.mint,
-		usdcIn: SHADOW_USDC_IN,
+		usdcIn,
 		shares: null,
 		venuePrice: null,
 		priceImpactBps: null,
@@ -163,30 +168,32 @@ export class MainnetShadow {
 	}
 
 	/** `known` is the last multiplier stored per mint, used when the RPC fails. */
-	async sample(now: number, known: Record<string, number> = {}): Promise<ShadowRow[]> {
-		const refs = await this.hermes.latest(MAINNET_XSTOCKS.map((s) => s.feedId));
+	async sample(now: number, known: Record<string, number> = {}, opts: { usdcIn?: number; limits?: GuardLimits; only?: string[] } = {}): Promise<ShadowRow[]> {
+		const usdcIn = opts.usdcIn ?? SHADOW_USDC_IN;
+		const stocks: readonly (typeof MAINNET_XSTOCKS)[number][] = opts.only ? MAINNET_XSTOCKS.filter((s) => opts.only?.includes(s.mint)) : MAINNET_XSTOCKS;
+		const refs = await this.hermes.latest(stocks.map((s) => s.feedId));
 		return Promise.all(
-			MAINNET_XSTOCKS.map(async (stock) => {
+			stocks.map(async (stock) => {
 				try {
 					const ref = refs.parsed.find((p) => p.feedId.replace(/^0x/, "").toLowerCase() === stock.feedId);
 					if (!ref) throw new Error(`no Pyth price for ${stock.ticker}`);
 					const [quote, liquidityUsd, multiplier] = await Promise.all([
-						this.quote(stock.mint),
+						this.quote(stock.mint, usdcIn),
 						this.liquidity(stock.mint),
 						this.multiplier(stock.mint, now, known[stock.mint]),
 					]);
-					if (typeof quote === "string") return failedRow(now, stock, quote, REASON.LOW_LIQUIDITY);
-					return shadowRow({ now, stock, ref, usdcIn: SHADOW_USDC_IN, outAmount: quote.outAmount, multiplier, priceImpactPct: quote.priceImpactPct, route: quote.route, liquidityUsd });
+					if (typeof quote === "string") return failedRow(now, stock, quote, REASON.LOW_LIQUIDITY, usdcIn);
+					return shadowRow({ now, stock, ref, usdcIn, outAmount: quote.outAmount, multiplier, priceImpactPct: quote.priceImpactPct, route: quote.route, liquidityUsd, limits: opts.limits });
 				} catch (err) {
-					return failedRow(now, stock, redact((err as Error).message), null);
+					return failedRow(now, stock, redact((err as Error).message), null, usdcIn);
 				}
 			}),
 		);
 	}
 
 	/** A string when Jupiter says no pool can fill the buy. */
-	private async quote(mint: string): Promise<Quote | string> {
-		const params = new URLSearchParams({ inputMint: MAINNET_USDC_MINT, outputMint: mint, amount: String(SHADOW_USDC_IN * 1_000_000), slippageBps: "50" });
+	private async quote(mint: string, usdcIn: number): Promise<Quote | string> {
+		const params = new URLSearchParams({ inputMint: MAINNET_USDC_MINT, outputMint: mint, amount: String(Math.round(usdcIn * 1_000_000)), slippageBps: "50" });
 		const res = await fetch(`${this.jupiterUrl}/swap/v1/quote?${params}`, { signal: AbortSignal.timeout(10_000) });
 		const body = (await res.json().catch(() => ({}))) as {
 			outAmount?: string;
@@ -221,7 +228,9 @@ export class MainnetShadow {
 		const cached = this.configs.get(mint);
 		if (cached && Date.now() - cached.at < 3_600_000) return effectiveMultiplier(cached.config, now);
 		try {
-			const info = await this.connection.getParsedAccountInfo(new PublicKey(mint));
+			// One retry: a cold connection's first request sometimes fails with "fetch failed".
+			const read = () => this.connection.getParsedAccountInfo(new PublicKey(mint));
+			const info = await read().catch(read);
 			const data = info.value?.data;
 			if (!data || !("parsed" in data)) throw new Error("mint account not found");
 			const extensions = (data.parsed?.info?.extensions ?? []) as { extension: string; state: ScaledUiAmountConfig }[];

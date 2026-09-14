@@ -18,14 +18,19 @@
 // them can move a user's funds, and since 2026-09-13 the programs' upgrade
 // authority is a cold key that never leaves the build machine, so the key
 // this route signs with cannot replace program code. Set DEMO_CONTROLS=1.
+//
+// Every action is timestamped. Left untouched for ten minutes, a changed demo
+// is restored by the next keeper pass (lib/demoState.ts), so one visitor
+// cannot leave it broken for the next.
 
 import { NextResponse } from "next/server";
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { DEFAULT_MARKET, DEFAULT_THRESHOLDS } from "@bozbasket/shared";
 import { CONFIG } from "@/lib/solana";
 import { adminPrograms, hermesLatest, MARKETS, marketPks } from "@/lib/server";
 import { schedulePass } from "@/lib/keeperRunner";
+import { AUTO_RESTORE_IDLE_SECS } from "@/lib/demoDefaults";
+import { configArgs, demoActivity, recordDemoAction, restoreDemo } from "@/lib/demoState";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,7 +60,8 @@ function rateLimited(req: Request): boolean {
 
 /** The demo page asks whether the controls are live before rendering them. */
 export async function GET() {
-	return NextResponse.json({ enabled: enabled() });
+	const activity = await demoActivity().catch(() => null);
+	return NextResponse.json({ enabled: enabled(), autoRestoreMins: AUTO_RESTORE_IDLE_SECS / 60, autoRestoredAt: activity?.autoRestoredAt ?? null });
 }
 
 const FORCED_LIQUIDITY_USDC = 10_000_000; // $10, below one leg of a $100 basket
@@ -66,22 +72,10 @@ export async function POST(req: Request) {
 	if (rateLimited(req)) return NextResponse.json({ error: "too many demo actions; wait a minute" }, { status: 429 });
 	try {
 		const { action, symbol, plan } = (await req.json()) as { action?: Action; symbol?: string; plan?: string };
+		if (action) await recordDemoAction(action);
 		const { kp, basket, market } = adminPrograms();
 		const admin = kp.publicKey;
 
-		const configArgs = async (over: Partial<typeof DEFAULT_THRESHOLDS>) => {
-			const c = await basket.account.config.fetch(CONFIG);
-			const t = { ...DEFAULT_THRESHOLDS, ...over };
-			return {
-				keeper: c.keeper,
-				maxStalenessSecs: t.maxStalenessSecs,
-				maxConfBps: t.maxConfBps,
-				maxDivergenceBps: t.maxDivergenceBps,
-				minLiquidityUsdc: new anchor.BN(t.minLiquidityUsdc),
-				fillProgram: c.fillProgram,
-				referenceProgram: c.referenceProgram,
-			};
-		};
 		const pickMarket = (s?: string) => {
 			const m = MARKETS.find((x) => x.symbol === s) ?? MARKETS[0];
 			return { info: m, pks: marketPks(m) };
@@ -109,13 +103,7 @@ export async function POST(req: Request) {
 				return NextResponse.json({ ok: true, signature: sig, detail: "max confidence tightened to 0 bps" });
 			}
 			case "restore": {
-				const sigs: string[] = [];
-				for (const m of MARKETS) {
-					const pks = marketPks(m);
-					sigs.push(await market.methods.setPriceOverride(new anchor.BN(0)).accountsPartial({ market: pks.market, admin }).rpc());
-					sigs.push(await market.methods.setLiquidity(new anchor.BN(DEFAULT_MARKET.liquidityUsdc)).accountsPartial({ market: pks.market, admin }).rpc());
-				}
-				sigs.push(await basket.methods.updateConfig(await configArgs({})).accountsPartial({ config: CONFIG, admin }).rpc());
+				const sigs = await restoreDemo();
 				return NextResponse.json({ ok: true, signature: sigs[sigs.length - 1], detail: `restored ${MARKETS.length} markets and the thresholds` });
 			}
 			case "nudge": {

@@ -113,6 +113,32 @@ price that stopped on Friday. The first one on record starts on Friday
 2026-09-18 at 20:00 ET, after submission, and the page keeps collecting
 through judging. VOOx is left out because Jupiter reports it not tradable.
 
+## Guard API
+
+The guard is also a public HTTP API, so any app about to buy an xStock on
+Solana mainnet (a wallet, a recurring-buy tool, a lending protocol pricing
+collateral) can ask the question bozBasket's keeper asks, for its own size and
+its own limits:
+
+```bash
+curl "https://boz-basket-web.vercel.app/api/v1/verdict?symbol=TSLAx&usdc=500"
+```
+
+It takes a live Jupiter quote for that size and the latest Pyth price, runs
+both through `checkLeg`, and answers `buy`, `defer` or `unavailable` for
+each xStock. With the verdict come the reason code the program would write and
+the numbers behind it: the Pyth price with its age and confidence, and the
+price per share Jupiter quotes, with the issuer's multiplier applied, its price
+impact and the signed gap. `/api/v1/history` serves the recorded checks behind
+the landing-page chart, and `/api/v1/openapi.json` describes both endpoints.
+[`/developers`](https://boz-basket-web.vercel.app/developers) documents them
+and sends live requests from the page.
+
+It is read-only, needs no key, is open to browsers, caches identical requests
+for 15 seconds and allows 60 requests a minute per address. It answers for a
+quote, not a fill, and runs on a free tier with no uptime promise, so a caller
+should ask right before swapping and treat `unavailable` as `defer`.
+
 ## Architecture
 
 ```
@@ -170,7 +196,8 @@ necessarily mocked. Being precise about which parts:
 - Two demo controls tighten a `Config` ceiling rather than corrupting a feed,
   because nobody can make Pyth publish a bad price on demand. The other two
   change the venue's real quote and depth. `docs/DEMO.md` spells out which is
-  which.
+  which. Left untouched for ten minutes, a changed demo restores itself on the
+  next keeper pass, so one visitor cannot leave it broken for the next.
 
 **Not built**
 - Mainnet execution through Jupiter. The program is structured for it — the

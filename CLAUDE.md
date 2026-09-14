@@ -282,6 +282,21 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
 - `/api/shadow` summarises the last seven days; `components/MainnetShadow.tsx`
   renders it under the live proof on the landing page.
 
+## Guard API and demo self-restore (2026-09-14)
+
+- `apps/web/src/lib/guardApi.ts` is the whole v1 contract, pure and tested:
+  query parsing, verdict shaping, the overall verdict. Routes under
+  `app/api/v1/` (verdict, history, openapi.json) only do I/O, send CORS
+  headers and rate limit per instance. `/developers` is the docs page.
+- The verdict route calls `MainnetShadow.sample(now, {}, { usdcIn, limits,
+  only })` from `keeper/shadow`; any change to the recorded check changes the
+  API too. Keep `/api/v1` backwards compatible: add fields, never rename.
+- `lib/demoState.ts`: every demo POST stamps `demo_activity`; after each
+  in-app keeper pass, still under the lock, `autoRestoreDemo` restores when a
+  control is still in effect and nothing was touched for 10 minutes. Drift
+  ignores depth above half the default, because fills draw depth down, or it
+  would restore after every execution.
+
 ## Deployed (day 7, 2026-09-13)
 
 - Web: https://boz-basket-web.vercel.app (Vercel project `boz-basket-web`,

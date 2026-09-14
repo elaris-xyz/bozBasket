@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DEMO_STOCKS } from "@bozbasket/shared";
 import { EXPLORER } from "@/lib/solana";
+import { fmtTs } from "@/lib/format";
 import { GuardPanel } from "@/components/GuardPanel";
 import { usePlans } from "@/lib/usePlans";
 import { useDemoWallet } from "@/lib/wallet";
@@ -27,12 +28,16 @@ export default function DemoPage() {
 	const [result, setResult] = useState<Result | null>(null);
 	const [refreshKey, setRefreshKey] = useState(0);
 	const [enabled, setEnabled] = useState<boolean | null>(null);
+	const [autoRestore, setAutoRestore] = useState<{ mins: number; lastAt: number | null } | null>(null);
 	const selected = plan || plans[0]?.address.toBase58() || "";
 
 	useEffect(() => {
 		fetch("/api/demo")
 			.then((r) => r.json())
-			.then((b) => setEnabled(!!b.enabled))
+			.then((b) => {
+				setEnabled(!!b.enabled);
+				if (typeof b.autoRestoreMins === "number") setAutoRestore({ mins: b.autoRestoreMins, lastAt: b.autoRestoredAt ?? null });
+			})
 			.catch(() => setEnabled(false));
 	}, []);
 
@@ -118,6 +123,12 @@ export default function DemoPage() {
 					</button>
 				</div>
 
+				{autoRestore && enabled && (
+					<p className="text-xs text-slate-500">
+						Left untouched for {autoRestore.mins} minutes, the demo restores itself, so the next visitor finds it working
+						{autoRestore.lastAt ? `. It last did so ${fmtTs(autoRestore.lastAt)}.` : "."}
+					</p>
+				)}
 				{busy && <p className="text-xs text-mint">{busy}…</p>}
 				{result && (
 					<p className={`break-words text-xs ${result.ok ? "text-mint" : "text-rose"}`}>

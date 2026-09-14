@@ -69,3 +69,9 @@ test("the mainnet RPC is the Helius twin of a Helius devnet URL, else the public
 	assert.equal(mainnetRpcFor("https://api.devnet.solana.com"), MAINNET_RPC_DEFAULT);
 	assert.equal(mainnetRpcFor("not a url"), MAINNET_RPC_DEFAULT);
 });
+
+test("caller limits replace the defaults, and a failed check keeps the caller's size", () => {
+	const strict = shadowRow({ ...base, ref: ref(703.73), outAmount: measuredOut, multiplier: 1.0027250296551051, limits: { maxStalenessSecs: 120, maxConfBps: 50, maxDivergenceBps: 10, minLiquidityUsdc: 500_000_000 } });
+	assert.equal(strict.reason, REASON.DIVERGENCE);
+	assert.equal(failedRow(now, qqqx, "no route", REASON.LOW_LIQUIDITY, 2500).usdcIn, 2500);
+});

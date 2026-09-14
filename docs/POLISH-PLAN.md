@@ -31,6 +31,11 @@ use?* Everything below is chosen against that, not against a feature list.
   multiplier, and the landing page charts the verdicts. The first weekend on
   record starts Friday 20:00 ET, after submission; the page keeps collecting
   through judging, which ends 2 October.
+- **Added 2026-09-14: the Guard API, and a demo that restores itself.** The
+  mainnet check is now a public endpoint any app can call for its own size and
+  limits, with an OpenAPI description and a `/developers` page. The finding
+  below is fixed: ten idle minutes after a control, the next keeper pass
+  restores the demo.
 - **Found on day 3: demo controls stay on until someone presses Restore.** A
   TSLA price override, $10 depth and a 0 bps confidence ceiling were still
   active on devnet, which would have stopped Monday's execution. Restored.

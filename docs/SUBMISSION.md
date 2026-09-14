@@ -9,10 +9,13 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] All six guard reason codes reproduced on chain, transactions in `docs/DEMO.md`
 - [x] Web app: demo wallet, basket builder, plan page, portfolio, history, guard panel, demo controls
 - [x] Keeper: session calendar, Hermes, Pyth receiver posting, Postgres ledger
-- [x] Tests: 9 Rust, 32 Anchor integration, 19 keeper (guard, calendar, mainnet check), 19 web (scorecard, mainnet summary), all re-run 2026-09-14
+- [x] Tests: 9 Rust, 32 Anchor integration, 20 keeper (guard, calendar, mainnet check), 36 web (scorecard, mainnet summary, deferral text, Guard API, demo restore), all re-run 2026-09-14
 - [x] Mainnet check: every keeper pass prices $100 of TSLAx and QQQx on Jupiter
   against Pyth, read-only, and records the guard's verdict; the landing page
   charts it
+- [x] Guard API v1: `/api/v1/verdict` (live verdict for any size and limits),
+  `/api/v1/history`, an OpenAPI 3.1 description and the `/developers` page
+- [x] Demo controls restore themselves after ten idle minutes
 - [x] README: problem, architecture, quickstart, what is synthetic, why Solana
 - [x] MIT license
 - [x] No keypairs in git history (`*.keypair.json` and `.env` ignored from the first commit)
@@ -92,6 +95,7 @@ deferred" can never be confused with "nothing is running".
 
 - Devnet program: `4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR`
 - The three Pyth equity feeds in use: TSLA, QQQ, VOO
+- Guard API docs: https://boz-basket-web.vercel.app/developers
 - Mainnet xStocks in the read-only check: TSLAx
   `XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB`, QQQx
   `Xs8S1uUs1zvS2p7iwtsG3b6fkhpvmwz4GYU3gWAmWHZ`
