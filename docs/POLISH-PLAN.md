@@ -139,8 +139,9 @@ Progress (Monday 2026-09-14):
 - Found: Pyth publishes US equities outside the regular session; only Friday
   20:00 to Sunday 20:00 ET is stale. The "136 stale hours" claim is gone from
   the README, DEMO and VIDEO.
-- Found: production has `OFF_HOURS_POLICY=strict` (skipped rows every five
-  minutes). The user removes it in Vercel.
+- Found: production had `OFF_HOURS_POLICY=strict` (skipped rows every five
+  minutes). Removed in Vercel; after the redeploy production filled a due plan
+  at 03:37 ET, with no GitHub Action run in that window.
 - `scenarios.ts` now holds the shared keeper lock, since "nudge" starts an
   in-app pass that would race it, and restores the deployment in `finally`.
   Not yet run against the deployment: Vercel's security checkpoint challenges

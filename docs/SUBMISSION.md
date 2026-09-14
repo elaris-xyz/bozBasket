@@ -22,11 +22,10 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] ~~Deploy the web app to Vercel~~ — https://boz-basket-web.vercel.app
 - [x] ~~Add `DEMO_CONTROLS=1` and `KEEPER_SECRET_KEY` in Vercel~~
 - [x] ~~Create the cron-job.org job~~ — its passes are in the ledger every five minutes on 2026-09-14
-- [ ] **Delete `OFF_HOURS_POLICY` from the Vercel environment variables**, then
-  redeploy. It is set to `strict` there: at 02:42 ET on Monday 2026-09-14
-  production skipped a due plan as "outside regular hours" while the Pyth
-  price was seconds old. Unset, the web app runs `guarded`, like the GitHub
-  Action, and the program judges the price rather than the calendar.
+- [x] ~~Delete `OFF_HOURS_POLICY` from the Vercel environment variables~~ — done
+  2026-09-14. It had been `strict`: at 02:42 ET production skipped a due plan
+  as "outside regular hours" while the Pyth price was seconds old. After the
+  redeploy, at 03:37 ET, production filled that plan.
 - [ ] **Take two screenshots** for the README, 1600 px wide: the demo plan page
   (scorecard and history) as `docs/img/plan.png`, and a plan's guard panel
   with a demo control applied as `docs/img/guard.png`
