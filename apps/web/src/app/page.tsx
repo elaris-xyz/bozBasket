@@ -6,6 +6,7 @@ import { usePlans } from "@/lib/usePlans";
 import { PlanCard } from "@/components/PlanCard";
 import { KeeperStatus } from "@/components/KeeperStatus";
 import { LiveProof } from "@/components/LiveProof";
+import { MainnetShadow } from "@/components/MainnetShadow";
 import { DEMO_PLAN } from "@/lib/solana";
 
 export default function Home() {
@@ -48,6 +49,8 @@ export default function Home() {
 			</section>
 
 			<LiveProof />
+
+			<MainnetShadow />
 
 			<section>
 				<div className="mb-3 flex items-center justify-between">

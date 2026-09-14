@@ -21,6 +21,20 @@ export type StockSymbol = keyof typeof PYTH_FEEDS;
 /** Feeds the demo can actually price on devnet. */
 export const DEMO_SYMBOLS = ["TSLA", "QQQ", "VOO"] as const satisfies readonly StockSymbol[];
 
+/** USDC on Solana mainnet. */
+export const MAINNET_USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+/** xStocks on Solana mainnet that a feed above prices and Jupiter routes, for
+ *  the read-only mainnet shadow check; nothing ever buys them. Token-2022
+ *  mints with 8 decimals and the scaled UI amount extension, which carries the
+ *  issuer's share multiplier. Mints from Jupiter's verified token list on
+ *  2026-09-14. VOOx (Xsd7TduTbjuYCFL7Uoujb8SbkZLmUsuYNLn7KdvX21x) exists, but
+ *  Jupiter reported it not tradable that day. */
+export const MAINNET_XSTOCKS = [
+	{ symbol: "TSLAx", ticker: "TSLA", mint: "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", feedId: PYTH_FEEDS.TSLA, decimals: 8 },
+	{ symbol: "QQQx", ticker: "QQQ", mint: "Xs8S1uUs1zvS2p7iwtsG3b6fkhpvmwz4GYU3gWAmWHZ", feedId: PYTH_FEEDS.QQQ, decimals: 8 },
+] as const;
+
 /** Pyth receiver program, same address on devnet and mainnet. */
 export const PYTH_RECEIVER_PROGRAM_ID = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ";
 /** Pyth push-oracle program (sponsored feeds live under it), devnet and mainnet. */

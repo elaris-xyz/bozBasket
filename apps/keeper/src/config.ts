@@ -26,6 +26,12 @@ export type KeeperConfig = {
 	/** Do not submit at all when the reference is older than this. */
 	skipStaleOlderThanSecs: number;
 	referenceSource: ReferenceSource;
+	/** Mainnet RPC for the read-only shadow check (xStock share multipliers). */
+	mainnetRpcUrl?: string;
+	/** Jupiter API base for the shadow check's quotes. */
+	jupiterUrl?: string;
+	/** false turns the mainnet shadow check off. */
+	mainnetShadow?: boolean;
 };
 
 function required(name: string): string {
@@ -64,6 +70,9 @@ export function loadConfig(): KeeperConfig {
 		computeUnitPriceMicroLamports: Number(process.env.CU_PRICE_MICROLAMPORTS ?? 50_000),
 		skipStaleOlderThanSecs: Number(process.env.SKIP_STALE_OLDER_THAN_SECS ?? 7 * 86_400),
 		referenceSource: (process.env.REFERENCE_SOURCE as ReferenceSource) ?? "pyth",
+		mainnetRpcUrl: process.env.MAINNET_RPC_URL || undefined,
+		jupiterUrl: process.env.JUPITER_API_URL || undefined,
+		mainnetShadow: process.env.MAINNET_SHADOW !== "0",
 	};
 }
 

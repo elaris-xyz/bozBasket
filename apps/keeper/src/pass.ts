@@ -13,8 +13,9 @@ import type { Deployment, KeeperConfig } from "./config";
 import { Executor, type PassResult } from "./executor";
 import { HermesClient } from "./hermes";
 import { LogLedger, PgLedger, type Ledger } from "./ledger";
+import { JUPITER_API_DEFAULT, MainnetShadow, mainnetRpcFor } from "./shadow";
 
-export type Keeper = { chain: Chain; cfg: KeeperConfig; executor: Executor; ledger: Ledger };
+export type Keeper = { chain: Chain; cfg: KeeperConfig; executor: Executor; ledger: Ledger; shadow: MainnetShadow | null };
 
 export type Log = (message: string) => void;
 
@@ -47,7 +48,8 @@ export async function createKeeper(cfg: KeeperConfig, deployment: Deployment, op
 		log("ledger: log only (DATABASE_URL unset)");
 	}
 
-	return { chain, cfg, executor: new Executor(chain, cfg, deployment, hermes, ledger), ledger };
+	const shadow = cfg.mainnetShadow === false ? null : new MainnetShadow(hermes, cfg.mainnetRpcUrl ?? mainnetRpcFor(cfg.rpcUrl), cfg.jupiterUrl ?? JUPITER_API_DEFAULT);
+	return { chain, cfg, executor: new Executor(chain, cfg, deployment, hermes, ledger), ledger, shadow };
 }
 
 export type PlanOutcome = { plan: string; kind: PassResult["kind"]; signature?: string; detail: string };
@@ -105,6 +107,22 @@ export async function runPass(k: Keeper, opts: { onlyPlan?: string; deadline?: n
 			outcomes.push({ plan: address, kind: "error", detail });
 			log(`  ${address}: failed ${detail}`);
 			await ledger.record({ plan: address, ts: planNow, kind: "error", reason: 0, detail, signature: null, usdcIn: null, legs: null });
+		}
+	}
+
+	// The mainnet shadow check rides along after the plans, which always come
+	// first, and never fails the pass. A single-plan run is a test; it skips it.
+	if (k.shadow && !opts.onlyPlan && (opts.deadline === undefined || Date.now() < opts.deadline)) {
+		const shadowNow = now + Math.floor((Date.now() - startedMs) / 1000);
+		try {
+			const { due: shadowDue, multipliers } = await ledger.shadowDue(shadowNow);
+			if (shadowDue) {
+				const rows = await k.shadow.sample(shadowNow, multipliers);
+				await ledger.recordShadow(rows);
+				log(`  mainnet shadow: ${rows.map((r) => (r.error ? `${r.symbol} ${r.error}` : `${r.symbol} ${r.divergenceBps?.toFixed(1)} bps, reason ${r.reason}`)).join(" | ")}`);
+			}
+		} catch (err) {
+			log(`  mainnet shadow failed: ${(err as Error).message.slice(0, 200)}`);
 		}
 	}
 

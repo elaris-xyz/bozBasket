@@ -1,8 +1,10 @@
 // Postgres ledger of every keeper decision. The chain is the source of truth;
 // this exists so the web app can list history and deferral reasons without
-// scanning transaction logs.
+// scanning transaction logs. It also keeps the mainnet shadow check
+// (./shadow), which has no chain state behind it at all.
 
 import { Pool } from "pg";
+import { SHADOW_EVERY_SECS, type ShadowRow } from "./shadow";
 
 export type LedgerRow = {
 	plan: string;
@@ -28,8 +30,52 @@ export type Heartbeat = { ts: number; cluster: string; activePlans: number; dueP
 export interface Ledger {
 	record(row: LedgerRow): Promise<void>;
 	beat(h: Heartbeat): Promise<void>;
+	/** Whether the mainnet shadow check is due, and the last share multiplier
+	 *  stored per mint, for when the mainnet RPC is unreachable. */
+	shadowDue(now: number): Promise<{ due: boolean; multipliers: Record<string, number> }>;
+	recordShadow(rows: ShadowRow[]): Promise<void>;
 	close(): Promise<void>;
 }
+
+const SHADOW_COLUMNS = [
+	"ts",
+	"symbol",
+	"mint",
+	"usdc_in",
+	"shares",
+	"venue_price",
+	"price_impact_bps",
+	"route",
+	"multiplier",
+	"liquidity_usd",
+	"ref_price",
+	"ref_age_secs",
+	"conf_bps",
+	"divergence_bps",
+	"reason",
+	"session",
+	"error",
+] as const;
+
+const shadowValues = (r: ShadowRow) => [
+	r.ts,
+	r.symbol,
+	r.mint,
+	r.usdcIn,
+	r.shares,
+	r.venuePrice,
+	r.priceImpactBps,
+	r.route,
+	r.multiplier,
+	r.liquidityUsd,
+	r.refPrice,
+	r.refAgeSecs,
+	r.confBps,
+	r.divergenceBps,
+	r.reason,
+	r.session,
+	r.error,
+];
 
 export class PgLedger implements Ledger {
 	private pool: Pool;
@@ -63,6 +109,27 @@ export class PgLedger implements Ledger {
 				due_plans    int     NOT NULL DEFAULT 0,
 				note         text
 			);
+			CREATE TABLE IF NOT EXISTS mainnet_shadow (
+				id               bigserial        PRIMARY KEY,
+				ts               bigint           NOT NULL,
+				symbol           text             NOT NULL,
+				mint             text             NOT NULL,
+				usdc_in          double precision NOT NULL,
+				shares           double precision,
+				venue_price      double precision,
+				price_impact_bps double precision,
+				route            text,
+				multiplier       double precision,
+				liquidity_usd    double precision,
+				ref_price        double precision,
+				ref_age_secs     bigint,
+				conf_bps         double precision,
+				divergence_bps   double precision,
+				reason           smallint,
+				session          text             NOT NULL,
+				error            text
+			);
+			CREATE INDEX IF NOT EXISTS mainnet_shadow_ts ON mainnet_shadow (ts DESC);
 		`);
 	}
 
@@ -95,6 +162,35 @@ export class PgLedger implements Ledger {
 		}
 	}
 
+	async shadowDue(now: number) {
+		try {
+			const r = await this.pool.query(
+				`SELECT (SELECT max(ts) FROM mainnet_shadow) AS last,
+				        (SELECT json_object_agg(mint, multiplier) FROM (
+				           SELECT DISTINCT ON (mint) mint, multiplier FROM mainnet_shadow
+				            WHERE multiplier IS NOT NULL ORDER BY mint, ts DESC
+				        ) latest) AS multipliers`,
+			);
+			const row = r.rows[0] ?? {};
+			const last = row.last === null || row.last === undefined ? null : Number(row.last);
+			return { due: last === null || now - last >= SHADOW_EVERY_SECS, multipliers: (row.multipliers ?? {}) as Record<string, number> };
+		} catch (err) {
+			console.warn(`ledger: shadow check skipped (${(err as Error).message})`);
+			return { due: false, multipliers: {} };
+		}
+	}
+
+	async recordShadow(rows: ShadowRow[]) {
+		if (rows.length === 0) return;
+		const width = SHADOW_COLUMNS.length;
+		const tuples = rows.map((_, i) => `(${SHADOW_COLUMNS.map((__, j) => `$${i * width + j + 1}`).join(",")})`).join(",");
+		try {
+			await this.pool.query(`INSERT INTO mainnet_shadow (${SHADOW_COLUMNS.join(",")}) VALUES ${tuples}`, rows.flatMap(shadowValues));
+		} catch (err) {
+			console.warn(`ledger: shadow insert failed (${(err as Error).message})`);
+		}
+	}
+
 	async close() {
 		await this.pool.end();
 	}
@@ -102,11 +198,19 @@ export class PgLedger implements Ledger {
 
 /** Used when DATABASE_URL is unset: prints instead of storing. */
 export class LogLedger implements Ledger {
+	private shadowAt = 0;
 	async record(r: LedgerRow) {
 		console.log(`[ledger] ${r.kind} plan=${r.plan} reason=${r.reason} ${r.detail ?? ""} ${r.signature ?? ""}`);
 	}
 	async beat(h: Heartbeat) {
 		console.log(`[ledger] heartbeat ${new Date(h.ts * 1000).toISOString()} ${h.activePlans} active, ${h.duePlans} due`);
+	}
+	async shadowDue(now: number) {
+		return { due: now - this.shadowAt >= SHADOW_EVERY_SECS, multipliers: {} };
+	}
+	async recordShadow(rows: ShadowRow[]) {
+		if (rows[0]) this.shadowAt = rows[0].ts;
+		for (const r of rows) console.log(`[ledger] shadow ${r.symbol} ${r.error ?? `${r.divergenceBps?.toFixed(1)} bps, reason ${r.reason}`}`);
 	}
 	async close() {}
 }

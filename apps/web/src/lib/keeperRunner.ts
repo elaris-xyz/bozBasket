@@ -54,6 +54,9 @@ function keeperConfig(): KeeperConfig {
 		computeUnitPriceMicroLamports: Number(process.env.CU_PRICE_MICROLAMPORTS ?? 50_000),
 		skipStaleOlderThanSecs: Number(process.env.SKIP_STALE_OLDER_THAN_SECS ?? 7 * 86_400),
 		referenceSource: process.env.REFERENCE_SOURCE === "mock" ? "mock" : "pyth",
+		mainnetRpcUrl: process.env.MAINNET_RPC_URL || undefined,
+		jupiterUrl: process.env.JUPITER_API_URL || undefined,
+		mainnetShadow: process.env.MAINNET_SHADOW !== "0",
 	};
 }
 
