@@ -113,8 +113,8 @@ export default function DemoPage() {
 						</button>
 					))}
 					<button className="btn-primary h-full flex-col !items-start gap-1 text-left" disabled={!!busy || !selected || enabled === false} onClick={() => run("nudge", "Make the plan due")}>
-						<span className="font-semibold">Advance the clock</span>
-						<span className="text-xs font-normal opacity-80">Plan becomes due now; the keeper picks it up on its next pass.</span>
+						<span className="font-semibold">Make the plan due</span>
+						<span className="text-xs font-normal opacity-80">A keeper pass starts at once; the result appears in the plan&apos;s History within about a minute.</span>
 					</button>
 				</div>
 
@@ -137,11 +137,20 @@ export default function DemoPage() {
 			{selected && <GuardPanel plan={selected} refreshKey={refreshKey} />}
 
 			<div className="card text-xs text-slate-400">
-				<p className="label mb-1">Running the keeper</p>
+				<p className="label mb-1">The keeper</p>
 				<p>
-					The keeper is a separate process; these controls only change chain state. Start it with{" "}
-					<code className="rounded bg-black/40 px-1">pnpm --filter keeper start</code> (add <code className="rounded bg-black/40 px-1">OFF_HOURS_POLICY=guarded</code> to let
-					it submit outside the US session, so the deferral is recorded on chain rather than skipped).
+					The keeper runs inside this app, so there is nothing to start. Open pages ask for a pass about once a minute, a scheduler every five minutes, and{" "}
+					<span className="text-slate-200">Make the plan due</span> starts one at once. Every copy shares one lock, so a plan is never attempted twice at the same time.
+					Each attempt is a real transaction, and the program alone decides whether it fills or defers.
+					{selected && (
+						<>
+							{" "}
+							<Link className="underline" href={`/plan/${selected}`}>
+								Open this plan&apos;s History
+							</Link>
+							.
+						</>
+					)}
 				</p>
 			</div>
 		</div>

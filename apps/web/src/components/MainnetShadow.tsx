@@ -68,6 +68,12 @@ export function MainnetShadow() {
 	}
 
 	const head = headline(rows);
+	// Symmetric around zero with the guard's limit always in view, and ticks
+	// short enough for a narrow axis: "-175 bp" wrapped onto the time axis.
+	const limit = limits.maxDivergenceBps;
+	const maxAbs = series.reduce((m, r) => Math.max(m, ...symbols.map((s) => Math.abs(r[s] ?? 0))), 0);
+	const bound = Math.ceil(Math.max(maxAbs, limit + 25) / 25) * 25;
+	const ticks = [...(bound > limit + 25 ? [-bound] : []), -limit, -limit / 2, 0, limit / 2, limit, ...(bound > limit + 25 ? [bound] : [])];
 	const deferrals = Object.entries(summary.byReason).sort(([, a], [, b]) => b - a);
 	const worst = summary.worstPremium;
 
@@ -114,32 +120,36 @@ export function MainnetShadow() {
 			</ul>
 
 			{series.length >= 2 ? (
-				<div className="mt-4 h-48 sm:h-56" aria-label="Gap between the Jupiter price and the Pyth price over time, in basis points">
-					<ResponsiveContainer>
-						<LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-							<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
-							<XAxis dataKey="ts" type="number" domain={["dataMin", "dataMax"]} tickFormatter={tickTime} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
-							<YAxis
-								stroke="#64748b"
-								fontSize={11}
-								tickLine={false}
-								width={52}
-								unit=" bp"
-								domain={[(min: number) => Math.min(Math.floor(min), -limits.maxDivergenceBps - 25), (max: number) => Math.max(Math.ceil(max), limits.maxDivergenceBps + 25)]}
-							/>
-							<ReferenceLine y={limits.maxDivergenceBps} stroke="#F59E0B" strokeDasharray="4 4" />
-							<ReferenceLine y={-limits.maxDivergenceBps} stroke="#F59E0B" strokeDasharray="4 4" />
-							<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
-							<Tooltip
-								labelFormatter={(ts) => fmtTs(Number(ts))}
-								formatter={(v: number, name: string) => [`${v > 0 ? "+" : ""}${v} bps`, name]}
-								contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }}
-							/>
-							{symbols.map((s) => (
-								<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={1.5} connectNulls isAnimationActive={false} />
-							))}
-						</LineChart>
-					</ResponsiveContainer>
+				<div className="mt-4">
+					<p className="mb-1 text-xs text-slate-500">Gap to the Pyth price, in bps. Dashed: the guard&apos;s limit.</p>
+					<div className="h-48 sm:h-56" aria-label="Gap between the Jupiter price and the Pyth price over time, in basis points">
+						<ResponsiveContainer>
+							<LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+								<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
+								<XAxis dataKey="ts" type="number" domain={["dataMin", "dataMax"]} tickFormatter={tickTime} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
+								<YAxis
+									stroke="#64748b"
+									fontSize={11}
+									tickLine={false}
+									width={40}
+									domain={[-bound, bound]}
+									ticks={ticks}
+									tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
+								/>
+								<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
+								<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
+								<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
+								<Tooltip
+									labelFormatter={(ts) => fmtTs(Number(ts))}
+									formatter={(v: number, name: string) => [`${v > 0 ? "+" : ""}${v} bps`, name]}
+									contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }}
+								/>
+								{symbols.map((s) => (
+									<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={1.5} connectNulls isAnimationActive={false} />
+								))}
+							</LineChart>
+						</ResponsiveContainer>
+					</div>
 				</div>
 			) : (
 				<p className="mt-4 text-xs text-slate-500">The chart fills in as checks arrive, one every five minutes.</p>
@@ -147,7 +157,7 @@ export function MainnetShadow() {
 
 			{summary.since !== null && (
 				<p className="mt-3 text-sm text-slate-300">
-					{summary.checks} checks since {fmtTs(summary.since)}. The guard would have bought {summary.wouldBuy} times
+					{summary.checks} price checks across {symbols.join(" and ")} since {fmtTs(summary.since)}. The guard would have bought {summary.wouldBuy} times
 					{deferrals.length > 0 ? ` and deferred ${deferrals.map(([reason, n]) => `${n} for ${reasonLabel(Number(reason)).toLowerCase()}`).join(", ")}` : " and deferred none"}.
 					{worst
 						? ` The most a blind $100 buy would have paid over Pyth: ${fmtGap(worst.bps)} on ${worst.symbol}, ${fmtTs(worst.ts)}, when the guard would have ${worst.reason === REASON.OK ? "bought, inside its limit" : `deferred for ${reasonLabel(worst.reason).toLowerCase()}`}.`
