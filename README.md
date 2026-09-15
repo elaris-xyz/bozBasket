@@ -6,8 +6,8 @@ to buy when the reference price cannot be trusted.**
 Define a basket once — say TSLA 50% / QQQ 30% / VOO 20%, $100 weekly — deposit
 USDC into a vault only you control, and a keeper buys the whole basket in one
 atomic transaction every period. Before each buy the program checks the Pyth
-reference price, the market session and the venue. If anything is off, the buy
-is **deferred with a reason code written on chain** instead of filled blind.
+reference price and the venue. If anything is off, the buy is **deferred with
+a reason code written on chain** instead of filled blind.
 
 - Repository: https://github.com/elaris-xyz/bozBasket
 - Live demo: https://boz-basket-web.vercel.app
@@ -213,7 +213,9 @@ necessarily mocked. Being precise about which parts:
   can withdraw, at any time, including while the plan is active.
 - Pyth price updates, signed by Pyth and verified on chain by the official
   receiver program, in the same transaction as the execution.
-- The session calendar, derived from Pyth's own published market hours.
+- Off chain, but real: the keeper's session calendar, derived from Pyth's own
+  published market hours. Only the keeper's `strict` policy uses it; the
+  deployment runs `guarded`, and the program never checks the calendar.
 
 **Synthetic on devnet, and clearly labelled in the UI**
 - `mAAPL`-style stock tokens and their fills. `mock_market` mints them at the

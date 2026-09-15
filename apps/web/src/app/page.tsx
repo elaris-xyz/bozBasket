@@ -25,7 +25,7 @@ export default function Home() {
 				<p className="mt-3 text-slate-300 sm:hidden">One basket, one atomic Solana transaction per period, and no buy when the reference price fails the guard.</p>
 				<p className="mt-3 hidden max-w-2xl text-slate-300 sm:block">
 					Define a basket once. A keeper buys every leg in one atomic Solana transaction each period, after checking the Pyth reference price for staleness and
-					confidence, the market session, and the venue for divergence and depth. If anything fails, the buy is deferred with a reason written on chain.
+					confidence, and the venue for divergence and depth. If anything fails, the buy is deferred with a reason written on chain.
 				</p>
 				<div className="mt-5 flex flex-wrap gap-2 sm:gap-3">
 					{w.publicKey ? (
@@ -85,7 +85,7 @@ export default function Home() {
 			<section className="grid gap-4 sm:grid-cols-3">
 				{[
 					["One transaction", "Every leg of the basket fills atomically. All or nothing, sub-cent fees."],
-					["Fair-value guard", "Pyth staleness and confidence, session calendar, venue divergence and depth, checked on chain before any fill."],
+					["Fair-value guard", "Pyth staleness and confidence, venue divergence and depth, checked on chain before any fill. The price decides, not the calendar."],
 					["Deferral, not a blind fill", "Saturday 03:00 does not get filled at whatever the pool says. The plan waits for the next safe window and tells you why."],
 				].map(([t, b]) => (
 					<div key={t} className="card">
