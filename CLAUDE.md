@@ -233,10 +233,12 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   rebalance the other legs so weights always sum to 10 000.
 - `/api/prices` fetches Hermes server-side so the browser never sees
   `PYTH_API_KEY`; `/api/history` reads the keeper's Postgres ledger.
-- `src/generated/` holds copies of the IDLs, the Anchor types and
-  `deploy/devnet.json`, written by `scripts/sync-generated.mjs` on every
-  dev/build and **committed on purpose** so Vercel builds without Anchor.
-  Rerun `pnpm --filter web sync` after `anchor build` or a redeploy.
+- `src/generated/` holds copies of the IDLs, the Anchor types,
+  `deploy/devnet.json` and `deploy/weekend-backtest.json`, written by
+  `scripts/sync-generated.mjs` before dev, build, type-check and test. It is
+  gitignored: Vercel builds without Anchor because `idl/` and `deploy/` are
+  committed and the build script copies them. Rerun `pnpm --filter web sync`
+  after `anchor build` or a redeploy.
 - **US equity feeds publish with exponent -5**, not -8. Prices are
   `price * 10^expo`; never hardcode 1e8 for equities.
 - Anchor event `BN`s serialize to **hex**. The keeper normalizes execution
