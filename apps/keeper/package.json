@@ -14,7 +14,7 @@
     "start": "tsx src/index.ts",
     "once": "tsx src/index.ts --once",
     "setup:devnet": "tsx scripts/setup-devnet.ts",
-    "test": "tsx --test src/calendar.test.ts src/guard.test.ts src/shadow.test.ts",
+    "test": "tsx --test src/calendar.test.ts src/guard.test.ts src/shadow.test.ts src/backtest.test.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
