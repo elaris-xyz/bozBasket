@@ -38,7 +38,11 @@ https://hackathons.solana.com/hackathons/stocklana
   with the mainnet check) and `docs/img/guard.png` (a demo control applied)
 - [ ] Optional: the demo plan page (scorecard and History) as `docs/img/plan.png`
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
-- [ ] **Rotate the Neon database password**; the repo is already public
+- [x] ~~Rotate the Neon database password~~ — decided against on 2026-09-15.
+  Checked first: the password and the database host appear in no commit on any
+  branch and in no tracked file, and `.env` and `.env.railway` are ignored and
+  were never committed. It lives only in the local `.env` files, Vercel and the
+  GitHub Actions secrets.
 - [ ] **Submit the form**: repo link, live demo link, video link
 
 ## Vercel settings

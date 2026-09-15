@@ -71,6 +71,7 @@ export function WeekendBacktest() {
 	const worst = view.symbols.reduce<SymbolView | null>((w, s) => (s.worstOverpay && (!w?.worstOverpay || s.worstOverpay.bps > w.worstOverpay.bps) ? s : w), null);
 	const cheapest = view.symbols.reduce<SymbolView | null>((w, s) => (s.bestUnderpayBps !== null && (w?.bestUnderpayBps == null || s.bestUnderpayBps < w.bestUnderpayBps) ? s : w), null);
 	const limit = view.limitBps;
+	const overpaid = view.symbols.map((s) => `${s.timerOverpaid} of ${s.timerWeekends}`);
 
 	return (
 		<section className="card">
@@ -129,7 +130,7 @@ export function WeekendBacktest() {
 						{pct(s.timerMeanBps)} on {s.symbol}
 					</span>
 				))}{" "}
-				against the price Pyth came back at, and paid more on {view.symbols.map((s) => `${s.timerOverpaid} of ${s.timerWeekends}`).join(" and ")} weekends. What the guard
+				against the price Pyth came back at, and paid more on {overpaid.every((c) => c === overpaid[0]) ? `${overpaid[0]} weekends for each` : `${overpaid.join(" and ")} weekends`}. What the guard
 				removes is the uncertainty, not a premium: a blind buy landed anywhere from {cheapest ? `${pct(cheapest.bestUnderpayBps)} (${cheapest.symbol})` : "–"} to{" "}
 				{worst?.worstOverpay ? `${pct(worst.worstOverpay.bps)} (${worst.symbol})` : "–"} against the first price anyone could vouch for, while the Friday price a timer would
 				have trusted was already stale.
