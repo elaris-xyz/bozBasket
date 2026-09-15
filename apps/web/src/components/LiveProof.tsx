@@ -62,8 +62,10 @@ export function LiveProof() {
 		headline = `The US market is ${session.open ? "open" : "closed"}, and ${why}.`;
 		consequence = "A timer-based bot would buy right now at whatever the pool says. bozBasket defers the buy and records why on chain.";
 	} else if (!session.open) {
-		headline = "The US market is closed, though the last prices are still fresh.";
-		consequence = "The keeper waits for the session to open before buying.";
+		// The deployment runs the keeper "guarded": it judges the price, not the
+		// calendar, and Pyth publishes US equities outside the regular session.
+		headline = "The US regular session is closed, but Pyth is still publishing and every reference price is fresh.";
+		consequence = "The guard judges the price, not the calendar, so a scheduled buy would go through now, as long as the venue quotes close to these prices.";
 	} else {
 		headline = "The US market is open and every reference price is fresh.";
 		consequence = "The guard would let a scheduled buy through, as long as the venue quotes close to these prices.";

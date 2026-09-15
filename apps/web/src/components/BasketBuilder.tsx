@@ -158,7 +158,7 @@ export function BasketBuilder() {
 						</label>
 					</div>
 					<p className="mt-3 text-xs text-slate-500">
-						The first buy is due as soon as the keeper runs, then every {CADENCES.find((c) => c.id === cadence)!.label.toLowerCase()} slot, only during the US session and only when the reference price passes the guard.
+						The first buy is due as soon as the keeper runs, then every {CADENCES.find((c) => c.id === cadence)!.label.toLowerCase()} slot, whenever the reference price passes the guard. Pyth publishes US equities outside the regular session on weekdays, and not at all from Friday 20:00 to Sunday 20:00 ET, so weekend buys wait.
 					</p>
 				</section>
 			</div>

@@ -3,7 +3,7 @@
 import { DEMO_STOCKS } from "@bozbasket/shared";
 import type { LoadedPlan, Prices } from "@/lib/usePlans";
 import { symbolByMint } from "@/lib/solana";
-import { fmtPct, fmtUnits, fmtUsd } from "@/lib/format";
+import { fmtDuration, fmtPct, fmtUnits, fmtUsd } from "@/lib/format";
 
 /** One labelled number in the stacked phone layout. */
 function Stat({ k, v }: { k: string; v: string }) {
@@ -34,13 +34,22 @@ export function Portfolio({ plan, prices }: { plan: LoadedPlan; prices: Prices |
 	const value = rows.every((r) => r.value !== null) ? rows.reduce((s, r) => s + (r.value ?? 0), 0) : null;
 	const pnl = value !== null ? value - invested : null;
 	const dash = (n: number | null) => (n === null ? "—" : fmtUsd(n));
+	// Say what the price is by its age, not the calendar: Pyth publishes outside
+	// the regular session, so "market closed" does not mean "last close".
+	const oldest = prices && prices.rows.length ? Math.max(...prices.rows.map((r) => prices.fetchedAt - r.publishTime)) : null;
+	const priceNote =
+		oldest !== null && oldest > 120
+			? ` (the last price before Pyth paused, ${fmtDuration(oldest)} old)`
+			: prices?.marketHours && !prices.marketHours.isOpen
+				? " (US regular session closed; Pyth is still publishing)"
+				: "";
 
 	return (
 		<div className="card">
 			<div className="flex flex-wrap items-end justify-between gap-3">
 				<div>
 					<h3 className="font-semibold">Portfolio</h3>
-					<p className="text-xs text-slate-500">Valued at the latest Pyth reference price{prices?.marketHours && !prices.marketHours.isOpen ? " (last close; market is closed)" : ""}.</p>
+					<p className="text-xs text-slate-500">Valued at the latest Pyth reference price{priceNote}.</p>
 				</div>
 				<div className="grid w-full grid-cols-3 gap-3 sm:flex sm:w-auto sm:gap-6 sm:text-right">
 					<div>
