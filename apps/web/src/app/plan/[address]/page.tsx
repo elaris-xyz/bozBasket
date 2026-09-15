@@ -52,6 +52,8 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 			</div>
 		);
 	const a = plan.account;
+	// The same test GuardScorecard uses to render at all.
+	const hasScorecard = !!history.scorecard && history.scorecard.deferrals + history.scorecard.executions > 0;
 
 	return (
 		<div className="space-y-5">
@@ -117,16 +119,15 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 
 			<GuardPanel plan={address} refreshKey={refreshKey} />
 
-			<div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-				<div className="space-y-5">
-					<GuardScorecard scorecard={history.scorecard} />
-					<Portfolio plan={plan} prices={prices} />
-					<History rows={history.rows} note={history.note} legTickers={a.legs.slice(0, a.legCount).map((l) => symbolByMint(l.mint.toBase58()).replace(/^m/, ""))} />
-				</div>
-				<div className="space-y-4">
-					<PlanActions plan={plan} onDone={onDone} />
-				</div>
+			{/* The scorecard and the plan's controls share a row; the portfolio
+			    and the history get the full width. The right column used to run
+			    the length of the page holding one short card. */}
+			<div className={`grid gap-5 lg:items-start ${hasScorecard ? "lg:grid-cols-[1fr_320px]" : "lg:grid-cols-[minmax(0,420px)]"}`}>
+				{hasScorecard && <GuardScorecard scorecard={history.scorecard} />}
+				<PlanActions plan={plan} onDone={onDone} />
 			</div>
+			<Portfolio plan={plan} prices={prices} />
+			<History rows={history.rows} note={history.note} legTickers={a.legs.slice(0, a.legCount).map((l) => symbolByMint(l.mint.toBase58()).replace(/^m/, ""))} />
 		</div>
 	);
 }

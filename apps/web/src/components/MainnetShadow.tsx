@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChartLegend } from "@/components/ChartLegend";
 import { DEMO_STOCKS, REASON } from "@bozbasket/shared";
 import type { ShadowResponse } from "@/app/api/shadow/route";
 import type { ShadowPoint } from "@/lib/shadow";
@@ -121,7 +122,7 @@ export function MainnetShadow() {
 
 			{series.length >= 2 ? (
 				<div className="mt-4">
-					<p className="mb-1 text-xs text-slate-500">Gap to the Pyth price, in bps. Dashed: the guard&apos;s limit.</p>
+					<ChartLegend caption="Gap to the Pyth price, in bps" series={symbols.map((s) => ({ name: s, color: colorOf(s) }))} shape="line" />
 					<div className="h-48 sm:h-56" aria-label="Gap between the Jupiter price and the Pyth price over time, in basis points">
 						<ResponsiveContainer>
 							<LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
@@ -136,6 +137,9 @@ export function MainnetShadow() {
 									ticks={ticks}
 									tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
 								/>
+								<ReferenceArea y1={-limit} y2={limit} fill="#10B981" fillOpacity={0.06} stroke="none" />
+								<ReferenceArea y1={limit} y2={bound} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
+								<ReferenceArea y1={-bound} y2={-limit} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
 								<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
 								<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
 								<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
@@ -145,7 +149,7 @@ export function MainnetShadow() {
 									contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }}
 								/>
 								{symbols.map((s) => (
-									<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={1.5} connectNulls isAnimationActive={false} />
+									<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={2} connectNulls isAnimationActive={false} />
 								))}
 							</LineChart>
 						</ResponsiveContainer>
@@ -168,11 +172,14 @@ export function MainnetShadow() {
 				</p>
 			)}
 
-			<p className="mt-3 text-xs text-slate-500">
+			<details className="mt-3 text-xs text-slate-500">
+				<summary className="cursor-pointer select-none text-slate-400 hover:text-slate-200">How this is measured</summary>
+				<p className="mt-2">
 				Nothing is bought on mainnet. Every five minutes the keeper asks Jupiter what $100 of USDC buys in each xStock and runs the answer through the same guard code,
 				with the default limits: {limits.maxStalenessSecs} s staleness, {limits.maxConfBps} bps confidence, {limits.maxDivergenceBps} bps gap (dashed). Share counts include
 				the issuer&apos;s multiplier. VOOx is left out because Jupiter reports it not tradable.
-			</p>
+				</p>
+			</details>
 		</section>
 	);
 }

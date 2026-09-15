@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CartesianGrid, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
+import { CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
 import { DEMO_STOCKS } from "@bozbasket/shared";
 import type { BacktestView, SymbolView } from "@/lib/backtestView";
 import { fmtTs } from "@/lib/format";
+import { ChartLegend } from "@/components/ChartLegend";
 
 const REPO = "https://github.com/elaris-xyz/bozBasket/blob/main";
+const Y_BOUND = 250;
 const colorOf = (symbol: string) => DEMO_STOCKS.find((s) => s.ticker === symbol.replace(/x$/, ""))?.color ?? "#94a3b8";
 const pct = (bps: number | null, signed = true) => (bps === null ? "–" : `${signed ? (bps >= 0 ? "+" : "−") : ""}${(Math.abs(bps) / 100).toFixed(2)}%`);
 const day = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -15,22 +17,35 @@ const range = (xs: (number | null)[]) => {
 	return v.length === 0 ? "–" : v[0] === v[v.length - 1] ? v[0] : `${v[0]} to ${v[v.length - 1]}`;
 };
 
+/** The two numbers the card is about, large, and the rest in small print. */
 function Tile({ s, limitBps }: { s: SymbolView; limitBps: number }) {
 	const rows: [string, string][] = [
-		["Weekend buy vs the next Pyth price, median", pct(s.weekendMedianGapBps, false)],
-		["Weekday pool vs Pyth, same moment, median", pct(s.weekdayMedianGapBps, false)],
 		["Worst weekend buy", s.worstOverpay ? `${pct(s.worstOverpay.bps)} (${day(s.worstOverpay.ts)})` : "–"],
 		[`Weekend hours beyond ${limitBps} bps`, s.shareBeyondLimit === null ? "–" : `${(s.shareBeyondLimit * 100).toFixed(1)}%`],
 		["Friday's stale price, off at reopen", `${pct(s.staleMoveMedianBps, false)} median, up to ${pct(s.staleMoveMaxBps, false)}`],
 	];
 	return (
-		<li className="rounded-xl border border-white/10 bg-ink-900/60 p-3">
-			<p className="font-semibold">
-				<span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: colorOf(s.symbol) }} />
-				{s.symbol}
-				<span className="ml-2 text-xs font-normal text-slate-500">{s.tradedHours} traded weekend hours</span>
+		<li className="rounded-xl border border-white/10 bg-ink-900/60 p-4">
+			<p className="flex flex-wrap items-baseline justify-between gap-2">
+				<span className="font-semibold">
+					<span className="mr-1.5 inline-block h-2 w-2 rounded-full align-middle" style={{ background: colorOf(s.symbol) }} aria-hidden />
+					{s.symbol}
+				</span>
+				<span className="text-xs text-slate-500">{s.tradedHours} traded weekend hours</span>
 			</p>
-			<dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-xs">
+			<div className="mt-3 grid grid-cols-2 gap-3">
+				<div>
+					<p className="text-xs text-slate-400">Weekend buy vs next Pyth price</p>
+					<p className="mt-0.5 text-2xl font-semibold text-slate-50">{pct(s.weekendMedianGapBps, false)}</p>
+					<p className="text-[11px] text-slate-500">median distance</p>
+				</div>
+				<div>
+					<p className="text-xs text-slate-400">Weekdays, same pools</p>
+					<p className="mt-0.5 text-2xl font-semibold text-slate-400">{pct(s.weekdayMedianGapBps, false)}</p>
+					<p className="text-[11px] text-slate-500">median distance</p>
+				</div>
+			</div>
+			<dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 border-t border-white/5 pt-3 text-xs">
 				{rows.map(([k, v]) => (
 					<div key={k} className="contents">
 						<dt className="text-slate-500">{k}</dt>
@@ -76,7 +91,7 @@ export function WeekendBacktest() {
 	return (
 		<section className="card">
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				<p className="label">The last {weekends} weekends, measured</p>
+				<p className="label">The last {weekends} weekends</p>
 				<span className="pill bg-white/10 text-slate-300">real pool trades · Pyth history</span>
 			</div>
 			<p className="mt-2 text-lg font-semibold leading-snug text-slate-100">
@@ -90,15 +105,28 @@ export function WeekendBacktest() {
 				))}
 			</ul>
 
-			<div className="mt-4">
-				<p className="mb-1 text-xs text-slate-500">Each dot is one weekend hour in which the pool traded: its price against the next Pyth price, in bps. Dashed: the guard&apos;s limit.</p>
-				<div className="h-56" aria-label="Weekend pool prices against the next Pyth price, per traded hour">
+			<div className="mt-5">
+				<ChartLegend caption="Each dot: one traded weekend hour, against the next Pyth price, in bps" series={bySymbol.map((s) => ({ name: s, color: colorOf(s) }))} shape="dot" />
+				<div className="h-56 sm:h-64" aria-label="Weekend pool prices against the next Pyth price, per traded hour">
 					<ResponsiveContainer>
 						<ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
 							<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
 							<XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} tickFormatter={day} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={40} />
-							<YAxis dataKey="y" type="number" stroke="#64748b" fontSize={11} tickLine={false} width={40} domain={[-250, 250]} ticks={[-200, -limit, 0, limit, 200]} tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))} />
-							<ZAxis range={[10, 10]} />
+							<YAxis
+								dataKey="y"
+								type="number"
+								stroke="#64748b"
+								fontSize={11}
+								tickLine={false}
+								width={40}
+								domain={[-Y_BOUND, Y_BOUND]}
+								ticks={[-200, -limit, 0, limit, 200]}
+								tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
+							/>
+							<ZAxis range={[40, 40]} />
+							<ReferenceArea y1={-limit} y2={limit} fill="#10B981" fillOpacity={0.06} stroke="none" />
+							<ReferenceArea y1={limit} y2={Y_BOUND} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
+							<ReferenceArea y1={-Y_BOUND} y2={-limit} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
 							<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
 							<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
 							<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
@@ -113,7 +141,7 @@ export function WeekendBacktest() {
 									name={symbol}
 									data={view.points.filter((p) => p.symbol === symbol).map((p) => ({ x: p.ts, y: p.bps }))}
 									fill={colorOf(symbol)}
-									fillOpacity={0.7}
+									fillOpacity={0.55}
 									isAnimationActive={false}
 								/>
 							))}
@@ -122,8 +150,8 @@ export function WeekendBacktest() {
 				</div>
 			</div>
 
-			<p className="mt-3 text-sm text-slate-300">
-				Waiting did not save money on average here. A weekly buy at Saturday noon ET came in{" "}
+			<p className="mt-4 text-sm leading-relaxed text-slate-300">
+				<span className="font-semibold text-slate-100">Waiting did not save money on average here.</span> A weekly buy at Saturday noon ET came in{" "}
 				{view.symbols.map((s, i) => (
 					<span key={s.symbol}>
 						{i > 0 && " and "}
@@ -135,18 +163,21 @@ export function WeekendBacktest() {
 				{worst?.worstOverpay ? `${pct(worst.worstOverpay.bps)} (${worst.symbol})` : "–"} against the first price anyone could vouch for, while the Friday price a timer would
 				have trusted was already stale.
 			</p>
-			<p className="mt-3 text-xs text-slate-500">
-				Weekends of {view.from} to {view.to}. Pool prices are hourly closes of the deepest USDC pool of each xStock (GeckoTerminal), per share; Pyth prices come from its
-				history, which reaches back about eight weeks. The weekend measure spans up to two days of market movement; the weekday one compares prices at the same moment.{" "}
-				<a className="underline" href={`${REPO}/apps/keeper/scripts/backtest-weekends.ts`} target="_blank" rel="noreferrer">
-					Reproduce it
-				</a>{" "}
-				or read{" "}
-				<a className="underline" href={`${REPO}/deploy/weekend-backtest.json`} target="_blank" rel="noreferrer">
-					the data
-				</a>
-				.
-			</p>
+			<details className="mt-3 text-xs text-slate-500">
+				<summary className="cursor-pointer select-none text-slate-400 hover:text-slate-200">How this is measured</summary>
+				<p className="mt-2">
+					Weekends of {view.from} to {view.to}. Pool prices are hourly closes of the deepest USDC pool of each xStock (GeckoTerminal), per share; Pyth prices come from its
+					history, which reaches back about eight weeks. The weekend measure spans up to two days of market movement; the weekday one compares prices at the same moment.{" "}
+					<a className="underline" href={`${REPO}/apps/keeper/scripts/backtest-weekends.ts`} target="_blank" rel="noreferrer">
+						Reproduce it
+					</a>{" "}
+					or read{" "}
+					<a className="underline" href={`${REPO}/deploy/weekend-backtest.json`} target="_blank" rel="noreferrer">
+						the data
+					</a>
+					.
+				</p>
+			</details>
 		</section>
 	);
 }
