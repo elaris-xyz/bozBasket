@@ -109,9 +109,42 @@ Two details decide whether the number means anything:
 - The reference age is Pyth's own publish time, never restamped.
 
 The window that matters is the weekend, when the pools keep quoting against a
-price that stopped on Friday. The first one on record starts on Friday
-2026-09-18 at 20:00 ET, after submission, and the page keeps collecting
-through judging. VOOx is left out because Jupiter reports it not tradable.
+price that stopped on Friday. The live check has none on record until Friday
+2026-09-18 at 20:00 ET and keeps collecting through judging; the eight
+weekends before it are measured from history below. VOOx is left out because
+Jupiter reports it not tradable.
+
+## Eight weekends, measured
+
+The weekends before the live check are measured from history: hourly candles
+of the deepest USDC pool of each xStock (GeckoTerminal, divided by the share
+multiplier) and Pyth's last price before each weekend and first price after it
+(Hermes history, which reaches back about eight weeks). Every hour the pool
+traded in between is compared with that first price back.
+`apps/keeper/scripts/backtest-weekends.ts` reproduces it, and the output is
+[`deploy/weekend-backtest.json`](deploy/weekend-backtest.json).
+
+| Weekends of 2026-07-24 to 2026-09-11 | TSLAx | QQQx |
+|---|---|---|
+| Traded weekend hours | 405 | 399 |
+| Weekend buy against the next Pyth price, median distance | 53 bps | 45 bps |
+| Weekday pool against Pyth at the same moment, median distance | 13 bps | 15 bps |
+| Worst weekend buy, above the next Pyth price | +1.92% | +1.84% |
+| Weekend hours beyond the guard's 150 bps limit | 5.9% | 3.0% |
+| Friday's stale price against the next Pyth price, median move | 60 bps | 43 bps |
+| A weekly buy at Saturday 12:00 ET, mean against the next Pyth price | −27 bps | −8 bps |
+| Weekends on which that Saturday buy paid more | 3 of 8 | 3 of 8 |
+
+What this does and does not show. Waiting did not save money on average: over
+these eight weekends prices mostly rose by the time Pyth came back, so the
+Saturday buyer paid a little less. The weekend measure also spans up to two
+days of market movement, while the weekday one compares prices at the same
+moment. What it shows is how uncertain a weekend price is. A blind TSLAx buy
+landed anywhere from 1.96% below to 1.92% above the first price anyone could
+vouch for, and the Friday price a timer would have trusted was itself a median
+60 bps from where Pyth came back. The guard removes that uncertainty. It does
+not promise a better price, and the landing page shows these numbers as they
+are.
 
 ## Guard API
 

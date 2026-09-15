@@ -27,8 +27,10 @@ Before recording:
 > Tokenized stocks trade around the clock, seven days a week. The price they
 > are measured against does not. From Friday evening to Sunday evening no US
 > equity price is published at all. The last one just sits there, aging, for
-> two days, while the tokens keep trading. Recurring-buy tools on chain fire
-> on a timer anyway.
+> two days, while the tokens keep trading. Over the last eight weekends a
+> blind buy of Tesla's token landed a median half a percent from the next
+> trustworthy price, four times the weekday gap, and up to two percent over it.
+> Recurring-buy tools on chain fire on a timer anyway.
 
 **0:15 — Build a basket.** *Click "Try with a demo wallet", then "Build a basket".*
 

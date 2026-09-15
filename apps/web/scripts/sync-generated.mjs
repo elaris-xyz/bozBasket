@@ -19,6 +19,7 @@ const files = [
 	["idl/basket_dca.ts", "basket_dca.ts"],
 	["idl/mock_market.ts", "mock_market.ts"],
 	["deploy/devnet.json", "devnet.json"],
+	["deploy/weekend-backtest.json", "weekend-backtest.json"],
 ];
 for (const [from, to] of files) {
 	const src = path.join(root, from);

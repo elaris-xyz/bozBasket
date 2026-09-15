@@ -297,6 +297,21 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   ignores depth above half the default, because fills draw depth down, or it
   would restore after every execution.
 
+## Weekend backtest (2026-09-15)
+
+- `apps/keeper/scripts/backtest-weekends.ts` writes `deploy/weekend-backtest.json`;
+  `src/backtest.ts` holds the tested arithmetic. The web app gets the file
+  through `sync-generated.mjs` and serves it at `/api/backtest`.
+- GeckoTerminal OHLCV closes are **per raw token**: divide by the share
+  multiplier in effect (QQQx read 1.0033 of Pyth, multiplier 1.0027).
+- Hermes `/v2/updates/price/{ts}` returns the first update **at or after**
+  `ts`, and 404 when none follows closely. Its history reaches back only
+  about eight weeks (nothing for 2026-06-26 to 2026-07-17 when run on 09-15).
+- The result does not show savings: a Saturday-noon buy averaged 27 and 8 bps
+  *below* the next Pyth price. The honest claim is uncertainty (weekend median
+  distance 3 to 4 times the weekday one, worst +1.9%). Never present it as
+  money saved.
+
 ## Deployed (day 7, 2026-09-13)
 
 - Web: https://boz-basket-web.vercel.app (Vercel project `boz-basket-web`,

@@ -16,6 +16,8 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] Guard API v1: `/api/v1/verdict` (live verdict for any size and limits),
   `/api/v1/history`, an OpenAPI 3.1 description and the `/developers` page
 - [x] Demo controls restore themselves after ten idle minutes
+- [x] Eight real weekends measured (`deploy/weekend-backtest.json`), on the landing
+  page and in the README, including that waiting did not save money on average
 - [x] README: problem, architecture, quickstart, what is synthetic, why Solana
 - [x] MIT license
 - [x] No keypairs in git history (`*.keypair.json` and `.env` ignored from the first commit)

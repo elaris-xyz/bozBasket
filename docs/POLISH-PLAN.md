@@ -36,6 +36,11 @@ use?* Everything below is chosen against that, not against a feature list.
   limits, with an OpenAPI description and a `/developers` page. The finding
   below is fixed: ten idle minutes after a control, the next keeper pass
   restores the demo.
+- **Added 2026-09-15: eight weekends measured.** Real pool candles and Pyth
+  history, 2026-07-24 to 2026-09-11: a weekend buy landed a median 53 bps
+  (TSLAx) and 45 bps (QQQx) from the next Pyth price, against 13 and 15 on
+  weekdays. Waiting did not save money on average, and the landing page and
+  README say so.
 - **Found on day 3: demo controls stay on until someone presses Restore.** A
   TSLA price override, $10 depth and a 0 bps confidence ceiling were still
   active on devnet, which would have stopped Monday's execution. Restored.
