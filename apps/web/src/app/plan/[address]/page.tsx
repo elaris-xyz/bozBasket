@@ -9,6 +9,7 @@ import { Countdown } from "@/components/Countdown";
 import { StatusPill } from "@/components/StatusPill";
 import { PlanActions } from "@/components/PlanActions";
 import { Portfolio } from "@/components/Portfolio";
+import { PortfolioChart } from "@/components/PortfolioChart";
 import { History } from "@/components/History";
 import { GuardScorecard } from "@/components/GuardScorecard";
 import { useHistory } from "@/lib/useHistory";
@@ -126,6 +127,7 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 				{hasScorecard && <GuardScorecard scorecard={history.scorecard} />}
 				<PlanActions plan={plan} onDone={onDone} />
 			</div>
+			<PortfolioChart plan={plan} prices={prices} refreshKey={refreshKey} />
 			<Portfolio plan={plan} prices={prices} />
 			<History rows={history.rows} note={history.note} legTickers={a.legs.slice(0, a.legCount).map((l) => symbolByMint(l.mint.toBase58()).replace(/^m/, ""))} />
 		</div>

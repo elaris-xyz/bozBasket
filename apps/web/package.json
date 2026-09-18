@@ -9,7 +9,7 @@
     "start": "next start -p 3200",
     "lint": "next lint",
     "type-check": "node scripts/sync-generated.mjs && tsc --noEmit",
-    "test": "node scripts/sync-generated.mjs && tsx --test src/lib/scorecard.test.ts src/lib/shadow.test.ts src/lib/deferral.test.ts src/lib/guardApi.test.ts src/lib/demoDefaults.test.ts src/lib/backtestView.test.ts"
+    "test": "node scripts/sync-generated.mjs && tsx --test src/lib/scorecard.test.ts src/lib/shadow.test.ts src/lib/deferral.test.ts src/lib/guardApi.test.ts src/lib/demoDefaults.test.ts src/lib/backtestView.test.ts src/lib/timeline.test.ts"
   },
   "dependencies": {
     "@bozbasket/shared": "workspace:*",
