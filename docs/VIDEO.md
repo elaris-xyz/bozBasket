@@ -16,8 +16,11 @@ Before recording:
 - Open `/demo` and click **Restore everything**. The guard panel should show
   the real Pyth reference with every check passing.
 - Open the demo plan in a second tab:
-  `/plan/5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq`. Its "What the guard
-  did" card is the 1:55 shot.
+  `/plan/5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq`. Its chart, "Invested
+  and value over time", and its "What the guard did" card are the 1:55 shot.
+- **After the weekend of 19–20 September**, fill in the two lines marked
+  `[live weekend]` at 2:15 from the landing page's mainnet panel: the live
+  check's first stale window, measured, not the backtest.
 - Use a fresh browser profile, so "Try with a demo wallet" starts empty.
 
 ---
@@ -72,7 +75,8 @@ minute. Let it; the 1:35 execution is the second period.*
 
 > Deferred. Reason four, divergence. The deferral is a successful transaction:
 > the reason is stored in the plan account and emitted as an event. Here it is
-> on the explorer. My money did not move.
+> on the explorer. My money did not move, and the page says what happens next:
+> the keeper tries again on its next pass, within minutes.
 
 **1:35 — Restore and execute.** *"Restore everything", then "Make the plan due" again.*
 
@@ -84,14 +88,16 @@ minute. Let it; the 1:35 execution is the second period.*
 > and loss against the live reference. The average cost sits about twenty
 > basis points above the reference: that is the venue spread, not rounding.
 
-**1:55 — A real weekend.** *Second tab: the demo plan's "What the guard did" card, then its History.*
+**1:55 — A real weekend.** *Second tab: the demo plan's chart, "Invested and value over time", then the "What the guard did" card.*
 
-> This plan was due last Sunday, while its prices were up to two days old. The
-> keeper kept trying, and every time the program said no, on chain, reason
-> one. None of it was forced. At 8:26 that evening prices were live again, and
-> it filled, a dollar twenty per hundred below the stale price it refused.
-> That is one weekend, and it could have gone the other way. The card would
-> show that, in red.
+> This plan was due on Sunday the thirteenth. The dashed, flat stretch is
+> Pyth's silence: no US equity price from Friday 20:00 to Sunday 20:00
+> Eastern. The long amber band is the guard holding the buy back: seven
+> attempts, each a transaction, each refused on chain, reason one. The grey
+> bands are my own demo tests, and the page labels them. At 8:26 that evening
+> prices were live again, and it filled, a dollar twenty per hundred below the
+> stale price it refused. That is one weekend, and it could have gone the
+> other way. The card would show that, in red.
 
 **2:15 — The honest part, and close.** *Home page: the mainnet panel, then `/developers` with a sent request, then the footer "synthetic" note.*
 
@@ -100,7 +106,10 @@ minute. Let it; the 1:35 execution is the second period.*
 > the Pyth prices, the guard and the reason codes are real. And the problem is
 > measured on the real market: every five minutes the keeper asks Jupiter what
 > a hundred dollars buys in real xStocks on mainnet, and runs the same guard on
-> it. Nothing is bought; the verdicts are right here. And the same check is a
+> it. Nothing is bought; the verdicts are right here. [live weekend: one
+> sentence with last weekend's measured numbers from the panel, e.g. how many
+> hours the pools traded against a price how old, and what the guard would
+> have done.] And the same check is a
 > public API, so any wallet or recurring-buy tool can ask it before a swap.
 > Tokenized stocks made the market 24/7. bozBasket makes the buying wait for a
 > price worth trusting.
