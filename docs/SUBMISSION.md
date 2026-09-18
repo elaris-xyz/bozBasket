@@ -1,6 +1,6 @@
 # Submission checklist
 
-Deadline: **Friday 2026-09-18, 16:00 ET**. Hackathon:
+Deadline: **Friday 2026-09-25, 16:00 ET** (extended from 09-18). Hackathon:
 https://hackathons.solana.com/hackathons/stocklana
 
 ## Done

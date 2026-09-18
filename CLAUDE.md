@@ -10,7 +10,9 @@ they differ.
 
 ## The deadline
 
-- Submissions close **Friday 2026-09-18, 16:00 ET**. Judging runs to Oct 2.
+- Submissions close **Friday 2026-09-25, 16:00 ET** (extended from 09-18; the
+  site said so on 2026-09-18). Judging runs to Oct 2. The page now also lists
+  sponsor bounties; only Pyth's ("Best use of Pyth market data") fits this app.
 - $100,000 pool, one track. Page: https://hackathons.solana.com/hackathons/stocklana
 - Submit needs at least one of: GitHub link, live demo, video. Edits allowed
   until close. One submission per team, original work, open-source parts OK
@@ -313,6 +315,34 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   *below* the next Pyth price. The honest claim is uncertainty (weekend median
   distance 3 to 4 times the weekday one, worst +1.9%). Never present it as
   money saved.
+
+## Plan chart and reference prices (2026-09-18)
+
+- The plan page charts invested against value over the plan's life, with the
+  held-back periods shaded (`components/PortfolioChart.tsx`). The arithmetic is
+  `lib/timeline.ts`, unit tested; `/api/timeline` only reads Postgres.
+- **The Pyth key is rate-limited, and the executions need it.** Six parallel
+  Hermes history requests drew 429 with `retry-after: 10`. So nothing a page
+  view triggers may call Hermes per data point. The keeper records every feed's
+  reference price once per quarter hour (`src/references.ts`, table
+  `reference_prices`, one Hermes call per slot across all keepers), and
+  `scripts/backfill-references.ts` filled the hours before that, serially.
+- A stored price older than 30 min at its own moment is Pyth's silence (the
+  weekend, a holiday); the chart draws it dashed, at the last published price.
+  A 404 from Hermes history for a moment is stored as a null price.
+- The chart's last point is computed on the page exactly as the Portfolio card
+  values the plan, so the two always show the same number; the page says when
+  the ledger's invested total differs from the chain's.
+- **The ledger must add up to the chain.** `scripts/scenarios.ts` used a
+  log-only ledger, so the demo plan held $500 of fills and 20 deferrals only
+  the chain knew about, and the chart ended in a $500 jump. The sweep now
+  records every row as `forced` (a demo test), and
+  `scripts/recover-ledger.ts <plan> [--demo] [--apply]` (dry run by default)
+  writes what the chain has and the ledger lacks. The scorecard lets a forced
+  fill end a held-back period but never scores it against the stale price.
+- Pyth Benchmarks (`/v1/shims/tradingview/history`) is gone (404). There is no
+  range query for history; only Hermes `/v2/updates/price/{ts}`, one moment
+  per request.
 
 ## Deployed (day 7, 2026-09-13)
 
