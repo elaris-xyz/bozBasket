@@ -187,6 +187,33 @@ for 15 seconds and allows 60 requests a minute per address. It answers for a
 quote, not a fill, and runs on a free tier with no uptime promise, so a caller
 should ask right before swapping and treat `unavailable` as `defer`.
 
+## How bozBasket uses Pyth
+
+Pyth is not a price label on this app; every decision runs through it.
+
+- **On chain, per leg, in the transaction that buys.** The keeper fetches
+  signed updates from Hermes and posts them to the Pyth receiver in the same
+  transaction bundle as `execute_basket`. The program then requires, for every
+  leg, that the `PriceUpdateV2` account is owned by the receiver, carries that
+  leg's feed id, is fully verified (`VerificationLevel::Full`), is younger than
+  `max_staleness_secs`, and has a confidence band inside `max_conf_bps`
+  ([`execute.rs`](programs/basket_dca/src/execute.rs)). The venue's price is
+  judged against it only after that.
+- **The publish time is the product.** Pyth publishes US equities from Sunday
+  20:00 to Friday 20:00 ET, overnight and pre-market included, and nothing in
+  between. That silence is what the guard refuses to buy through, what the
+  plan page draws as a dashed line, and what "tried again Sunday 20:00 ET"
+  counts down to.
+- **History, for evidence.** Hermes `/v2/updates/price/{ts}` rebuilds the
+  eight measured weekends and the plan charts' prices before the keeper began
+  storing them; the keeper now stores all three feeds every quarter hour.
+- **The real market.** The mainnet check and the Guard API run the same
+  `checkLeg` on the Pyth price against a live Jupiter quote for real xStocks.
+- **Limits of the key in use.** It is entitled to TSLA, QQQ and VOO equities
+  only. Pyth also publishes xStock feeds (`Crypto.TSLAX/USD`) and redemption
+  rates (`Crypto.TSLAX/TSLA.RR`); with them the guard could compare the token
+  with its underlying from Pyth alone, around the clock.
+
 ## Architecture
 
 ```
