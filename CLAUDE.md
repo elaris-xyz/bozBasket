@@ -78,9 +78,12 @@ else until the demo works end to end. No feature work on the last day; day
   nothing is geo-blocked, but two things changed on Pyth's side:
   - **Hermes needs an API key since 2026-08-26** (`Authorization: Bearer`,
     free trial at terminal.pyth.network). `PYTH_API_KEY` is in `.env` and
-    covers crypto/FX/metals and exactly three US equities: **TSLA, QQQ,
-    VOO**. Everything else (AAPL, NVDA, SPY...) is `403 Not entitled`. The
-    demo basket is therefore TSLA/QQQ/VOO with real signed Pyth updates.
+    covers exactly three US equities: **TSLA, QQQ, VOO**. Everything else
+    (AAPL, NVDA, SPY...) is `403 Not entitled`. The demo basket is therefore
+    TSLA/QQQ/VOO with real signed Pyth updates. On 2026-09-18 crypto spot was
+    not entitled either, including Pyth's own xStock feeds
+    (`Crypto.TSLAX/USD`, `Crypto.TSLAX/TSLA.RR`), which exist on Hermes; an
+    upgraded key would let the guard compare both sides with Pyth alone.
   - **Nobody sponsors Pyth US equity accounts on devnet or mainnet** (weeks
     stale; BTC/SOL fresh), so the keeper posts the signed Hermes updates to
     the Pyth receiver itself (`post_update`) in the execute transaction.
@@ -228,7 +231,7 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
 `start`). It reads the chain directly and needs no keeper running.
 
 - **Demo wallet**: a burner keypair in `localStorage`, funded by
-  `POST /api/faucet` (0.05 SOL + 10 000 mock USDC, signed by
+  `POST /api/faucet` (0.02 SOL + 10 000 mock USDC, signed by
   `KEEPER_SECRET_KEY`, skipped when the wallet already holds 5 000+). No
   browser extension anywhere in the judge flow.
 - **Builder** creates the plan and deposits in one transaction. Sliders

@@ -12,8 +12,11 @@ import deployment from "@/generated/devnet.json";
 
 export const runtime = "nodejs";
 
-/** Enough for the rent on a plan, a vault and three token accounts, plus fees. */
-const DRIP_SOL = 0.04;
+/** Creating and funding a plan measured 0.0058 SOL (rent on the plan, its
+ *  vault and the token accounts, plus fees) on 2026-09-18, so this covers
+ *  three plans. It was 0.04, seven plans' worth, which spent the faucet on
+ *  roughly 39 visitors; at 0.02 the same SOL serves about twice as many. */
+const DRIP_SOL = 0.02;
 /** A wallet already holding this much USDC gets nothing more. */
 const USDC_CEILING = 5_000;
 const USDC_GRANT = 10_000;
