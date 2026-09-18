@@ -173,7 +173,7 @@ export function MainnetShadow() {
 			)}
 
 			<details className="mt-3 text-xs text-slate-500">
-				<summary className="cursor-pointer select-none text-slate-400 hover:text-slate-200">How this is measured</summary>
+				<summary className="cursor-pointer select-none py-1.5 text-slate-400 hover:text-slate-200">How this is measured</summary>
 				<p className="mt-2">
 				Nothing is bought on mainnet. Every five minutes the keeper asks Jupiter what $100 of USDC buys in each xStock and runs the answer through the same guard code,
 				with the default limits: {limits.maxStalenessSecs} s staleness, {limits.maxConfBps} bps confidence, {limits.maxDivergenceBps} bps gap (dashed). Share counts include

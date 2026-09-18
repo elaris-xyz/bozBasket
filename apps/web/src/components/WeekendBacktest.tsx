@@ -164,7 +164,7 @@ export function WeekendBacktest() {
 				have trusted was already stale.
 			</p>
 			<details className="mt-3 text-xs text-slate-500">
-				<summary className="cursor-pointer select-none text-slate-400 hover:text-slate-200">How this is measured</summary>
+				<summary className="cursor-pointer select-none py-1.5 text-slate-400 hover:text-slate-200">How this is measured</summary>
 				<p className="mt-2">
 					Weekends of {view.from} to {view.to}. Pool prices are hourly closes of the deepest USDC pool of each xStock (GeckoTerminal), per share; Pyth prices come from its
 					history, which reaches back about eight weeks. The weekend measure spans up to two days of market movement; the weekday one compares prices at the same moment.{" "}
