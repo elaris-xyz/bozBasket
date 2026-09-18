@@ -359,6 +359,15 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   range query for history; only Hermes `/v2/updates/price/{ts}`, one moment
   per request.
 
+## Live weekend (from 2026-09-18)
+
+- `scripts/weekend-live.ts [--friday YYYY-MM-DD]` measures a weekend from
+  `mainnet_shadow` with the backtest's own `analyzeWeekend`, on hourly candles
+  (median venue price per hour), so it can join the eight-weekend table. The
+  first whole weekend is 2026-09-18 to 09-20; run it after Sunday 20:00 ET and
+  it writes `deploy/weekend-live-<friday>.json`. Before that it reports only
+  checks, age, verdicts and the gap to the frozen price.
+
 ## Deployed (day 7, 2026-09-13)
 
 - Web: https://boz-basket-web.vercel.app (Vercel project `boz-basket-web`,
