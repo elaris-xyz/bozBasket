@@ -68,7 +68,7 @@ export function weekendWindows(fromTs: number, toTs: number): WeekendWindow[] {
 
 export const bps = (price: number, reference: number) => ((price - reference) / reference) * 10_000;
 
-function median(xs: number[]): number | null {
+export function median(xs: number[]): number | null {
 	if (xs.length === 0) return null;
 	const s = [...xs].sort((a, b) => a - b);
 	const m = s.length >> 1;
