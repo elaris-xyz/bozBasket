@@ -106,6 +106,12 @@ function staleOutcome(opener: HistoryRow, closer: HistoryRow, mintByFeed: Record
 	return total;
 }
 
+/** Whether deferral `r` ends a period a demo control opened and starts one
+ *  of the market's. Shared with the chart (lib/timeline.ts), so both count
+ *  the same held-back buys. */
+export const startsOrganicPeriod = (opener: { forced: boolean; reason: number } | null, r: HistoryRow) =>
+	!!opener && opener.forced && !r.forced && r.reason !== opener.reason;
+
 export function buildScorecard(rows: HistoryRow[], mintByFeed: Record<string, string>): Scorecard {
 	const mints: Record<string, string> = {};
 	for (const [feed, mint] of Object.entries(mintByFeed)) mints[normFeed(feed)] = mint;
@@ -128,6 +134,13 @@ export function buildScorecard(rows: HistoryRow[], mintByFeed: Record<string, st
 			card.deferrals++;
 			if (r.forced) card.forcedDeferrals++;
 			else card.byReason[r.reason] = (card.byReason[r.reason] ?? 0) + 1;
+			// A demo control stops being the cause once the market defers for a
+			// reason of its own; from there the buy is held back organically. A
+			// retry for the control's own reason stays the control's.
+			if (startsOrganicPeriod(opener, r)) {
+				opener = null;
+				staleSnapshot = null;
+			}
 			if (!opener) {
 				opener = r;
 				if (!r.forced) {

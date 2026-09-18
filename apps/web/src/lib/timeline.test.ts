@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildTimeline, chartRows, sampleGrid, samplesFromReferences, SAMPLE_STEPS, type PriceSample } from "./timeline";
-import type { HistoryRow } from "./scorecard";
+import { buildScorecard, type HistoryRow } from "./scorecard";
 
 const STALE = 1;
 const DIVERGENCE = 4;
@@ -85,13 +85,40 @@ test("a moment with no Pyth price keeps the last one and says so", () => {
 
 test("retries of one held-back buy make one period, closed by the fill, judged by its opener", () => {
 	const t = buildTimeline(
-		[executed(100, [leg("A", 100, 1, 100)], 100), deferred(200, DIVERGENCE, true), deferred(250, STALE), deferred(300, STALE), executed(400, [leg("A", 100, 1, 100)], 100), deferred(500, STALE)],
+		[executed(100, [leg("A", 100, 1, 100)], 100), deferred(200, DIVERGENCE, true), deferred(250, DIVERGENCE), deferred(300, DIVERGENCE), executed(400, [leg("A", 100, 1, 100)], 100), deferred(500, STALE)],
 		[],
 	);
 	assert.deepEqual(t.heldBack, [
 		{ from: 200, to: 400, reason: DIVERGENCE, forced: true, attempts: 3 },
 		{ from: 500, to: null, reason: STALE, forced: false, attempts: 1 },
 	]);
+});
+
+test("the market deferring for its own reason ends the demo control's period", () => {
+	// The demo plan on 2026-09-13: a scenario sweep's last test deferral, then the weekend.
+	const t = buildTimeline([executed(100, [leg("A", 100, 1, 100)], 100), deferred(200, 6, true), deferred(300, STALE), deferred(400, STALE), executed(500, [leg("A", 100, 1, 100)], 100)], []);
+	assert.deepEqual(t.heldBack, [
+		{ from: 200, to: 300, reason: 6, forced: true, attempts: 1 },
+		{ from: 300, to: 500, reason: STALE, forced: false, attempts: 2 },
+	]);
+});
+
+test("the chart counts the same held-back buys as the scorecard", () => {
+	const rows = [
+		deferred(50, STALE),
+		executed(100, [leg("A", 100, 1, 100)], 100),
+		deferred(200, DIVERGENCE, true),
+		deferred(210, DIVERGENCE),
+		deferred(220, 6, true),
+		deferred(300, STALE),
+		executed(500, [leg("A", 100, 1, 100)], 100),
+		deferred(600, DIVERGENCE),
+		deferred(700, STALE, true),
+		executed(800, [leg("A", 100, 1, 100)], 100),
+	];
+	const organic = buildTimeline(rows, []).heldBack.filter((h) => !h.forced).length;
+	assert.equal(organic, buildScorecard(rows, {}).heldBackBuys);
+	assert.equal(organic, 3);
 });
 
 test("a plan held back before its first buy starts the chart at that deferral", () => {

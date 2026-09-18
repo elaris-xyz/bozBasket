@@ -1,16 +1,18 @@
 // A plan's invested amount and value over time, for the chart on the plan page.
 //
 // Pure: no database, no network, no path aliases, so it runs under
-// `node --test`. The route (app/api/timeline) reads the ledger and samples
-// Pyth history; this file turns both into points and held-back periods.
+// `node --test`. The route (app/api/timeline) reads the ledger and the
+// reference prices the keeper stores; this file turns both into points and
+// held-back periods.
 //
 // Value is units held times the Pyth reference price, as the Portfolio card
-// values them. Between fills the prices come from Hermes history. When Pyth
+// values them. Between fills the prices are the stored quarter-hourly ones
+// (keeper/src/references.ts). When Pyth
 // published nothing near a moment (Friday 20:00 to Sunday 20:00 ET, holidays)
 // the point keeps the last price it did publish and says so: that flat stretch
 // is the window in which the guard refuses to buy.
 
-import { isFillLeg, scaledPrice, type HistoryRow } from "./scorecard";
+import { isFillLeg, scaledPrice, startsOrganicPeriod, type HistoryRow } from "./scorecard";
 
 /** Stock mints and USDC both have 6 decimals, as the Portfolio card assumes. */
 const BASE_UNITS = 1e6;
@@ -33,7 +35,8 @@ export type TimelinePoint = {
 
 /** A stretch in which the guard held the scheduled buy back: from the first
  *  deferral after a fill to the fill that ended it, `to` null while it lasts.
- *  Judged by its opening deferral, as the scorecard judges a period. */
+ *  Judged by its opening deferral, as the scorecard judges a period, and
+ *  split where the market takes over from a demo control (startsOrganicPeriod). */
 export type HeldBack = { from: number; to: number | null; reason: number; forced: boolean; attempts: number };
 
 export type Timeline = { points: TimelinePoint[]; heldBack: HeldBack[]; invested: number };
@@ -131,6 +134,10 @@ export function buildTimeline(rows: HistoryRow[], samples: PriceSample[]): Timel
 	for (const r of ascending) {
 		samplesBefore(r.ts);
 		if (r.kind === "deferred") {
+			if (open && startsOrganicPeriod(open, r)) {
+				open.to = r.ts;
+				open = null;
+			}
 			if (open) open.attempts++;
 			else {
 				open = { from: r.ts, to: null, reason: r.reason, forced: r.forced, attempts: 1 };

@@ -81,6 +81,13 @@ test("stale legs pair with the fill by mint even after update_plan changed the a
 	near(s.staleSavedUsdc, 2.5);
 });
 
+test("a demo deferral stops holding the period once the market defers for its own reason", () => {
+	// The sweep's last test deferral (a short vault), then the real weekend.
+	const s = buildScorecard([deferred(100, 6, [], { forced: true }), deferred(200, STALE, [guardLeg(TSLA, 100, 50)]), executed(500, [fill("TSLAmint", 50, 95)])], MINTS);
+	assert.equal(s.heldBackBuys, 1);
+	near(s.staleSavedUsdc, 2.5);
+});
+
 test("a demo fill ends the period but is never scored against the stale price", () => {
 	// A scenario sweep's fill runs on the mock reference, far from the stale price.
 	const s = buildScorecard(
