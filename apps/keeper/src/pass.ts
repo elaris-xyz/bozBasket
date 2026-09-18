@@ -14,8 +14,9 @@ import { Executor, type PassResult } from "./executor";
 import { HermesClient } from "./hermes";
 import { LogLedger, PgLedger, type Ledger } from "./ledger";
 import { JUPITER_API_DEFAULT, MainnetShadow, mainnetRpcFor } from "./shadow";
+import { ReferenceLog, referenceSlot } from "./references";
 
-export type Keeper = { chain: Chain; cfg: KeeperConfig; executor: Executor; ledger: Ledger; shadow: MainnetShadow | null };
+export type Keeper = { chain: Chain; cfg: KeeperConfig; executor: Executor; ledger: Ledger; shadow: MainnetShadow | null; references: ReferenceLog };
 
 export type Log = (message: string) => void;
 
@@ -49,7 +50,8 @@ export async function createKeeper(cfg: KeeperConfig, deployment: Deployment, op
 	}
 
 	const shadow = cfg.mainnetShadow === false ? null : new MainnetShadow(hermes, cfg.mainnetRpcUrl ?? mainnetRpcFor(cfg.rpcUrl), cfg.jupiterUrl ?? JUPITER_API_DEFAULT);
-	return { chain, cfg, executor: new Executor(chain, cfg, deployment, hermes, ledger), ledger, shadow };
+	const references = new ReferenceLog(hermes, Object.values(deployment.markets).map((m) => m.feedId));
+	return { chain, cfg, executor: new Executor(chain, cfg, deployment, hermes, ledger), ledger, shadow, references };
 }
 
 export type PlanOutcome = { plan: string; kind: PassResult["kind"]; signature?: string; detail: string };
@@ -123,6 +125,21 @@ export async function runPass(k: Keeper, opts: { onlyPlan?: string; deadline?: n
 			}
 		} catch (err) {
 			log(`  mainnet shadow failed: ${(err as Error).message.slice(0, 200)}`);
+		}
+	}
+
+	// Reference prices for the plan page's chart: one Hermes call per quarter
+	// hour across every keeper, after the plans, never failing the pass.
+	if (!opts.onlyPlan && (opts.deadline === undefined || Date.now() < opts.deadline)) {
+		const slot = referenceSlot(now + Math.floor((Date.now() - startedMs) / 1000));
+		try {
+			if (await ledger.referenceDue(slot)) {
+				const rows = await k.references.sample(slot);
+				await ledger.recordReferences(rows);
+				log(`  reference prices: ${rows.length} feeds for ${new Date(slot * 1000).toISOString()}`);
+			}
+		} catch (err) {
+			log(`  reference prices failed: ${(err as Error).message.slice(0, 200)}`);
 		}
 	}
 

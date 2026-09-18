@@ -5,6 +5,7 @@
 
 import { Pool } from "pg";
 import { SHADOW_EVERY_SECS, type ShadowRow } from "./shadow";
+import type { ReferenceRow } from "./references";
 
 export type LedgerRow = {
 	plan: string;
@@ -34,6 +35,9 @@ export interface Ledger {
 	 *  stored per mint, for when the mainnet RPC is unreachable. */
 	shadowDue(now: number): Promise<{ due: boolean; multipliers: Record<string, number> }>;
 	recordShadow(rows: ShadowRow[]): Promise<void>;
+	/** Whether the quarter hour `slot` still lacks its reference prices. */
+	referenceDue(slot: number): Promise<boolean>;
+	recordReferences(rows: ReferenceRow[]): Promise<void>;
 	close(): Promise<void>;
 }
 
@@ -130,6 +134,14 @@ export class PgLedger implements Ledger {
 				error            text
 			);
 			CREATE INDEX IF NOT EXISTS mainnet_shadow_ts ON mainnet_shadow (ts DESC);
+			CREATE TABLE IF NOT EXISTS reference_prices (
+				ts           bigint           NOT NULL,
+				feed_id      text             NOT NULL,
+				price        double precision,
+				publish_time bigint,
+				PRIMARY KEY (feed_id, ts)
+			);
+			CREATE INDEX IF NOT EXISTS reference_prices_ts ON reference_prices (ts);
 		`);
 	}
 
@@ -191,6 +203,29 @@ export class PgLedger implements Ledger {
 		}
 	}
 
+	async referenceDue(slot: number) {
+		try {
+			const r = await this.pool.query(`SELECT 1 FROM reference_prices WHERE ts = $1 LIMIT 1`, [slot]);
+			return r.rowCount === 0;
+		} catch (err) {
+			console.warn(`ledger: reference check skipped (${(err as Error).message})`);
+			return false;
+		}
+	}
+
+	async recordReferences(rows: ReferenceRow[]) {
+		if (rows.length === 0) return;
+		const tuples = rows.map((_, i) => `($${i * 4 + 1},$${i * 4 + 2},$${i * 4 + 3},$${i * 4 + 4})`).join(",");
+		try {
+			await this.pool.query(
+				`INSERT INTO reference_prices (ts, feed_id, price, publish_time) VALUES ${tuples} ON CONFLICT (feed_id, ts) DO NOTHING`,
+				rows.flatMap((r) => [r.ts, r.feedId, r.price, r.publishTime]),
+			);
+		} catch (err) {
+			console.warn(`ledger: reference insert failed (${(err as Error).message})`);
+		}
+	}
+
 	async close() {
 		await this.pool.end();
 	}
@@ -212,5 +247,10 @@ export class LogLedger implements Ledger {
 		if (rows[0]) this.shadowAt = rows[0].ts;
 		for (const r of rows) console.log(`[ledger] shadow ${r.symbol} ${r.error ?? `${r.divergenceBps?.toFixed(1)} bps, reason ${r.reason}`}`);
 	}
+	/** Nothing would keep the prices, so never spend a Hermes call on them. */
+	async referenceDue() {
+		return false;
+	}
+	async recordReferences() {}
 	async close() {}
 }
