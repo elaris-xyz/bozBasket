@@ -340,6 +340,11 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   `scripts/recover-ledger.ts <plan> [--demo] [--apply]` (dry run by default)
   writes what the chain has and the ledger lacks. The scorecard lets a forced
   fill end a held-back period but never scores it against the stale price.
+- A deferral says when it retries (`retryNote` in `lib/deferral.ts`): a stale
+  price names the next Pyth window, from `secondsUntilPythPublishes` and
+  `PYTH_US_EQUITY_WINDOW` in the shared calendar (Sunday 20:00 to Friday
+  20:00 ET, holidays not listed). That is a forecast for the screen only; the
+  program judges the publish time.
 - Pyth Benchmarks (`/v1/shims/tradingview/history`) is gone (404). There is no
   range query for history; only Hermes `/v2/updates/price/{ts}`, one moment
   per request.
