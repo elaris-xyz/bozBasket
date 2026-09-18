@@ -81,6 +81,17 @@ test("stale legs pair with the fill by mint even after update_plan changed the a
 	near(s.staleSavedUsdc, 2.5);
 });
 
+test("a demo fill ends the period but is never scored against the stale price", () => {
+	// A scenario sweep's fill runs on the mock reference, far from the stale price.
+	const s = buildScorecard(
+		[deferred(100, STALE, [guardLeg(TSLA, 100, 50)]), { ...executed(200, [fill("TSLAmint", 50, 80)]), forced: true }, deferred(300, STALE, [guardLeg(TSLA, 100, 50)]), executed(400, [fill("TSLAmint", 50, 95)])],
+		MINTS,
+	);
+	assert.equal(s.executions, 2);
+	assert.equal(s.heldBackBuys, 2);
+	near(s.staleSavedUsdc, 2.5);
+});
+
 test("the venue spread is not reported as a market move", () => {
 	const s = buildScorecard([deferred(100, STALE, [guardLeg(TSLA, 100, 50)]), executed(500, [fill("TSLAmint", 50, 100, 100.2)])], MINTS);
 	near(s.staleSavedUsdc, 0);

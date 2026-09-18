@@ -138,7 +138,9 @@ export function buildScorecard(rows: HistoryRow[], mintByFeed: Record<string, st
 			if (!staleSnapshot && !r.forced && r.reason === REASON.REFERENCE_STALE && hasSnapshot(r)) staleSnapshot = r;
 		} else if (r.kind === "executed") {
 			card.executions++;
-			if (opener && !opener.forced && opener.reason === REASON.REFERENCE_STALE) {
+			// A demo fill runs on the mock reference: it ends the period, since
+			// the plan did buy, but its price says nothing about the stale one.
+			if (opener && !opener.forced && !r.forced && opener.reason === REASON.REFERENCE_STALE) {
 				const source = hasSnapshot(opener) ? opener : staleSnapshot;
 				if (source) card.staleSavedUsdc += staleOutcome(source, r, mints);
 			}

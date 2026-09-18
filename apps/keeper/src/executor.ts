@@ -30,12 +30,12 @@ function avoidedByDeferring(reason: number, leg: LegVerdict | undefined): number
 	return (leg.legUsdc * overpay) / leg.referencePrice;
 }
 
-type EventLeg = { mint: PublicKey; usdcIn: anchor.BN; units: anchor.BN; referencePrice: anchor.BN; venuePrice: anchor.BN; exponent: number };
+export type EventLeg = { mint: PublicKey; usdcIn: anchor.BN; units: anchor.BN; referencePrice: anchor.BN; venuePrice: anchor.BN; exponent: number };
 
 /** Anchor's `BN.toJSON()` is a *hex* string, so storing an event's legs
  *  verbatim puts "0215a1" in the ledger and every reader has to know that.
  *  The ledger holds decimal strings instead. */
-function normalizeLeg(l: EventLeg) {
+export function normalizeLeg(l: EventLeg) {
 	return {
 		mint: l.mint.toBase58(),
 		usdcIn: l.usdcIn.toString(10),

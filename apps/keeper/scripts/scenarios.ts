@@ -12,6 +12,10 @@
 // reached). Restores the config and every market before exiting, including
 // when a scenario throws.
 //
+// Records every attempt in the ledger, marked as a demo test (`forced`), so
+// History and the plan chart add up to the chain. With a log-only ledger the
+// sweeps left $500 of fills on the demo plan that only the chain knew about.
+//
 // Holds the shared keeper lock for the whole sweep. Every keeper (the web
 // app's passes, which "nudge" now starts too, the scheduler, the GitHub
 // Action) takes that lock, and any of them running meanwhile would race this
@@ -28,11 +32,26 @@ import { REASON, reasonLabel } from "@bozbasket/shared";
 import { loadConfig, loadDeployment } from "../src/config";
 import { chainNow, configPda, connect } from "../src/chain";
 import { HermesClient } from "../src/hermes";
-import { LogLedger } from "../src/ledger";
+import { LogLedger, PgLedger, type Ledger, type LedgerRow } from "../src/ledger";
 import { Executor, PYTH_RECEIVER } from "../src/executor";
 import { LOCK_TIMING, PassLock } from "../src/lock";
 
 const WEB = process.env.WEB_URL ?? "http://localhost:3200";
+
+/** The sweep's rows, all marked `forced`: every deferral here is caused by a
+ *  demo control and every fill runs on the mock reference, so none may count
+ *  as a saving or be scored against a stale price. */
+function demoTestLedger(inner: Ledger): Ledger {
+	return {
+		record: (r: LedgerRow) => inner.record({ ...r, forced: true, detail: r.kind === "executed" ? "demo scenario" : r.detail }),
+		beat: () => Promise.resolve(),
+		shadowDue: () => Promise.resolve({ due: false, multipliers: {} }),
+		recordShadow: () => Promise.resolve(),
+		referenceDue: () => Promise.resolve(false),
+		recordReferences: () => Promise.resolve(),
+		close: () => inner.close(),
+	};
+}
 
 type Outcome = { name: string; expected: number; predicted: number | string; actual: number | string; signature: string; ok: boolean };
 
@@ -71,7 +90,8 @@ async function main() {
 	const cfg = { ...loadConfig(), referenceSource: "mock" as const, offHours: "guarded" as const };
 	const dep = loadDeployment(cfg.deploymentFile);
 	const chain = connect(cfg.rpcUrl, cfg.keeper);
-	const executor = new Executor(chain, cfg, dep, new HermesClient(cfg.hermesUrl, cfg.pythApiKey), new LogLedger());
+	const ledger = demoTestLedger(cfg.databaseUrl ? new PgLedger(cfg.databaseUrl) : new LogLedger());
+	const executor = new Executor(chain, cfg, dep, new HermesClient(cfg.hermesUrl, cfg.pythApiKey), ledger);
 	const config = configPda(chain.basket.programId);
 
 	const setReference = async (mode: "pyth" | "mock") => {
@@ -190,6 +210,7 @@ async function main() {
 			await lock.release(holder, LOCK_TIMING.spacingSecs).catch((err) => console.error("lock release failed; it expires on its own:", (err as Error).message));
 			await lock.close();
 		}
+		await ledger.close().catch(() => undefined);
 	}
 
 	const failed = results.filter((r) => !r.ok);
