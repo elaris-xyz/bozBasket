@@ -23,17 +23,25 @@ function parseHours(spec: string): Range[] | "closed" | "all" {
 	});
 }
 
+/** One formatter per time zone: building one costs far more than using it,
+ *  and a scan across a weekend asks for about three thousand minutes. */
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
 /** Local wall-clock parts of `date` in `tz`. */
 export function localParts(date: Date, tz: string) {
-	const fmt = new Intl.DateTimeFormat("en-US", {
-		timeZone: tz,
-		hour12: false,
-		weekday: "short",
-		month: "2-digit",
-		day: "2-digit",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
+	let fmt = formatters.get(tz);
+	if (!fmt) {
+		fmt = new Intl.DateTimeFormat("en-US", {
+			timeZone: tz,
+			hour12: false,
+			weekday: "short",
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+		formatters.set(tz, fmt);
+	}
 	const parts = Object.fromEntries(fmt.formatToParts(date).map((p) => [p.type, p.value]));
 	const weekdayIndex = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(parts.weekday);
 	return {
@@ -78,4 +86,18 @@ export function secondsUntilOpen(date: Date, schedule = US_EQUITY_SCHEDULE_2026)
 		if (sessionAt(t, schedule).open) return Math.round((t.getTime() - date.getTime()) / 1000);
 	}
 	return -1;
+}
+
+/** When Pyth publishes US equity prices at all, as measured on this
+ *  deployment: from Sunday 20:00 to Friday 20:00 ET without a break
+ *  (overnight, pre-market, regular and after hours), nothing in between. This
+ *  is not the regular session `sessionAt` answers: at 02:38 ET on a Monday the
+ *  feeds were seconds old. Holidays are not listed. The program judges the
+ *  publish time itself, so this is only the forecast a screen shows. */
+export const PYTH_US_EQUITY_WINDOW = "America/New_York;O,O,O,O,0000-2000,C,2000-2400;";
+
+/** Seconds until Pyth is expected to publish US equity prices again; 0 while
+ *  it is publishing. */
+export function secondsUntilPythPublishes(date: Date): number {
+	return sessionAt(date, PYTH_US_EQUITY_WINDOW).open ? 0 : secondsUntilOpen(date, PYTH_US_EQUITY_WINDOW);
 }

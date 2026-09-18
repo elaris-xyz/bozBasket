@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { REASON } from "@bozbasket/shared";
-import { deferralDetail, fmtAge } from "./deferral";
+import { deferralDetail, fmtAge, pythResumeLabel, retryNote } from "./deferral";
 
 const legs = ["TSLA", "QQQ", "VOO"];
 
@@ -30,4 +30,26 @@ test("ages below two minutes stay in seconds", () => {
 	assert.equal(fmtAge(3), "3 s");
 	assert.equal(fmtAge(120), "2 min");
 	assert.equal(fmtAge(169_215), "47 h");
+});
+
+// Saturday 2026-09-19 12:00 ET; Pyth resumes Sunday 20:00 ET, 32 hours later.
+const saturdayNoon = Date.parse("2026-09-19T16:00:00Z") / 1000;
+const untilSunday = 32 * 3600;
+
+test("a stale deferral names when Pyth publishes again, in New York time", () => {
+	assert.equal(pythResumeLabel(saturdayNoon, untilSunday), "Sunday 20:00 ET, in 1d 8h");
+	assert.equal(
+		retryNote(REASON.REFERENCE_STALE, saturdayNoon, untilSunday, 0),
+		"Pyth publishes no US equity prices until Sunday 20:00 ET, in 1d 8h. The keeper keeps trying and buys on the first fresh price.",
+	);
+});
+
+test("while Pyth publishes, every other cause is retried on the next pass", () => {
+	for (const reason of [REASON.REFERENCE_STALE, REASON.CONFIDENCE_TOO_WIDE, REASON.DIVERGENCE, REASON.LOW_LIQUIDITY]) {
+		assert.match(retryNote(reason, saturdayNoon, 0, 0), /^The keeper tries again on its next pass, within a few minutes, and buys once /);
+	}
+});
+
+test("a short vault says how much to deposit", () => {
+	assert.equal(retryNote(REASON.INSUFFICIENT_BALANCE, saturdayNoon, 0, 1), "Nothing changes that on its own: deposit at least $1.00 and the next pass buys.");
 });

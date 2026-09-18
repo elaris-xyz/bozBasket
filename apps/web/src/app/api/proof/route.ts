@@ -6,7 +6,7 @@
 // market, whichever reference mode the devnet program happens to be in.
 
 import { NextResponse } from "next/server";
-import { checkLeg, DEFAULT_THRESHOLDS, DEMO_STOCKS, REASON, secondsUntilOpen, sessionAt } from "@bozbasket/shared";
+import { checkLeg, DEFAULT_THRESHOLDS, DEMO_STOCKS, REASON, secondsUntilOpen, secondsUntilPythPublishes, sessionAt } from "@bozbasket/shared";
 import { CONFIG, readPrograms } from "@/lib/solana";
 import { hermesLatest } from "@/lib/server";
 
@@ -18,6 +18,8 @@ export type ProofFeed = { ticker: string; name: string; color: string; price: nu
 export type ProofResponse = {
 	now: number;
 	session: { open: boolean; label: string; secondsUntilOpen: number | null };
+	/** Seconds until Pyth is expected to publish US equity prices again; 0 while it is. */
+	pythResumesInSecs: number;
 	thresholds: { maxStalenessSecs: number; maxConfBps: number };
 	feeds: ProofFeed[];
 	/** The first failing check across the feeds, as the guard would report it; 0 when all pass. */
@@ -62,6 +64,7 @@ export async function GET() {
 		const body: ProofResponse = {
 			now,
 			session: { open: session.open, label: session.label, secondsUntilOpen: session.open ? null : secondsUntilOpen(new Date(now * 1000)) },
+			pythResumesInSecs: secondsUntilPythPublishes(new Date(now * 1000)),
 			thresholds: { maxStalenessSecs: t.maxStalenessSecs, maxConfBps: t.maxConfBps },
 			feeds,
 			verdict: feeds.find((f) => f.reason !== REASON.OK)?.reason ?? REASON.OK,

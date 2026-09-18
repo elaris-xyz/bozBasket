@@ -4,7 +4,9 @@ import { use, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlan, usePrices } from "@/lib/usePlans";
 import { EXPLORER, EXPLORER_ACCOUNT, symbolByMint } from "@/lib/solana";
+import { REASON, secondsUntilPythPublishes } from "@bozbasket/shared";
 import { cadenceLabel, fmtTs, fmtUsd, reasonLabel, short } from "@/lib/format";
+import { retryNote } from "@/lib/deferral";
 import { Countdown } from "@/components/Countdown";
 import { StatusPill } from "@/components/StatusPill";
 import { PlanActions } from "@/components/PlanActions";
@@ -97,7 +99,7 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 					<div key={k} className="card !p-4">
 						<p className="label">{k}</p>
 						<p className="mt-1 text-lg font-bold">{v}</p>
-						{/* The chain counts demo-control tests too, which History does not list. */}
+						{/* The chain counts demo-control tests too; History lists them, marked. */}
 						{k === "Executions / deferrals" && <p className="text-xs text-slate-500">on chain, demo tests included</p>}
 					</div>
 				))}
@@ -112,7 +114,14 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 
 			{a.lastReason !== 0 && (
 				<p className="rounded-xl border border-amber/30 bg-amber/10 px-4 py-2 text-sm text-amber">
-					Last attempt was deferred: <strong>{reasonLabel(a.lastReason)}</strong>. The reason is recorded on chain; the keeper retries at the next safe window.
+					Last attempt was deferred: <strong>{reasonLabel(a.lastReason)}</strong>, recorded on chain.{" "}
+					{retryNote(
+						a.lastReason,
+						Math.floor(Date.now() / 1000),
+						// Only a stale price has a time worth naming, and the scan costs a few milliseconds.
+						a.lastReason === REASON.REFERENCE_STALE ? secondsUntilPythPublishes(new Date()) : 0,
+						Math.max(0, a.amountPerPeriod.toNumber() / 1e6 - plan.vaultUsdc),
+					)}
 				</p>
 			)}
 

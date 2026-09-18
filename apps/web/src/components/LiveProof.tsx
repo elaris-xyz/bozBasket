@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { REASON } from "@bozbasket/shared";
 import type { ProofResponse } from "@/app/api/proof/route";
 import { fmtDuration, fmtUsd, reasonLabel } from "@/lib/format";
+import { pythResumeLabel } from "@/lib/deferral";
 
 /** The whole pitch, demonstrated before a single click: whether the US market
  *  is open, and how old and how certain each reference price is right now. */
@@ -61,6 +62,8 @@ export function LiveProof() {
 		const why = verdict === REASON.REFERENCE_STALE ? `the reference prices are ${fmtDuration(oldest)} old` : `a reference price fails the guard: ${reasonLabel(verdict).toLowerCase()}`;
 		headline = `The US market is ${session.open ? "open" : "closed"}, and ${why}.`;
 		consequence = "A timer-based bot would buy right now at whatever the pool says. bozBasket defers the buy and records why on chain.";
+		// Older cached bodies lack the field; say nothing rather than guess.
+		if (verdict === REASON.REFERENCE_STALE && (data.pythResumesInSecs ?? 0) > 0) consequence += ` Pyth publishes again ${pythResumeLabel(data.now, data.pythResumesInSecs)}, and the first fresh price lets the buy through.`;
 	} else if (!session.open) {
 		// The deployment runs the keeper "guarded": it judges the price, not the
 		// calendar, and Pyth publishes US equities outside the regular session.

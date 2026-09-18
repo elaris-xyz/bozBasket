@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sessionAt, secondsUntilOpen, localParts } from "@bozbasket/shared";
+import { sessionAt, secondsUntilOpen, secondsUntilPythPublishes, localParts } from "@bozbasket/shared";
 
 // 2026-09-14 is a Monday. 14:00 UTC = 10:00 ET (EDT).
 const monday10ET = new Date("2026-09-14T14:00:00Z");
@@ -42,4 +42,25 @@ test("secondsUntilOpen from saturday reaches monday 09:30 ET", () => {
 test("localParts uses Pyth's Monday-first weekday index", () => {
 	assert.equal(localParts(monday10ET, "America/New_York").weekdayIndex, 0);
 	assert.equal(localParts(saturday03ET, "America/New_York").weekdayIndex, 5);
+});
+
+// Pyth's US equity window, as measured: Sunday 20:00 to Friday 20:00 ET.
+const resumesAt = (d: Date) => new Date(d.getTime() + secondsUntilPythPublishes(d) * 1000).toISOString();
+
+test("Pyth is publishing on a weekday night and after the Sunday reopen", () => {
+	assert.equal(secondsUntilPythPublishes(new Date("2026-09-14T06:38:00Z")), 0); // Mon 02:38 ET, measured fresh
+	assert.equal(secondsUntilPythPublishes(new Date("2026-09-14T00:26:00Z")), 0); // Sun 20:26 ET, measured fresh
+	assert.equal(secondsUntilPythPublishes(new Date("2026-09-18T23:59:00Z")), 0); // Fri 19:59 ET
+});
+
+test("from Friday 20:00 ET the next Pyth price is due Sunday 20:00 ET", () => {
+	assert.equal(resumesAt(new Date("2026-09-19T00:00:00Z")), "2026-09-21T00:00:00.000Z"); // Fri 20:00 ET
+	assert.equal(resumesAt(saturday03ET), "2026-09-14T00:00:00.000Z");
+	assert.equal(resumesAt(new Date("2026-09-13T23:59:00Z")), "2026-09-14T00:00:00.000Z"); // Sun 19:59 ET
+});
+
+test("a weekend scan stays cheap", () => {
+	const t0 = performance.now();
+	for (let i = 0; i < 10; i++) secondsUntilPythPublishes(new Date("2026-09-19T00:00:00Z"));
+	assert.ok(performance.now() - t0 < 1000, "ten scans across a weekend should take well under a second");
 });
