@@ -47,7 +47,11 @@ WEB_URL=https://boz-basket-web.vercel.app pnpm --filter keeper exec tsx scripts/
 For each row it changes real state through the demo API, asks the guard panel
 what it predicts, submits the transaction, and compares the reason code the
 program recorded. It holds the shared keeper lock throughout, so no other
-keeper touches the plan mid-sweep, and restores everything when it ends. Run
+keeper touches the plan mid-sweep, and restores everything when it ends.
+Every attempt is also written to the ledger, marked as a demo test, so the
+plan's History and chart add up to the chain and none of it counts as a
+saving. (The sweeps listed here ran before that; `scripts/recover-ledger.ts`
+wrote their rows back from the chain on 2026-09-18.) Run
 twice on 2026-09-13 against a local web app, 6/6 both times, and on 2026-09-14
 against the deployment, 6/6. The table is the deployment run.
 
