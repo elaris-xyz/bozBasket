@@ -340,6 +340,10 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
   `scripts/recover-ledger.ts <plan> [--demo] [--apply]` (dry run by default)
   writes what the chain has and the ledger lacks. The scorecard lets a forced
   fill end a held-back period but never scores it against the stale price.
+- A period a demo control opened ends when the market defers for a reason of
+  its own (`startsOrganicPeriod`, shared by the scorecard and the chart; a test
+  holds their counts equal). Without it, a sweep's last test deferral swallowed
+  the demo plan's real weekend and its $1.20 fell to $0.
 - A deferral says when it retries (`retryNote` in `lib/deferral.ts`): a stale
   price names the next Pyth window, from `secondsUntilPythPublishes` and
   `PYTH_US_EQUITY_WINDOW` in the shared calendar (Sunday 20:00 to Friday
