@@ -9,13 +9,21 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] All six guard reason codes reproduced on chain, transactions in `docs/DEMO.md`
 - [x] Web app: demo wallet, basket builder, plan page, portfolio, history, guard panel, demo controls
 - [x] Keeper: session calendar, Hermes, Pyth receiver posting, Postgres ledger
-- [x] Tests: 9 Rust, 32 Anchor integration, 20 keeper (guard, calendar, mainnet check), 36 web (scorecard, mainnet summary, deferral text, Guard API, demo restore), all re-run 2026-09-14
+- [x] Tests: 9 Rust, 32 Anchor integration (last run 2026-09-14), 28 keeper (guard,
+  calendar, mainnet check, backtest), 58 web (scorecard, chart, Guard API, deferral
+  wording, demo restore), keeper and web re-run 2026-09-19
 - [x] Mainnet check: every keeper pass prices $100 of TSLAx and QQQx on Jupiter
   against Pyth, read-only, and records the guard's verdict; the landing page
   charts it
 - [x] Guard API v1: `/api/v1/verdict` (live verdict for any size and limits),
   `/api/v1/history`, an OpenAPI 3.1 description and the `/developers` page
 - [x] Demo controls restore themselves after ten idle minutes
+- [x] Plan page chart: invested against value, held-back periods shaded, Pyth's
+  silence dashed; the keeper stores reference prices every quarter hour
+- [x] A deferral says when it will be tried again (Sunday 20:00 ET on a weekend)
+- [x] The demo plan's history matches the chain (8 fills, 29 deferrals), demo
+  tests marked; scorecard 2 held-back buys, $1.20
+- [x] Faucet: 0.02 SOL per demo wallet, 3.87 SOL on 2026-09-18 (about 167 wallets)
 - [x] Eight real weekends measured (`deploy/weekend-backtest.json`), on the landing
   page and in the README, including that waiting did not save money on average
 - [x] README: problem, architecture, quickstart, what is synthetic, why Solana

@@ -65,6 +65,12 @@ publishes: at 02:38 ET on a Monday the three feeds were seconds old, with
 confidence under 1 bp. On a weekend the price is stale, and the program defers
 with code 1, on chain.
 
+The plan page then says when the buy will be tried again. On a weekend that
+is when Pyth publishes US equity prices again, Sunday 20:00 ET, and how long
+from now; for a venue or confidence problem, the keeper's next pass, within
+minutes; for a short vault, how much to deposit. The time is a forecast for
+the screen only: the program still judges the publish time itself.
+
 Every code has been reproduced end to end on devnet; the transactions are
 listed in [`docs/DEMO.md`](docs/DEMO.md).
 
@@ -89,6 +95,15 @@ reference to reference: the four fills came in $1.10 to $1.20 per $100 below
 it. That was one weekend in which prices happened to drift down; when they
 open higher, the same card shows the cost, in red. The guard exists to refuse
 prices nobody can vouch for, not to time the market.
+
+The plan page draws the same weekend. It charts what the plan has put in
+against what it is worth, from its first activity to now: Pyth's silence is a
+dashed, flat stretch at the last price it published, the held-back buy is
+shaded amber, and demo-control tests are shaded grey. The value between buys
+comes from reference prices the keeper stores every quarter hour, one Hermes
+call for all three feeds, because the Pyth key is rate-limited (six parallel
+requests drew 429) and the executions need it; drawing a chart never calls
+Hermes.
 
 ## The real market, read-only
 
@@ -193,8 +208,11 @@ should ask right before swapping and treat `unavailable` as `defer`.
 
 The chain is the source of truth for plan state, schedule and the last
 decision. The keeper holds no authority over user funds: it can only *attempt*
-an execution. Postgres is a cache for history; delete it and nothing is lost
-that the chain does not already hold.
+an execution. Postgres is a cache: of the decisions the chain already holds,
+and of the quarter-hourly Pyth prices the charts draw. Delete it and nothing
+is lost that the chain and Pyth do not hold: `scripts/recover-ledger.ts`
+rebuilds a plan's history from its transactions, and
+`scripts/backfill-references.ts` refetches the prices from Hermes history.
 
 The guard's arithmetic exists twice on purpose — in Rust for the program, and
 once in TypeScript (`packages/shared/src/guard.ts`) shared by the keeper and
@@ -222,6 +240,10 @@ necessarily mocked. Being precise about which parts:
   reference price plus a configurable spread. There is no counterparty and no
   real share behind the token.
 - Mock USDC, minted by a faucet so judges do not have to source devnet tokens.
+- Demo tests. The scenario sweep behind `docs/DEMO.md` ran on the demo plan,
+  so its fills and deferrals are in that plan's history, marked as demo tests,
+  shaded grey on its chart, and never counted by the scorecard. A demo test's
+  period ends as soon as the market defers for a reason of its own.
 - An optional *mock reference* mode. With the real Pyth receiver, nothing is
   published for US equities from Friday 20:00 ET to Sunday 20:00 ET, so a demo
   in that window can only ever show deferrals. `scripts/set-reference.ts mock`
@@ -308,8 +330,8 @@ anchor build
 node tools/sync-idl.mjs         # refresh the committed interface in idl/
 cargo test --workspace          # 9 pure-Rust tests
 tools/test-local.sh             # 32 Anchor tests on a local validator
-pnpm --filter keeper test       # 11 guard and calendar tests
-pnpm --filter web test          # 13 scorecard tests
+pnpm --filter keeper test       # 28 guard, calendar, mainnet-check and backtest tests
+pnpm --filter web test          # 58 scorecard, chart, Guard API and wording tests
 ```
 
 Deploy your own copy:
@@ -375,7 +397,7 @@ cumulative units bought, which is what makes average cost exact.
 programs/basket_dca     the product: plan lifecycle and the guard
 programs/mock_market    devnet fill venue and reference relay (synthetic)
 apps/keeper             the once-a-minute executor, plus operational scripts
-apps/web                Next.js app: builder, plan page, guard panel, demo controls
+apps/web                Next.js app: builder, plan page (chart, scorecard, history), guard panel, demo controls
 packages/shared         guard arithmetic, session calendar, presets, reason codes
 tests                   Anchor integration tests
 docs/DEMO.md            demo script and the transaction for every reason code
