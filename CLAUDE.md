@@ -84,6 +84,9 @@ else until the demo works end to end. No feature work on the last day; day
     not entitled either, including Pyth's own xStock feeds
     (`Crypto.TSLAX/USD`, `Crypto.TSLAX/TSLA.RR`), which exist on Hermes; an
     upgraded key would let the guard compare both sides with Pyth alone.
+    Their mainnet push accounts (push oracle `pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT`,
+    shard 0) exist but are not kept fresh: 6.4 days old on 2026-09-18, while
+    SOL/USD was 4 minutes old. They are no way around the entitlement.
   - **Nobody sponsors Pyth US equity accounts on devnet or mainnet** (weeks
     stale; BTC/SOL fresh), so the keeper posts the signed Hermes updates to
     the Pyth receiver itself (`post_update`) in the execute transaction.

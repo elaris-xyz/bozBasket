@@ -57,7 +57,9 @@ export function retryNote(reason: number, nowSecs: number, pythResumesIn: number
 		case REASON.LOW_LIQUIDITY:
 			return `${nextPass}, and buys once the venue has the depth for every leg.`;
 		case REASON.INSUFFICIENT_BALANCE:
-			return `Nothing changes that on its own: deposit at least ${fmtUsd(shortfallUsdc)} and the next pass buys.`;
+			// The reason stays on chain until the next attempt, so a deposit made
+			// since then already covers it.
+			return shortfallUsdc > 0 ? `Nothing changes that on its own: deposit at least ${fmtUsd(shortfallUsdc)} and the next pass buys.` : `${nextPass}, and buys now that the vault covers a period.`;
 		default:
 			return `${nextPass}.`;
 	}

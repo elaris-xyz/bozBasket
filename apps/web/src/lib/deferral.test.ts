@@ -50,6 +50,8 @@ test("while Pyth publishes, every other cause is retried on the next pass", () =
 	}
 });
 
-test("a short vault says how much to deposit", () => {
+test("a short vault says how much to deposit, and stops asking once it is covered", () => {
 	assert.equal(retryNote(REASON.INSUFFICIENT_BALANCE, saturdayNoon, 0, 1), "Nothing changes that on its own: deposit at least $1.00 and the next pass buys.");
+	// Deposited since the attempt: the on-chain reason is stale until the next pass.
+	assert.equal(retryNote(REASON.INSUFFICIENT_BALANCE, saturdayNoon, 0, 0), "The keeper tries again on its next pass, within a few minutes, and buys now that the vault covers a period.");
 });

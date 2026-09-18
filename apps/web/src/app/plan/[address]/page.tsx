@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlan, usePrices } from "@/lib/usePlans";
 import { EXPLORER, EXPLORER_ACCOUNT, symbolByMint } from "@/lib/solana";
@@ -29,6 +29,24 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 		reload();
 		setRefreshKey((k) => k + 1);
 	};
+
+	// The plan is re-read from the chain every 20 s, but History, the scorecard
+	// and the chart read the ledger only when asked. A buy the keeper makes in
+	// the background would reach the cards and not the history, and the chart
+	// would end $100 above its own line. So when the on-chain counters move,
+	// refresh the ledger readers now, and again shortly after: the keeper writes
+	// its row a few seconds after the transaction confirms.
+	const counters = plan ? `${plan.account.executions}/${plan.account.deferrals}/${plan.account.totalInvested.toString()}` : null;
+	const seenCounters = useRef<string | null>(null);
+	useEffect(() => {
+		if (counters === null || counters === seenCounters.current) return;
+		const first = seenCounters.current === null;
+		seenCounters.current = counters;
+		if (first) return; // every reader fetches on mount already
+		setRefreshKey((k) => k + 1);
+		const t = setTimeout(() => setRefreshKey((k) => k + 1), 10_000);
+		return () => clearTimeout(t);
+	}, [counters]);
 
 	// A failed refresh keeps the loaded plan on screen. Only a plan that has
 	// never loaded shows the error, so one slow RPC call cannot blank the page.

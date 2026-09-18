@@ -198,8 +198,9 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 			</p>
 			{anyStale && <p className="mt-1 text-xs text-slate-500">Dashed: Pyth published no US equity price then, so the value holds at the last one. The program does not buy on a price that old.</p>}
 			{Math.abs(missing) >= 0.01 && (
-				<p className="mt-1 text-xs text-amber">
-					The history is missing {fmtUsd(Math.abs(missing))} of buys that the chain recorded; the last point comes from the chain.
+				<p className="mt-1 text-xs text-slate-500">
+					The chain shows {fmtUsd(Math.abs(missing))} {missing > 0 ? "more" : "less"} invested than the history lists, and the last point comes from the chain. A buy that has
+					just landed reaches the history a few seconds later.
 				</p>
 			)}
 			{data.note && <p className="mt-1 text-xs text-slate-500">{data.note}.</p>}
