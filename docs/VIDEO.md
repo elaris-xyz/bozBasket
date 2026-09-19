@@ -88,7 +88,7 @@ minute. Let it; the 1:35 execution is the second period.*
 > and loss against the live reference. The average cost sits about twenty
 > basis points above the reference: that is the venue spread, not rounding.
 
-**1:55 — A real weekend.** *Second tab: the demo plan's chart, "Invested and value over time", then the "What the guard did" card.*
+**1:55 — A real weekend.** *Second tab: the demo plan's chart, "Invested and value over time". Click **Held-back buy** so the weekend fills the chart, then show the "What the guard did" card.*
 
 > This plan was due on Sunday the thirteenth. The dashed, flat stretch is
 > Pyth's silence: no US equity price from Friday 20:00 to Sunday 20:00
