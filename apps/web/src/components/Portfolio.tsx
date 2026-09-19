@@ -54,15 +54,15 @@ export function Portfolio({ plan, prices }: { plan: LoadedPlan; prices: Prices |
 				<div className="grid w-full grid-cols-3 gap-3 sm:flex sm:w-auto sm:gap-6 sm:text-right">
 					<div>
 						<p className="label">Invested</p>
-						<p className="text-lg font-bold">{fmtUsd(invested)}</p>
+						<p className="num text-lg font-semibold">{fmtUsd(invested)}</p>
 					</div>
 					<div>
 						<p className="label">Value</p>
-						<p className="text-lg font-bold">{dash(value)}</p>
+						<p className="num text-lg font-semibold">{dash(value)}</p>
 					</div>
 					<div>
 						<p className="label">P&amp;L</p>
-						<p className={`text-lg font-bold ${pnl === null ? "" : pnl >= 0 ? "text-mint" : "text-rose"}`}>{dash(pnl)}</p>
+						<p className={`num text-lg font-semibold ${pnl === null ? "" : pnl >= 0 ? "text-mint" : "text-rose"}`}>{dash(pnl)}</p>
 						{pnl !== null && <p className={`text-xs ${pnl >= 0 ? "text-mint" : "text-rose"}`}>{fmtPct(invested > 0 ? (pnl / invested) * 100 : 0)}</p>}
 					</div>
 				</div>

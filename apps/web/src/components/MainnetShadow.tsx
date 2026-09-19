@@ -144,13 +144,16 @@ export function MainnetShadow() {
 					<div className="h-48 sm:h-56" aria-label="Gap between the Jupiter price and the Pyth price over time, in basis points">
 						<ResponsiveContainer>
 							<LineChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-								<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
-								<XAxis dataKey="ts" type="number" domain={["dataMin", "dataMax"]} tickFormatter={tickTime} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
+								<CartesianGrid stroke="rgba(170,186,210,.10)" vertical={false} />
+								<XAxis dataKey="ts" type="number" domain={["dataMin", "dataMax"]} tickFormatter={tickTime} stroke="#6B7686" fontSize={10} fontFamily="var(--font-mono)" tickLine={false} axisLine={{ stroke: "rgba(170,186,210,.10)" }} minTickGap={48} />
 								<YAxis
-									stroke="#64748b"
-									fontSize={11}
+									orientation="right"
+									stroke="#6B7686"
+									fontSize={10}
+									fontFamily="var(--font-mono)"
 									tickLine={false}
-									width={40}
+									axisLine={false}
+									width={44}
 									domain={[-bound, bound]}
 									ticks={ticks}
 									tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
@@ -161,9 +164,9 @@ export function MainnetShadow() {
 								<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
 								<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
 								<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
-								<Tooltip content={(p) => <GapTip {...(p as TipProps)} />} />
+								<Tooltip content={(p) => <GapTip {...(p as TipProps)} />} cursor={{ stroke: "rgba(170,186,210,.35)", strokeWidth: 1 }} />
 								{symbols.map((s) => (
-									<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={2} connectNulls isAnimationActive={false} />
+									<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={2} strokeLinecap="round" connectNulls isAnimationActive={false} />
 								))}
 							</LineChart>
 						</ResponsiveContainer>

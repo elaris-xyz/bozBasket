@@ -125,15 +125,18 @@ export function WeekendBacktest() {
 				<div className="h-56 sm:h-64" aria-label="Weekend pool prices against the next Pyth price, per traded hour">
 					<ResponsiveContainer>
 						<ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-							<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
-							<XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} tickFormatter={day} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={40} />
+							<CartesianGrid stroke="rgba(170,186,210,.10)" vertical={false} />
+							<XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} tickFormatter={day} stroke="#6B7686" fontSize={10} fontFamily="var(--font-mono)" tickLine={false} axisLine={{ stroke: "rgba(170,186,210,.10)" }} minTickGap={40} />
 							<YAxis
 								dataKey="y"
 								type="number"
-								stroke="#64748b"
-								fontSize={11}
+								orientation="right"
+								stroke="#6B7686"
+								fontSize={10}
+								fontFamily="var(--font-mono)"
 								tickLine={false}
-								width={40}
+								axisLine={false}
+								width={44}
 								domain={[-Y_BOUND, Y_BOUND]}
 								ticks={[-200, -limit, 0, limit, 200]}
 								tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}

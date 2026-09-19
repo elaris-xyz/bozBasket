@@ -15,7 +15,7 @@ export function PlanCard({ plan }: { plan: LoadedPlan }) {
 			<div className="flex items-start justify-between gap-3">
 				<div>
 					<p className="label">Plan #{a.planId}</p>
-					<p className="mt-1 text-xl font-bold">
+					<p className="num mt-1 text-xl font-semibold">
 						{fmtUsd(a.amountPerPeriod.toNumber() / 1e6, 0)} <span className="text-sm font-normal text-slate-400">{cadenceLabel(a.periodSeconds.toNumber())}</span>
 					</p>
 				</div>

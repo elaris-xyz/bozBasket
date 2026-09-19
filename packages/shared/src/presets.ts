@@ -13,9 +13,9 @@ export type DemoStock = {
 };
 
 export const DEMO_STOCKS: DemoStock[] = [
-	{ symbol: "mTSLA", name: "Tesla", ticker: "TSLA", feedId: "16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1", color: "#EF4444" },
-	{ symbol: "mQQQ", name: "Nasdaq 100 ETF", ticker: "QQQ", feedId: "9695e2b96ea7b3859da9ed25b7a46a920a776e2fdae19a7bcfdf2b219230452d", color: "#3B82F6" },
-	{ symbol: "mVOO", name: "S&P 500 ETF", ticker: "VOO", feedId: "236b30dd09a9c00dfeec156c7b1efd646c0f01825a1758e3e4a0679e3bdff179", color: "#10B981" },
+	{ symbol: "mTSLA", name: "Tesla", ticker: "TSLA", feedId: "16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1", color: "#3987E5" },
+	{ symbol: "mQQQ", name: "Nasdaq 100 ETF", ticker: "QQQ", feedId: "9695e2b96ea7b3859da9ed25b7a46a920a776e2fdae19a7bcfdf2b219230452d", color: "#D95926" },
+	{ symbol: "mVOO", name: "S&P 500 ETF", ticker: "VOO", feedId: "236b30dd09a9c00dfeec156c7b1efd646c0f01825a1758e3e4a0679e3bdff179", color: "#199E70" },
 ];
 
 export type BasketPreset = {

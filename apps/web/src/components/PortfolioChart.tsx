@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Label, Line, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { LoadedPlan, Prices } from "@/lib/usePlans";
 import { chartRows, type HeldBack, type TimelinePoint } from "@/lib/timeline";
 import { symbolByMint } from "@/lib/solana";
@@ -12,8 +12,12 @@ type TimelineResponse = { points: TimelinePoint[]; heldBack: HeldBack[]; investe
 type Row = ReturnType<typeof chartRows>[number];
 
 const VALUE = "#3B82F6";
-const INVESTED = "#94a3b8";
+const INVESTED = "#8C97A8";
 const AMBER = "#F59E0B";
+const SURFACE = "#0D1117";
+/** Axis and grid ink: one step off the surface, and never louder than a mark. */
+const AXIS = "#6B7686";
+const GRID = "rgba(170,186,210,.10)";
 
 /** Where the plan stands now, valued exactly as the Portfolio card values it,
  *  so the line ends on the card's number. Null until every leg has a price. */
@@ -141,6 +145,8 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 	const pad = Math.max((hi - lo) * 0.1, hi * 0.005, 0.5);
 	const axis = niceAxis(lo - pad, hi + pad);
 	const anyStale = points.some((p) => p.stale);
+	// The last point in view, for the dot and label at the end of the line.
+	const end = [...points].reverse().find((p) => p.value !== null && p.ts <= last && p.ts >= first) ?? null;
 	// Only the chain knows every fill: the ledger is a cache the keeper may have
 	// missed a write to. The last point is the chain's, so say when they differ.
 	const chainInvested = plan.account.totalInvested.toNumber() / 1e6;
@@ -201,10 +207,43 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 
 			<div className="mt-2 h-52 sm:h-64" aria-label="The plan's invested amount and its value over time, with the periods in which the guard held the buy back">
 				<ResponsiveContainer>
-					<ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-						<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
-						<XAxis dataKey="ts" type="number" domain={[first, last]} allowDataOverflow tickFormatter={tickFor(last - first)} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
-						<YAxis stroke="#64748b" fontSize={11} tickLine={false} width={48} domain={axis.domain} ticks={axis.ticks} interval={0} allowDataOverflow tickFormatter={fmtAxisUsd} />
+					<ComposedChart data={rows} margin={{ top: 10, right: 4, bottom: 0, left: 4 }}>
+						<defs>
+							{/* A wash under the value line, as a price chart carries. */}
+							<linearGradient id="valueFill" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="0%" stopColor={VALUE} stopOpacity={0.18} />
+								<stop offset="100%" stopColor={VALUE} stopOpacity={0} />
+							</linearGradient>
+						</defs>
+						<CartesianGrid stroke={GRID} vertical={false} />
+						<XAxis
+							dataKey="ts"
+							type="number"
+							domain={[first, last]}
+							allowDataOverflow
+							tickFormatter={tickFor(last - first)}
+							stroke={AXIS}
+							fontSize={10}
+							fontFamily="var(--font-mono)"
+							tickLine={false}
+							axisLine={{ stroke: GRID }}
+							minTickGap={48}
+						/>
+						{/* Price on the right, where a trader reads it. */}
+						<YAxis
+							orientation="right"
+							stroke={AXIS}
+							fontSize={10}
+							fontFamily="var(--font-mono)"
+							tickLine={false}
+							axisLine={false}
+							width={52}
+							domain={axis.domain}
+							ticks={axis.ticks}
+							interval={0}
+							allowDataOverflow
+							tickFormatter={fmtAxisUsd}
+						/>
 						{data.heldBack.map((h) => (
 							<ReferenceArea key={`a${h.from}`} x1={h.from} x2={Math.min(h.to ?? last, last)} fill={h.forced ? "#ffffff" : AMBER} fillOpacity={h.forced ? 0.06 : 0.12} stroke="none" ifOverflow="hidden" />
 						))}
@@ -213,10 +252,18 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 						{data.heldBack.map((h) => (
 							<ReferenceLine key={`l${h.from}`} x={h.from} stroke={h.forced ? "rgba(255,255,255,.3)" : AMBER} strokeOpacity={0.6} ifOverflow="hidden" />
 						))}
-						<Tooltip content={<Tip />} />
+						<Tooltip content={<Tip />} cursor={{ stroke: "rgba(170,186,210,.35)", strokeWidth: 1 }} />
+						<Area dataKey="live" stroke="none" fill="url(#valueFill)" isAnimationActive={false} />
 						<Line dataKey="invested" type="stepAfter" stroke={INVESTED} strokeWidth={1.5} dot={false} isAnimationActive={false} />
-						<Line dataKey="live" stroke={VALUE} strokeWidth={2} dot={false} isAnimationActive={false} />
-						<Line dataKey="frozen" stroke={VALUE} strokeWidth={2} strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+						<Line dataKey="live" stroke={VALUE} strokeWidth={2} strokeLinecap="round" dot={false} isAnimationActive={false} />
+						<Line dataKey="frozen" stroke={VALUE} strokeWidth={2} strokeDasharray="4 4" strokeLinecap="round" dot={false} isAnimationActive={false} />
+						{/* The last value, labelled on the mark: the one number worth
+						    reading without hovering. */}
+						{end !== null && (
+							<ReferenceDot x={end.ts} y={end.value as number} r={4} fill={VALUE} stroke={SURFACE} strokeWidth={2} ifOverflow="hidden">
+								<Label value={fmtUsd(end.value as number)} position="left" offset={10} fill="#E8ECF3" fontSize={11} fontFamily="var(--font-mono)" />
+							</ReferenceDot>
+						)}
 					</ComposedChart>
 				</ResponsiveContainer>
 			</div>

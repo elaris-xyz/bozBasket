@@ -27,12 +27,12 @@ export function GuardScorecard({ scorecard }: { scorecard: Scorecard | null }) {
 				<div className="flex gap-6 text-right">
 					<div>
 						<p className="label">Overpayment avoided</p>
-						<p className={`text-lg font-bold ${avoidedUsdc > 0 ? "text-mint" : ""}`}>{fmtUsd(avoidedUsdc)}</p>
+						<p className={`num text-lg font-semibold ${avoidedUsdc > 0 ? "text-mint" : ""}`}>{fmtUsd(avoidedUsdc)}</p>
 						<p className="text-[11px] text-slate-500">venue quoted above fair value</p>
 					</div>
 					<div>
 						<p className="label">Waiting on stale prices</p>
-						<p className={`text-lg font-bold ${staleSavedUsdc > 0 ? "text-mint" : staleSavedUsdc < 0 ? "text-rose" : ""}`}>{signed(staleSavedUsdc)}</p>
+						<p className={`num text-lg font-semibold ${staleSavedUsdc > 0 ? "text-mint" : staleSavedUsdc < 0 ? "text-rose" : ""}`}>{signed(staleSavedUsdc)}</p>
 						<p className="text-[11px] text-slate-500">saved (+) or cost (−)</p>
 					</div>
 				</div>

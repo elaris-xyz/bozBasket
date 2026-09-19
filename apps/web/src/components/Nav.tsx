@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDemoWallet } from "@/lib/wallet";
 import { fmtUsd, short } from "@/lib/format";
+import { Ticker } from "@/components/Ticker";
 
 const LINKS: [string, string][] = [
 	["/", "Plans"],
@@ -25,8 +26,8 @@ export function Nav() {
 		</Link>
 	);
 	return (
-		<header className="sticky top-0 z-20 border-b border-white/5 bg-ink-900/80 backdrop-blur">
-			<div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+		<header className="sticky top-0 z-20 border-b border-white/5 bg-ink-900/85 backdrop-blur">
+			<div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5">
 				<div className="flex min-w-0 items-center gap-4">
 					<Link href="/" className="shrink-0 text-lg font-bold tracking-tight">
 						boz<span className="text-mint">Basket</span>
@@ -65,6 +66,7 @@ export function Nav() {
 				{LINKS.map(link)}
 			</nav>
 			{w.busy && <div className="border-t border-white/5 bg-mint/10 px-4 py-1 text-center text-xs text-mint">{w.busy}…</div>}
+					<Ticker />
 		</header>
 	);
 }

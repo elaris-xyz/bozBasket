@@ -107,7 +107,7 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 							{short(address, 6)}
 						</a>
 					</p>
-					<h1 className="mt-1 text-2xl font-bold">
+					<h1 className="num mt-1 text-2xl font-semibold tracking-tight">
 						{fmtUsd(a.amountPerPeriod.toNumber() / 1e6, 0)} {cadenceLabel(a.periodSeconds.toNumber())}
 					</h1>
 					<div className="mt-2 flex flex-wrap gap-1.5">
@@ -136,14 +136,14 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 				].map(([k, v]) => (
 					<div key={k} className="card !p-4">
 						<p className="label">{k}</p>
-						<p className="mt-1 text-lg font-bold">{v}</p>
+						<p className="num mt-1 text-lg font-semibold">{v}</p>
 						{/* The chain counts demo-control tests too; History lists them, marked. */}
 						{k === "Executions / deferrals" && <p className="text-xs text-slate-500">on chain, demo tests included</p>}
 					</div>
 				))}
 				<div className="card !p-4">
 					<p className="label">Next buy</p>
-					<p className="mt-1 text-lg font-bold">
+					<p className="num mt-1 text-lg font-semibold">
 						<Countdown ts={a.nextExecution.toNumber()} />
 					</p>
 					<p className="text-xs text-slate-500">{fmtTs(a.nextExecution.toNumber())}</p>

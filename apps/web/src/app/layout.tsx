@@ -1,8 +1,16 @@
 import type { Metadata, Viewport } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { DemoWalletProvider } from "@/lib/wallet";
 import { Nav } from "@/components/Nav";
 import { KeeperPulse } from "@/components/KeeperPulse";
+
+// IBM Plex: a technical, financial typeface family, and its mono for every
+// figure. next/font self-hosts them at build time, so no request leaves the
+// page. Before this the CSS named Inter without loading it and fell back to
+// Segoe UI, with Consolas for the numbers.
+const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-sans", display: "swap" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono", display: "swap" });
 
 const description = "Recurring baskets of tokenized US stocks on Solana, bought only when the reference price can be trusted.";
 
@@ -29,7 +37,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="en" className="dark">
+		<html lang="en" className={`dark ${sans.variable} ${mono.variable}`}>
 			<body className="flex min-h-screen flex-col antialiased">
 				<DemoWalletProvider>
 					<KeeperPulse />
