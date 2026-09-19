@@ -14,7 +14,7 @@ a reason code written on chain** instead of filled blind.
 - Video: _add the video link_
 - Devnet program: [`4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR`](https://explorer.solana.com/address/4Tv5nEbh6b6EGNhep7rpeLy7NXpiz8AkRmVi36iwxVuR?cluster=devnet)
 
-![The landing page during the US session: live Pyth prices, and the read-only check of TSLAx and QQQx on Solana mainnet](docs/img/home.png)
+![The landing page on a Saturday: Pyth has published no US equity price for 16 hours, the real xStocks keep trading on Solana mainnet, and the guard would defer every buy](docs/img/home.png)
 
 ---
 
@@ -104,6 +104,8 @@ comes from reference prices the keeper stores every quarter hour, one Hermes
 call for all three feeds, because the Pyth key is rate-limited (six parallel
 requests drew 429) and the executions need it; drawing a chart never calls
 Hermes.
+
+![The demo plan's chart zoomed to Sunday 13 September: Pyth silent (dashed), seven refused attempts (amber), then the fill at 20:26 ET; the grey band is a demo test](docs/img/plan.png)
 
 ## The real market, read-only
 

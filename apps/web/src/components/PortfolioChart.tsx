@@ -204,7 +204,7 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 					<ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
 						<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
 						<XAxis dataKey="ts" type="number" domain={[first, last]} allowDataOverflow tickFormatter={tickFor(last - first)} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
-						<YAxis stroke="#64748b" fontSize={11} tickLine={false} width={48} domain={axis.domain} ticks={axis.ticks} interval={0} tickFormatter={fmtAxisUsd} />
+						<YAxis stroke="#64748b" fontSize={11} tickLine={false} width={48} domain={axis.domain} ticks={axis.ticks} interval={0} allowDataOverflow tickFormatter={fmtAxisUsd} />
 						{data.heldBack.map((h) => (
 							<ReferenceArea key={`a${h.from}`} x1={h.from} x2={Math.min(h.to ?? last, last)} fill={h.forced ? "#ffffff" : AMBER} fillOpacity={h.forced ? 0.06 : 0.12} stroke="none" ifOverflow="hidden" />
 						))}

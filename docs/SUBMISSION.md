@@ -44,7 +44,7 @@ https://hackathons.solana.com/hackathons/stocklana
   redeploy, at 03:37 ET, production filled that plan.
 - [x] ~~Screenshots for the README~~ — `docs/img/home.png` (the landing page
   with the mainnet check) and `docs/img/guard.png` (a demo control applied)
-- [ ] Optional: the demo plan page (scorecard and History) as `docs/img/plan.png`
+- [x] ~~The demo plan page as `docs/img/plan.png`~~ — the chart zoomed to Sunday 13 September; `home.png` retaken on a Saturday (2026-09-19), both in New York time
 - [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
 - [x] ~~Rotate the Neon database password~~ — decided against on 2026-09-15.
   Checked first: the password and the database host appear in no commit on any
