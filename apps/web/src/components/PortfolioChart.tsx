@@ -6,6 +6,7 @@ import type { LoadedPlan, Prices } from "@/lib/usePlans";
 import { chartRows, type HeldBack, type TimelinePoint } from "@/lib/timeline";
 import { symbolByMint } from "@/lib/solana";
 import { fmtPct, fmtTs, fmtUsd, reasonLabel } from "@/lib/format";
+import { TipBox } from "@/components/ChartTip";
 
 type TimelineResponse = { points: TimelinePoint[]; heldBack: HeldBack[]; invested: number; note?: string | null; error?: string };
 type Row = ReturnType<typeof chartRows>[number];
@@ -52,7 +53,7 @@ function Tip({ active, payload }: { active?: boolean; payload?: { payload: Row }
 	const p = payload[0].payload;
 	const pnl = p.value !== null ? p.value - p.invested : null;
 	return (
-		<div className="rounded-xl border border-white/10 bg-ink-800 px-3 py-2 text-xs">
+		<TipBox>
 			<p className="text-slate-400">{fmtTs(p.ts)}</p>
 			<p className="mt-1 text-slate-300">Invested {fmtUsd(p.invested)}</p>
 			{p.value !== null && (
@@ -63,7 +64,7 @@ function Tip({ active, payload }: { active?: boolean; payload?: { payload: Row }
 			)}
 			{p.fill && <p className="text-mint">Bought here</p>}
 			{p.stale && <p className="text-amber">Pyth published no price: valued at the last one</p>}
-		</div>
+		</TipBox>
 	);
 }
 

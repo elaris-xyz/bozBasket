@@ -3,12 +3,28 @@
 import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartLegend } from "@/components/ChartLegend";
+import { TipBox, TipRow, TipTitle, type TipProps } from "@/components/ChartTip";
 import { DEMO_STOCKS, REASON } from "@bozbasket/shared";
 import type { ShadowResponse } from "@/app/api/shadow/route";
 import type { ShadowPoint } from "@/lib/shadow";
 import { fmtDuration, fmtTs, fmtUsd, reasonLabel } from "@/lib/format";
 
 const colorOf = (symbol: string) => DEMO_STOCKS.find((s) => s.ticker === symbol.replace(/x$/, ""))?.color ?? "#94a3b8";
+/** One check time, each xStock's gap to Pyth in its own colour. */
+function GapTip({ active, payload, label }: TipProps) {
+	if (!active || !payload?.length) return null;
+	return (
+		<TipBox>
+			<TipTitle>{fmtTs(Number(label))}</TipTitle>
+			{payload
+				.filter((i) => i.value !== null && i.value !== undefined)
+				.map((i) => (
+					<TipRow key={String(i.name)} color={i.color} label={String(i.name)} value={`${Number(i.value) > 0 ? "+" : ""}${i.value} bps`} />
+				))}
+		</TipBox>
+	);
+}
+
 const fmtGap = (bps: number) => `${bps >= 0 ? "+" : "−"}${(Math.abs(bps) / 100).toFixed(2)}%`;
 const tickTime = (ts: number) => new Date(ts * 1000).toLocaleString("en-US", { weekday: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -143,11 +159,7 @@ export function MainnetShadow() {
 								<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
 								<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
 								<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
-								<Tooltip
-									labelFormatter={(ts) => fmtTs(Number(ts))}
-									formatter={(v: number, name: string) => [`${v > 0 ? "+" : ""}${v} bps`, name]}
-									contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }}
-								/>
+								<Tooltip content={(p) => <GapTip {...(p as TipProps)} />} />
 								{symbols.map((s) => (
 									<Line key={s} dataKey={s} stroke={colorOf(s)} dot={false} strokeWidth={2} connectNulls isAnimationActive={false} />
 								))}

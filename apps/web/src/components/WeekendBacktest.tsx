@@ -6,10 +6,23 @@ import { DEMO_STOCKS } from "@bozbasket/shared";
 import type { BacktestView, SymbolView } from "@/lib/backtestView";
 import { fmtTs } from "@/lib/format";
 import { ChartLegend } from "@/components/ChartLegend";
+import { TipBox, TipRow, TipTitle, type TipProps } from "@/components/ChartTip";
 
 const REPO = "https://github.com/elaris-xyz/bozBasket/blob/main";
 const Y_BOUND = 250;
 const colorOf = (symbol: string) => DEMO_STOCKS.find((s) => s.ticker === symbol.replace(/x$/, ""))?.color ?? "#94a3b8";
+
+/** One weekend hour: whose, when, and how far from the next Pyth price. */
+function HourTip({ active, payload }: TipProps<{ x: number; y: number; symbol: string }>) {
+	const p = active ? payload?.[0]?.payload : undefined;
+	if (!p) return null;
+	return (
+		<TipBox>
+			<TipTitle>{fmtTs(p.x)}</TipTitle>
+			<TipRow color={colorOf(p.symbol)} label={`${p.symbol} vs next Pyth price`} value={`${p.y > 0 ? "+" : ""}${p.y} bps`} />
+		</TipBox>
+	);
+}
 const pct = (bps: number | null, signed = true) => (bps === null ? "–" : `${signed ? (bps >= 0 ? "+" : "−") : ""}${(Math.abs(bps) / 100).toFixed(2)}%`);
 const day = (ts: number) => new Date(ts * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const range = (xs: (number | null)[]) => {
@@ -130,16 +143,12 @@ export function WeekendBacktest() {
 							<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
 							<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
 							<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
-							<Tooltip
-								cursor={false}
-								formatter={(v: number, name: string) => (name === "y" ? [`${v > 0 ? "+" : ""}${v} bps`, "vs next Pyth price"] : [fmtTs(v), "hour"])}
-								contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }}
-							/>
+							<Tooltip cursor={false} content={(p) => <HourTip {...(p as TipProps<{ x: number; y: number; symbol: string }>)} />} />
 							{bySymbol.map((symbol) => (
 								<Scatter
 									key={symbol}
 									name={symbol}
-									data={view.points.filter((p) => p.symbol === symbol).map((p) => ({ x: p.ts, y: p.bps }))}
+									data={view.points.filter((p) => p.symbol === symbol).map((p) => ({ x: p.ts, y: p.bps, symbol }))}
 									fill={colorOf(symbol)}
 									fillOpacity={0.55}
 									isAnimationActive={false}

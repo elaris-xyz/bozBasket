@@ -10,6 +10,7 @@ import { CADENCES, DEMO_STOCKS, PRESETS, type DemoStock } from "@bozbasket/share
 import { useDemoWallet } from "@/lib/wallet";
 import { ata, CONFIG, EXPLORER, keypairWallet, marketBySymbol, planPda, programsFor, USDC_MINT, vaultPda } from "@/lib/solana";
 import { fmtUsd } from "@/lib/format";
+import { TipBox, TipRow, type TipProps } from "@/components/ChartTip";
 
 type Weights = Record<DemoStock["symbol"], number>;
 const ZERO: Weights = { mTSLA: 0, mQQQ: 0, mVOO: 0 };
@@ -174,7 +175,16 @@ export function BasketBuilder() {
 										<Cell key={p.name} fill={p.color} />
 									))}
 								</Pie>
-								<Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }} itemStyle={{ color: "#e2e8f0" }} />
+								<Tooltip
+									content={(p) => {
+										const d = (p as TipProps<{ name: string; value: number; color: string }>).active ? (p as TipProps<{ name: string; value: number; color: string }>).payload?.[0]?.payload : undefined;
+										return d ? (
+											<TipBox>
+												<TipRow color={d.color} label={d.name} value={`${d.value}%`} />
+											</TipBox>
+										) : null;
+									}}
+								/>
 							</PieChart>
 						</ResponsiveContainer>
 					</div>
