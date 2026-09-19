@@ -291,6 +291,29 @@ necessarily mocked. Being precise about which parts:
   not implemented, so it is not claimed. What does run against mainnet is the
   read-only check described in [The real market](#the-real-market-read-only).
 
+## What comes next
+
+What each step rests on has been measured; the steps themselves are not built.
+
+- **Real buys on mainnet, without custody or a new program.** Build the
+  Jupiter swap for the user's own wallet with its minimum output set from the
+  Pyth price and the guard's divergence limit: Jupiter's program then enforces
+  that limit on chain, and staleness and confidence are checked before the
+  swap is built, as the Guard API already does. Simulated against mainnet on 2026-09-18 for a $2 USDC to
+  TSLAx buy: with the Pyth-derived floor the swap went through; with a floor
+  1% above the pool it reverted (`0x1771`, slippage exceeded). A recurring
+  plan on mainnet then needs either a capped delegation or the vault program
+  deployed there.
+- **The token against its underlying, from Pyth alone.** Pyth publishes
+  xStock feeds (`Crypto.TSLAX/USD`) and redemption rates
+  (`Crypto.TSLAX/TSLA.RR`) around the clock. With a key entitled to them, the
+  guard compares a token with its stock without a DEX quote, and weekends show
+  how far the token moved while the stock's price stood still.
+- **More stocks** are configuration: AAPL, NVDA and SPY feeds exist, and the
+  only limit today is the key's entitlement.
+- **Holidays** in the forecast the screen shows ("tried again Sunday 20:00
+  ET"). The program already handles them: it judges the publish time.
+
 ## Why Solana
 
 - **Atomicity is the product.** A basket of four legs is one transaction that
