@@ -29,7 +29,8 @@ export const MAINNET_USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
  *  mints with 8 decimals and the scaled UI amount extension, which carries the
  *  issuer's share multiplier. Mints from Jupiter's verified token list on
  *  2026-09-14. VOOx (Xsd7TduTbjuYCFL7Uoujb8SbkZLmUsuYNLn7KdvX21x) exists, but
- *  Jupiter reported it not tradable that day. */
+ *  no pool holds it: Jupiter reported it not tradable on 09-14 and found no
+ *  route on 09-20, when it had 24 holders and GeckoTerminal listed no pool. */
 export const MAINNET_XSTOCKS = [
 	{ symbol: "TSLAx", ticker: "TSLA", mint: "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", feedId: PYTH_FEEDS.TSLA, decimals: 8 },
 	{ symbol: "QQQx", ticker: "QQQ", mint: "Xs8S1uUs1zvS2p7iwtsG3b6fkhpvmwz4GYU3gWAmWHZ", feedId: PYTH_FEEDS.QQQ, decimals: 8 },

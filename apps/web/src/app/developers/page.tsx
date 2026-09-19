@@ -162,7 +162,7 @@ export default function DevelopersPage() {
 						The arithmetic is <code className="font-mono text-xs">checkLeg</code> in <code className="font-mono text-xs">packages/shared</code>, the off-chain twin of the
 						program&apos;s guard, which the keeper and the guard panel also use.
 					</li>
-					<li>Covered: {MAINNET_XSTOCKS.map((s) => s.symbol).join(" and ")}. VOOx is left out because Jupiter reports it not tradable.</li>
+					<li>Covered: {MAINNET_XSTOCKS.map((s) => s.symbol).join(" and ")}. VOOx is left out: no pool holds it on Solana, so Jupiter finds no route.</li>
 					<li>This runs on a free tier for a hackathon, with no uptime promise. Treat an error or unavailable as defer.</li>
 				</ul>
 				<p className="mt-3">

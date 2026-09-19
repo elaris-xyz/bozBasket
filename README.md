@@ -128,8 +128,9 @@ Two details decide whether the number means anything:
 The window that matters is the weekend, when the pools keep quoting against a
 price that stopped on Friday. The live check has none on record until Friday
 2026-09-18 at 20:00 ET and keeps collecting through judging; the eight
-weekends before it are measured from history below. VOOx is left out because
-Jupiter reports it not tradable.
+weekends before it are measured from history below. VOOx is left out: the
+token exists, but no pool holds it, so Jupiter finds no route and there is no
+market price to check (checked 2026-09-20). VOO stays in the devnet baskets.
 
 ## Eight weekends, measured
 

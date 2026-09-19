@@ -287,8 +287,10 @@ the `PriceUpdateV2` mirror in `mock_market` byte-identical to Pyth's.
 - The mainnet RPC is the Helius devnet URL with the host swapped
   (`mainnetRpcFor`), so it carries the API key: never log it.
   `MAINNET_RPC_URL`, `JUPITER_API_URL` and `MAINNET_SHADOW=0` override.
-- VOOx is TOKEN_NOT_TRADABLE on Jupiter, and the Pyth key covers only TSLA,
-  QQQ and VOO, so the mainnet basket is two stocks.
+- VOOx has no pool on Solana (TOKEN_NOT_TRADABLE on 09-14, NO_ROUTES_FOUND and
+  24 holders on 09-20, no GeckoTerminal pool), and the Pyth key covers only
+  TSLA, QQQ and VOO, so the mainnet check and the weekend backtest are two
+  stocks. Both cards say why (`NoVooNote`), not only under "How this is measured".
 - `/api/shadow` summarises the last seven days; `components/MainnetShadow.tsx`
   renders it under the live proof on the landing page.
 

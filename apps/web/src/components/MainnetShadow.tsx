@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartLegend } from "@/components/ChartLegend";
+import { NoVooNote } from "@/components/NoVooNote";
 import { TipBox, TipRow, TipTitle, type TipProps } from "@/components/ChartTip";
 import { DEMO_STOCKS, REASON } from "@bozbasket/shared";
 import type { ShadowResponse } from "@/app/api/shadow/route";
@@ -135,6 +136,7 @@ export function MainnetShadow() {
 					);
 				})}
 			</ul>
+			<NoVooNote missing="no market price to check" />
 
 			{series.length >= 2 ? (
 				<div className="mt-4">
@@ -189,7 +191,7 @@ export function MainnetShadow() {
 				<p className="mt-2">
 				Nothing is bought on mainnet. Every five minutes the keeper asks Jupiter what $100 of USDC buys in each xStock and runs the answer through the same guard code,
 				with the default limits: {limits.maxStalenessSecs} s staleness, {limits.maxConfBps} bps confidence, {limits.maxDivergenceBps} bps gap (dashed). Share counts include
-				the issuer&apos;s multiplier. VOOx is left out because Jupiter reports it not tradable.
+				the issuer&apos;s multiplier. VOOx is left out: no pool holds it, so Jupiter finds no route.
 				</p>
 			</details>
 		</section>

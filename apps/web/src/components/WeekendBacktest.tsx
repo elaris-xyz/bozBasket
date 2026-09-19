@@ -6,6 +6,7 @@ import { DEMO_STOCKS } from "@bozbasket/shared";
 import type { BacktestView, SymbolView } from "@/lib/backtestView";
 import { fmtTs } from "@/lib/format";
 import { ChartLegend } from "@/components/ChartLegend";
+import { NoVooNote } from "@/components/NoVooNote";
 import { TipBox, TipRow, TipTitle, type TipProps } from "@/components/ChartTip";
 
 const REPO = "https://github.com/elaris-xyz/bozBasket/blob/main";
@@ -117,6 +118,7 @@ export function WeekendBacktest() {
 					<Tile key={s.symbol} s={s} limitBps={limit} />
 				))}
 			</ul>
+			<NoVooNote missing="no weekend trade to measure" />
 
 			<div className="mt-5">
 				<ChartLegend caption="Each dot: one traded weekend hour, against the next Pyth price, in bps" series={bySymbol.map((s) => ({ name: s, color: colorOf(s) }))} shape="dot" />
