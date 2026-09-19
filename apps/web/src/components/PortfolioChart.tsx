@@ -73,6 +73,7 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 	const address = plan.address.toBase58();
 	const [data, setData] = useState<TimelineResponse | null>(null);
 	const [failed, setFailed] = useState(false);
+	const [zoomed, setZoomed] = useState(false);
 
 	useEffect(() => {
 		let alive = true;
@@ -114,15 +115,30 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 	}
 
 	const rows = chartRows(points);
-	const first = points[0].ts;
-	const last = points[points.length - 1].ts;
-	const ys = points.flatMap((p) => (p.value === null ? [p.invested] : [p.invested, p.value]));
+	const organic = data.heldBack.filter((h) => !h.forced);
+	const forced = data.heldBack.length - organic.length;
+	const whole = { from: points[0].ts, to: points[points.length - 1].ts };
+	// A held-back buy lasts hours and a plan lives for weeks, so on the whole
+	// plan the story is a sliver: on a phone the demo plan's weekend was 22 px
+	// of 253, and it narrows every day the plan runs. Offer its own window.
+	const focus = organic.length ? organic[organic.length - 1] : null;
+	const focusTo = focus ? Math.min(focus.to ?? whole.to, whole.to) : 0;
+	// A tight margin: the hours around a held-back buy can hold demo fills that
+	// would pull the y range down to $0 and flatten the stretch in question.
+	const margin = focus ? Math.max(1.5 * 3600, 0.15 * (focusTo - focus.from)) : 0;
+	const focusWindow = focus ? { from: Math.max(whole.from, focus.from - margin), to: Math.min(whole.to, focusTo + margin) } : null;
+	const canZoom = !!focusWindow && (focusTo - (focus as HeldBack).from) / Math.max(1, whole.to - whole.from) < 0.25;
+	const view = canZoom && zoomed && focusWindow ? focusWindow : whole;
+	const first = view.from;
+	const last = view.to;
+	// The y range follows what is in view, plus the points either side, whose
+	// lines cross into it.
+	const inView = points.filter((p, i) => (p.ts >= first && p.ts <= last) || (p.ts < first && points[i + 1]?.ts >= first) || (p.ts > last && points[i - 1]?.ts <= last));
+	const ys = inView.flatMap((p) => (p.value === null ? [p.invested] : [p.invested, p.value]));
 	const lo = Math.min(...ys);
 	const hi = Math.max(...ys);
 	const pad = Math.max((hi - lo) * 0.1, hi * 0.005, 0.5);
 	const axis = niceAxis(lo - pad, hi + pad);
-	const organic = data.heldBack.filter((h) => !h.forced);
-	const forced = data.heldBack.length - organic.length;
 	const anyStale = points.some((p) => p.stale);
 	// Only the chain knows every fill: the ledger is a cache the keeper may have
 	// missed a write to. The last point is the chain's, so say when they differ.
@@ -135,6 +151,23 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 				<h3 className="font-semibold">Invested and value over time</h3>
 				<p className="text-xs text-slate-500">Valued at the Pyth reference price, as in the portfolio below</p>
 			</div>
+			{canZoom && (
+				<div className="mt-3 inline-flex rounded-lg border border-white/10 p-0.5 text-xs" role="group" aria-label="Chart range">
+					{[
+						[false, "Whole plan"],
+						[true, "Held-back buy"],
+					].map(([z, label]) => (
+						<button
+							key={String(label)}
+							className={`rounded-md px-3 py-1.5 ${zoomed === z ? "bg-white/10 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+							aria-pressed={zoomed === z}
+							onClick={() => setZoomed(z as boolean)}
+						>
+							{label}
+						</button>
+					))}
+				</div>
+			)}
 
 			<ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
 				<li className="inline-flex items-center gap-1.5">
@@ -169,8 +202,8 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 				<ResponsiveContainer>
 					<ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
 						<CartesianGrid stroke="rgba(255,255,255,.06)" vertical={false} />
-						<XAxis dataKey="ts" type="number" domain={[first, last]} tickFormatter={tickFor(last - first)} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
-						<YAxis stroke="#64748b" fontSize={11} tickLine={false} width={48} domain={axis.domain} ticks={axis.ticks} tickFormatter={fmtAxisUsd} />
+						<XAxis dataKey="ts" type="number" domain={[first, last]} allowDataOverflow tickFormatter={tickFor(last - first)} stroke="#64748b" fontSize={11} tickLine={false} minTickGap={48} />
+						<YAxis stroke="#64748b" fontSize={11} tickLine={false} width={48} domain={axis.domain} ticks={axis.ticks} interval={0} tickFormatter={fmtAxisUsd} />
 						{data.heldBack.map((h) => (
 							<ReferenceArea key={`a${h.from}`} x1={h.from} x2={Math.min(h.to ?? last, last)} fill={h.forced ? "#ffffff" : AMBER} fillOpacity={h.forced ? 0.06 : 0.12} stroke="none" ifOverflow="hidden" />
 						))}

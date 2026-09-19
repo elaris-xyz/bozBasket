@@ -174,7 +174,7 @@ export function BasketBuilder() {
 										<Cell key={p.name} fill={p.color} />
 									))}
 								</Pie>
-								<Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }} />
+								<Tooltip formatter={(v: number) => `${v}%`} contentStyle={{ background: "#0f1629", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12 }} itemStyle={{ color: "#e2e8f0" }} />
 							</PieChart>
 						</ResponsiveContainer>
 					</div>

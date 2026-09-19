@@ -16,7 +16,25 @@ function Code({ children }: { children: string }) {
 
 function Table({ head, rows }: { head: string[]; rows: string[][] }) {
 	return (
-		<div className="mt-3 overflow-x-auto">
+		<>
+			{/* Phones: one block per row. The table needs 520 px and scrolled
+			    sideways with no sign that it did, so the last column looked cut. */}
+			<dl className="mt-3 divide-y divide-white/5 text-sm sm:hidden">
+				{rows.map((r) => (
+					<div key={r[0]} className="py-2">
+						<dt className="font-mono text-xs text-slate-200">{r[0]}</dt>
+						{r.slice(1).map((cell, i) =>
+							cell ? (
+								<dd key={i} className="mt-0.5 text-slate-400">
+									{head.length > 2 && i < head.length - 2 ? <span className="text-xs uppercase tracking-wide text-slate-500">{head[i + 1]} </span> : null}
+									{cell}
+								</dd>
+							) : null,
+						)}
+					</div>
+				))}
+			</dl>
+			<div className="mt-3 hidden overflow-x-auto sm:block">
 			<table className="w-full min-w-[520px] text-left text-sm">
 				<thead>
 					<tr className="border-b border-white/10 text-xs uppercase tracking-wide text-slate-500">
@@ -40,6 +58,7 @@ function Table({ head, rows }: { head: string[]; rows: string[][] }) {
 				</tbody>
 			</table>
 		</div>
+		</>
 	);
 }
 
