@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GuardResponse } from "@/app/api/guard/route";
 import { fmtDuration, fmtUsd, reasonLabel } from "@/lib/format";
+import { SessionPill } from "@/components/SessionPill";
 
 const verdictClass = (reason: number) => (reason === 0 ? "bg-mint/15 text-mint" : "bg-amber/15 text-amber");
 const cell = (bad: boolean) => `text-right font-mono ${bad ? "text-amber" : "text-slate-300"}`;
@@ -83,10 +84,7 @@ export function GuardPanel({ plan, refreshKey }: { plan: string; refreshKey: num
 			</div>
 
 			<div className="mt-3 flex flex-wrap gap-2 text-xs">
-				<span className={`pill ${data.session.open ? "bg-mint/15 text-mint" : "bg-white/10 text-slate-300"}`}>
-					US session {data.session.open ? "open" : `closed · ${data.session.label}`}
-					{data.session.secondsUntilOpen !== null && ` · opens in ${fmtDuration(data.session.secondsUntilOpen)}`}
-				</span>
+				<SessionPill open={data.session.open} label={data.session.label} secondsUntilOpen={data.session.secondsUntilOpen} pythResumesIn={data.pythResumesInSecs ?? 0} />
 				<span className="pill bg-white/5 text-slate-400">reference: {data.referenceMode === "pyth" ? "Pyth receiver" : "mock, restamped by the keeper (devnet demo)"}</span>
 				<span className="pill bg-white/5 text-slate-400">
 					vault {fmtUsd(data.vaultUsdc)} / {fmtUsd(data.amountPerPeriod)} per period

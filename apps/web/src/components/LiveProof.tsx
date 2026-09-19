@@ -5,6 +5,7 @@ import { REASON } from "@bozbasket/shared";
 import type { ProofResponse } from "@/app/api/proof/route";
 import { fmtDuration, fmtUsd, reasonLabel } from "@/lib/format";
 import { pythResumeLabel } from "@/lib/deferral";
+import { SessionPill } from "@/components/SessionPill";
 
 /** The whole pitch, demonstrated before a single click: whether the US market
  *  is open, and how old and how certain each reference price is right now. */
@@ -78,10 +79,7 @@ export function LiveProof() {
 		<section className="card" aria-live="polite">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<p className="label">Right now, live from Pyth</p>
-				<span className={`pill ${session.open ? "bg-mint/15 text-mint" : "bg-white/10 text-slate-300"}`}>
-					US session {session.open ? "open" : "closed"}
-					{session.secondsUntilOpen !== null && ` · opens in ${fmtDuration(session.secondsUntilOpen)}`}
-				</span>
+				<SessionPill open={session.open} secondsUntilOpen={session.secondsUntilOpen} pythResumesIn={data.pythResumesInSecs ?? 0} />
 			</div>
 			<p className={`mt-2 text-lg font-semibold leading-snug ${blocked ? "text-amber" : "text-mint"}`}>{headline}</p>
 			<p className="mt-1 text-sm text-slate-300">{consequence}</p>

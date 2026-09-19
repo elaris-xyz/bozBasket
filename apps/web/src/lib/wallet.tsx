@@ -41,16 +41,16 @@ export function DemoWalletProvider({ children }: { children: ReactNode }) {
 		}
 	}, []);
 
-	const refresh = useCallback(async () => {
-		if (!keypair) return;
+	const readBalances = useCallback(async (pk: PublicKey) => {
 		const conn = connection();
-		const [lamports, usdcAcc] = await Promise.all([
-			conn.getBalance(keypair.publicKey),
-			getAccount(conn, ata(keypair.publicKey, USDC_MINT)).catch(() => null),
-		]);
+		const [lamports, usdcAcc] = await Promise.all([conn.getBalance(pk), getAccount(conn, ata(pk, USDC_MINT)).catch(() => null)]);
 		setSol(lamports / 1e9);
 		setUsdc(usdcAcc ? Number(usdcAcc.amount) / 1e6 : 0);
-	}, [keypair]);
+	}, []);
+
+	const refresh = useCallback(async () => {
+		if (keypair) await readBalances(keypair.publicKey);
+	}, [keypair, readBalances]);
 
 	useEffect(() => {
 		refresh();
@@ -72,10 +72,14 @@ export function DemoWalletProvider({ children }: { children: ReactNode }) {
 			setKeypair(kp);
 			setBusy("Airdropping SOL and 10,000 devnet USDC");
 			await fundKey(kp.publicKey);
+			// The balance read when the key appeared ran before the faucet paid,
+			// and the next poll is 15 s away: without this the builder stayed
+			// disabled, saying the wallet held $0.00.
+			await readBalances(kp.publicKey).catch(() => undefined);
 		} finally {
 			setBusy(null);
 		}
-	}, [fundKey]);
+	}, [fundKey, readBalances]);
 
 	const fund = useCallback(async () => {
 		if (!keypair) return;

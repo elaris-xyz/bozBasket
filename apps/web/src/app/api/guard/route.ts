@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { getAccount } from "@solana/spl-token";
-import { basketVerdict, checkLeg, DEMO_STOCKS, legAmounts, sessionAt, secondsUntilOpen, type LegVerdict } from "@bozbasket/shared";
+import { basketVerdict, checkLeg, DEMO_STOCKS, legAmounts, sessionAt, secondsUntilOpen, secondsUntilPythPublishes, type LegVerdict } from "@bozbasket/shared";
 import { connection, readPrograms, CONFIG } from "@/lib/solana";
 import { hermesLatest, MARKETS } from "@/lib/server";
 
@@ -16,6 +16,8 @@ export const dynamic = "force-dynamic";
 export type GuardResponse = {
 	now: number;
 	session: { open: boolean; label: string; secondsUntilOpen: number | null };
+	/** Seconds until Pyth is expected to publish US equity prices again; 0 while it is. */
+	pythResumesInSecs: number;
 	thresholds: { maxStalenessSecs: number; maxConfBps: number; maxDivergenceBps: number; minLiquidityUsdc: number };
 	referenceMode: "pyth" | "mock";
 	vaultUsdc: number;
@@ -88,6 +90,7 @@ export async function GET(req: Request) {
 		const body: GuardResponse = {
 			now,
 			session: { open: session.open, label: session.label, secondsUntilOpen: session.open ? null : secondsUntilOpen(new Date(now * 1000)) },
+			pythResumesInSecs: secondsUntilPythPublishes(new Date(now * 1000)),
 			thresholds: { ...thresholds, minLiquidityUsdc: Number(thresholds.minLiquidityUsdc) / 1e6 },
 			referenceMode,
 			vaultUsdc,

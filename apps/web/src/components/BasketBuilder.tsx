@@ -191,9 +191,17 @@ export function BasketBuilder() {
 						</li>
 					</ul>
 				</section>
-				<button className="btn-primary w-full" disabled={!canSubmit} onClick={submit}>
-					{busy ?? (w.keypair ? "Create plan and deposit" : "Create a demo wallet first")}
-				</button>
+				{/* On a phone the header button is a long scroll back up; the wallet is
+				    one tap here, and then this same button creates the plan. */}
+				{w.keypair ? (
+					<button className="btn-primary w-full" disabled={!canSubmit} onClick={submit}>
+						{busy ?? "Create plan and deposit"}
+					</button>
+				) : (
+					<button className="btn-primary w-full" disabled={!!w.busy} onClick={() => w.create().catch((e) => setError((e as Error).message))}>
+						{w.busy ?? "Create a demo wallet (no extension)"}
+					</button>
+				)}
 				{w.keypair && w.usdc < deposit && <p className="text-xs text-amber">Wallet holds {fmtUsd(w.usdc)} USDC. Top up from the header.</p>}
 				{error && <p className="break-words text-xs text-rose">{error}</p>}
 				<p className="text-xs text-slate-500">One transaction: creates the plan account and its vault, then moves the deposit. You can withdraw at any time.</p>
