@@ -16,7 +16,20 @@ const PILLARS: [string, string][] = [
 	["Deferral, not a blind fill", "Saturday 03:00 does not get filled at whatever the pool says. The plan waits for the next safe window and tells you why."],
 ];
 
-function Pillars({ className }: { className: string }) {
+/** The three claims. `stacked` is the hero's right column on wide screens,
+ *  where they fill what used to be empty space instead of taking a row. */
+function Pillars({ className, stacked = false }: { className: string; stacked?: boolean }) {
+	if (stacked)
+		return (
+			<ul className={`gap-4 ${className}`}>
+				{PILLARS.map(([title, body]) => (
+					<li key={title} className="border-l-2 border-mint/60 pl-4">
+						<h3 className="font-semibold">{title}</h3>
+						<p className="mt-1 text-sm text-slate-400">{body}</p>
+					</li>
+				))}
+			</ul>
+		);
 	return (
 		<ul className={`gap-3 sm:grid-cols-3 ${className}`}>
 			{PILLARS.map(([title, body]) => (
@@ -61,14 +74,14 @@ export default function Home() {
 			{!w.publicKey ? (
 				<p className="card text-slate-400">Create a demo wallet to see your plans. It lives in this browser; the vault is a program account only your key controls.</p>
 			) : loading && plans.length === 0 ? (
-				<div className="grid gap-4 sm:grid-cols-2" aria-busy="true" aria-label="Loading your plans">
+				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading your plans">
 					<div className="skeleton h-44" />
 					<div className="skeleton hidden h-44 sm:block" />
 				</div>
 			) : plans.length === 0 ? (
 				<p className="card text-slate-400">No plans yet. Build one: pick a basket, an amount and a cadence, and deposit devnet USDC.</p>
 			) : (
-				<div className="grid gap-4 sm:grid-cols-2">
+				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{plans.map((p) => (
 						<PlanCard key={p.address.toBase58()} plan={p} />
 					))}
@@ -80,39 +93,42 @@ export default function Home() {
 	return (
 		<div className="space-y-10 sm:space-y-14">
 			<div className="space-y-4">
-				<section className="card overflow-hidden bg-gradient-to-br from-ink-800 to-ink-700">
-					<p className="label">Tokenized stocks trade 24/7. A trustworthy price does not.</p>
-					<h1 className="mt-2 text-2xl font-bold leading-tight sm:text-4xl">
-						Buy a basket of US stocks on a schedule, <span className="text-mint">only when the price can be trusted.</span>
-					</h1>
-					{/* Short on a phone, so the live proof below stays on the first screen. */}
-					<p className="mt-3 text-slate-300 sm:hidden">One basket, one atomic Solana transaction per period, and no buy when the reference price fails the guard.</p>
-					<p className="mt-3 hidden max-w-2xl text-slate-300 sm:block">
-						Define a basket once. A keeper buys every leg in one atomic Solana transaction each period, after checking the Pyth reference price for staleness and
-						confidence, and the venue for divergence and depth. If anything fails, the buy is deferred with a reason written on chain.
-					</p>
-					<div className="mt-5 flex flex-wrap gap-2 sm:gap-3">
-						{w.publicKey ? (
-							<Link href="/build" className="btn-primary">
-								Build a basket
+				<section className="card overflow-hidden bg-gradient-to-br from-ink-800 to-ink-700 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-10">
+					<div>
+						<p className="label">Tokenized stocks trade 24/7. A trustworthy price does not.</p>
+						<h1 className="mt-2 text-2xl font-bold leading-tight sm:text-4xl">
+							Buy a basket of US stocks on a schedule, <span className="text-mint">only when the price can be trusted.</span>
+						</h1>
+						{/* Short on a phone, so the live proof below stays on the first screen. */}
+						<p className="mt-3 text-slate-300 sm:hidden">One basket, one atomic Solana transaction per period, and no buy when the reference price fails the guard.</p>
+						<p className="mt-3 hidden max-w-2xl text-slate-300 sm:block">
+							Define a basket once. A keeper buys every leg in one atomic Solana transaction each period, after checking the Pyth reference price for staleness and
+							confidence, and the venue for divergence and depth. If anything fails, the buy is deferred with a reason written on chain.
+						</p>
+						<div className="mt-5 flex flex-wrap gap-2 sm:gap-3">
+							{w.publicKey ? (
+								<Link href="/build" className="btn-primary">
+									Build a basket
+								</Link>
+							) : (
+								<button className="btn-primary" onClick={w.create} disabled={!!w.busy}>
+									{w.busy ?? "Try with a demo wallet"}
+								</button>
+							)}
+							<Link className="btn-ghost" href={`/plan/${DEMO_PLAN}`}>
+								Watch a live plan
 							</Link>
-						) : (
-							<button className="btn-primary" onClick={w.create} disabled={!!w.busy}>
-								{w.busy ?? "Try with a demo wallet"}
-							</button>
-						)}
-						<Link className="btn-ghost" href={`/plan/${DEMO_PLAN}`}>
-							Watch a live plan
-						</Link>
-						<a className="btn-ghost" href="https://github.com/elaris-xyz/bozBasket" target="_blank" rel="noreferrer">
-							How it works
-						</a>
+							<a className="btn-ghost" href="https://github.com/elaris-xyz/bozBasket" target="_blank" rel="noreferrer">
+								How it works
+							</a>
+						</div>
+						<div className="mt-4">
+							<KeeperStatus compact />
+						</div>
 					</div>
-					<div className="mt-4">
-						<KeeperStatus compact />
-					</div>
+					<Pillars className="hidden lg:grid" stacked />
 				</section>
-				<Pillars className="hidden sm:grid" />
+				<Pillars className="hidden sm:grid lg:hidden" />
 			</div>
 
 			{hasPlans && plansSection}

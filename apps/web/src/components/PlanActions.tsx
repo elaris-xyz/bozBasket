@@ -50,18 +50,9 @@ export function PlanActions({ plan, onDone }: { plan: LoadedPlan; onDone: () => 
 	const programs = () => programsFor(keypairWallet(w.keypair!)).basket;
 	const common = () => ({ plan: plan.address, vault: a.vault, ownerUsdc: ata(w.keypair!.publicKey, USDC_MINT), owner: w.keypair!.publicKey, tokenProgram: TOKEN_PROGRAM_ID });
 
-	if (!isOwner)
-		return (
-			<div className="card space-y-3">
-				<div>
-					<h3 className="font-semibold">Watching this plan</h3>
-					<p className="mt-1 text-sm text-slate-400">Only its owner can deposit, withdraw, pause or edit it. Everything on this page is read from chain.</p>
-				</div>
-				<Link href="/build" className="btn-primary w-full">
-					Build your own basket
-				</Link>
-			</div>
-		);
+	// A visitor gets the invitation in the page header instead: as a card it was
+	// a short box beside a tall one, with the gap below it.
+	if (!isOwner) return null;
 
 	return (
 		<div className="card space-y-3">

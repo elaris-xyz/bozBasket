@@ -26,7 +26,7 @@ export function Nav() {
 	);
 	return (
 		<header className="sticky top-0 z-20 border-b border-white/5 bg-ink-900/80 backdrop-blur">
-			<div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+			<div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
 				<div className="flex min-w-0 items-center gap-4">
 					<Link href="/" className="shrink-0 text-lg font-bold tracking-tight">
 						boz<span className="text-mint">Basket</span>

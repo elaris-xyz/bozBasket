@@ -30,12 +30,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" className="dark">
-			<body className="min-h-screen antialiased">
+			<body className="flex min-h-screen flex-col antialiased">
 				<DemoWalletProvider>
 					<KeeperPulse />
 					<Nav />
-					<main className="mx-auto w-full max-w-5xl px-4 pb-16 pt-4 sm:pt-6">{children}</main>
-					<footer className="mx-auto max-w-5xl px-4 pb-8 text-xs text-slate-500">
+					{/* 1152 px: at 1024 a 1440-1920 screen was mostly empty margin. The footer
+					    sits at the bottom of a short page rather than mid-screen. */}
+					<main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-4 sm:pt-6">{children}</main>
+					<footer className="mx-auto w-full max-w-6xl px-4 pb-8 text-xs text-slate-500">
 						Devnet demo. Stock tokens and fills are synthetic; the program, vaults, schedule, guard and deferrals are real on chain.
 					</footer>
 				</DemoWalletProvider>

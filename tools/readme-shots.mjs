@@ -9,6 +9,7 @@
 // labels but not where they sat. Look at the images before committing them.
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
@@ -17,7 +18,21 @@ const SITE = process.env.SITE ?? "https://boz-basket-web.vercel.app";
 const outDir = process.argv[2];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const profile = fs.mkdtempSync(path.join(process.env.TEMP ?? ".", "shoot-"));
+// Removed at the end of every run, errors included: each run used to leave
+// ~25 MB of Chrome profile in TEMP.
+const profile = fs.mkdtempSync(path.join(os.tmpdir(), "shoot-"));
+const cleanup = () => {
+	try {
+		chrome.kill();
+	} catch {}
+	setTimeout(() => fs.rmSync(profile, { recursive: true, force: true }), 1500);
+};
+process.on("exit", () => fs.rmSync(profile, { recursive: true, force: true }));
+process.on("uncaughtException", (e) => {
+	console.error(e.message);
+	cleanup();
+	setTimeout(() => process.exit(1), 2000);
+});
 const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`, "--hide-scrollbars", "--force-dark-mode", "about:blank"], { stdio: "ignore" });
 
 async function target() {
@@ -92,4 +107,4 @@ await shoot(
 );
 
 ws.close();
-chrome.kill();
+cleanup();

@@ -17,12 +17,15 @@ import { GuardScorecard } from "@/components/GuardScorecard";
 import { useHistory } from "@/lib/useHistory";
 import { GuardPanel } from "@/components/GuardPanel";
 import { KeeperStatus } from "@/components/KeeperStatus";
+import Link from "next/link";
+import { useDemoWallet } from "@/lib/wallet";
 
 export default function PlanPage({ params }: { params: Promise<{ address: string }> }) {
 	const { address } = use(params);
 	const created = useSearchParams().get("created");
 	const { plan, error, reload } = usePlan(address);
 	const prices = usePrices();
+	const w = useDemoWallet();
 	const [refreshKey, setRefreshKey] = useState(0);
 	const history = useHistory(address, refreshKey);
 	const onDone = () => {
@@ -73,8 +76,18 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 			</div>
 		);
 	const a = plan.account;
+	const isOwner = !!w.publicKey && w.publicKey.equals(a.owner);
 	// The same test GuardScorecard uses to render at all.
 	const hasScorecard = !!history.scorecard && history.scorecard.deferrals + history.scorecard.executions > 0;
+	// Cards pair up so a row never holds one short box beside a tall one: the
+	// scorecard beside the owner's controls, or beside the portfolio for a
+	// visitor; with no scorecard yet, the controls beside the portfolio.
+	const scorecard = hasScorecard ? <GuardScorecard key="score" scorecard={history.scorecard} /> : null;
+	const actions = isOwner ? <PlanActions key="actions" plan={plan} onDone={onDone} /> : null;
+	const portfolio = <Portfolio key="portfolio" plan={plan} prices={prices} />;
+	const pair = [scorecard, actions ?? (scorecard ? portfolio : null)].filter(Boolean);
+	const row = pair.length === 1 && actions ? [actions, portfolio] : pair;
+	const portfolioBelow = !row.includes(portfolio);
 
 	return (
 		<div className="space-y-5">
@@ -105,10 +118,17 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 						))}
 					</div>
 				</div>
-				<StatusPill status={a.status} />
+				<div className="flex flex-col items-start gap-2 sm:items-end">
+					<StatusPill status={a.status} />
+					{!isOwner && (
+						<Link href="/build" className="btn-primary !py-1.5 text-sm" title="Only its owner can deposit, withdraw, pause or edit this plan. Everything here is read from chain.">
+							Build your own basket
+						</Link>
+					)}
+				</div>
 			</div>
 
-			<div className="grid gap-4 sm:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
 				{[
 					["Vault", fmtUsd(plan.vaultUsdc)],
 					["Invested", fmtUsd(a.totalInvested.toNumber() / 1e6)],
@@ -145,17 +165,12 @@ export default function PlanPage({ params }: { params: Promise<{ address: string
 
 			<KeeperStatus />
 
-			<GuardPanel plan={address} refreshKey={refreshKey} />
-
-			{/* The scorecard and the plan's controls share a row; the portfolio
-			    and the history get the full width. The right column used to run
-			    the length of the page holding one short card. */}
-			<div className={`grid gap-5 lg:items-start ${hasScorecard ? "lg:grid-cols-[1fr_320px]" : "lg:grid-cols-[minmax(0,420px)]"}`}>
-				{hasScorecard && <GuardScorecard scorecard={history.scorecard} />}
-				<PlanActions plan={plan} onDone={onDone} />
-			</div>
+			{/* The plan's story first, then what the guard did and what it holds,
+			    then what it would decide now, then every attempt. */}
 			<PortfolioChart plan={plan} prices={prices} refreshKey={refreshKey} />
-			<Portfolio plan={plan} prices={prices} />
+			{row.length > 0 && <div className={`grid gap-5 ${row.length === 2 ? "lg:grid-cols-2" : ""}`}>{row}</div>}
+			{portfolioBelow && portfolio}
+			<GuardPanel plan={address} refreshKey={refreshKey} />
 			<History rows={history.rows} note={history.note} legTickers={a.legs.slice(0, a.legCount).map((l) => symbolByMint(l.mint.toBase58()).replace(/^m/, ""))} />
 		</div>
 	);

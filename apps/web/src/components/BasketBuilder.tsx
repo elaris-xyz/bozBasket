@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { CADENCES, DEMO_STOCKS, PRESETS, type DemoStock } from "@bozbasket/shared";
+import { CADENCES, DEMO_STOCKS, PRESETS, secondsUntilPythPublishes, type DemoStock } from "@bozbasket/shared";
 import { useDemoWallet } from "@/lib/wallet";
 import { ata, CONFIG, EXPLORER, keypairWallet, marketBySymbol, planPda, programsFor, USDC_MINT, vaultPda } from "@/lib/solana";
 import { fmtUsd } from "@/lib/format";
 import { TipBox, TipRow, type TipProps } from "@/components/ChartTip";
+import { pythResumeLabel } from "@/lib/deferral";
 
 type Weights = Record<DemoStock["symbol"], number>;
 const ZERO: Weights = { mTSLA: 0, mQQQ: 0, mVOO: 0 };
@@ -48,6 +49,17 @@ export function BasketBuilder() {
 
 	const total = Object.values(weights).reduce((a, b) => a + b, 0);
 	const active = DEMO_STOCKS.filter((s) => weights[s.symbol] > 0);
+	// When the first buy can happen: in the browser only, since the server's
+	// clock would render different text, and once a minute, since the weekend
+	// scan costs a few milliseconds and a slider re-renders on every step.
+	const [pythResumesIn, setPythResumesIn] = useState<number | null>(null);
+	useEffect(() => {
+		const tick = () => setPythResumesIn(secondsUntilPythPublishes(new Date()));
+		tick();
+		const t = setInterval(tick, 60_000);
+		return () => clearInterval(t);
+	}, []);
+	const cadenceWord = CADENCES.find((c) => c.id === cadence)!.label.toLowerCase();
 	const pie = useMemo(() => active.map((s) => ({ name: s.ticker, value: weights[s.symbol] / 100, color: s.color })), [active, weights]);
 	const period = CADENCES.find((c) => c.id === cadence)!.seconds;
 	const canSubmit = !!w.keypair && total === 10_000 && active.length > 0 && amount > 0 && deposit >= amount && w.usdc >= deposit && !busy;
@@ -158,13 +170,12 @@ export function BasketBuilder() {
 							<input className="input mt-1" type="number" min={amount} step={1} value={deposit} onChange={(e) => setDeposit(Number(e.target.value))} />
 						</label>
 					</div>
-					<p className="mt-3 text-xs text-slate-500">
-						The first buy is due as soon as the keeper runs, then every {CADENCES.find((c) => c.id === cadence)!.label.toLowerCase()} slot, whenever the reference price passes the guard. Pyth publishes US equities outside the regular session on weekdays, and not at all from Friday 20:00 to Sunday 20:00 ET, so weekend buys wait.
-					</p>
 				</section>
 			</div>
 
-			<aside className="space-y-4">
+			{/* Sticky beside a taller form, so the summary and the button stay in
+			    reach instead of ending halfway down an empty column. */}
+			<aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
 				<section className="card">
 					<h2 className="font-semibold">Your basket</h2>
 					<div className="h-44">
@@ -200,6 +211,28 @@ export function BasketBuilder() {
 							<span className="font-mono">{fmtUsd(amount)}</span>
 						</li>
 					</ul>
+					<div className="mt-4 border-t border-white/10 pt-3">
+						<h3 className="text-sm font-semibold">When it buys</h3>
+						<ul className="mt-2 space-y-1.5 text-xs text-slate-300">
+							<li>
+								<span className="text-slate-500">First buy · </span>
+								{pythResumesIn !== null && pythResumesIn > 0 ? (
+									<>
+										when Pyth publishes US equity prices again: <span className="text-amber">{pythResumeLabel(Math.floor(Date.now() / 1000), pythResumesIn)}</span>. Until then every attempt is deferred, on
+										chain.
+									</>
+								) : (
+									"as soon as the keeper runs, within a few minutes."
+								)}
+							</li>
+							<li>
+								<span className="text-slate-500">Then · </span>every {cadenceWord} slot, whenever the reference price passes the guard.
+							</li>
+							<li>
+								<span className="text-slate-500">Weekends · </span>Pyth publishes nothing from Friday 20:00 to Sunday 20:00 ET, so weekend buys wait for it.
+							</li>
+						</ul>
+					</div>
 				</section>
 				{/* On a phone the header button is a long scroll back up; the wallet is
 				    one tap here, and then this same button creates the plan. */}
