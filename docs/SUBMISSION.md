@@ -45,13 +45,18 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] ~~Screenshots for the README~~ — `docs/img/home.png` (the landing page
   with the mainnet check) and `docs/img/guard.png` (a demo control applied)
 - [x] ~~The demo plan page as `docs/img/plan.png`~~ — the chart zoomed to Sunday 13 September; `home.png` retaken on a Saturday (2026-09-19), both in New York time
-- [ ] **Record the video** from `docs/VIDEO.md`, upload it, put the link in the README
+- [ ] **Record the pitch video** from `docs/VIDEO.md`, upload it, put the link in the README
+- [ ] **Record the technical video** from `docs/VIDEO-TECHNICAL.md` (optional, but
+      the form has a field for it and a technical judge is the reader)
 - [x] ~~Rotate the Neon database password~~ — decided against on 2026-09-15.
   Checked first: the password and the database host appear in no commit on any
   branch and in no tracked file, and `.env` and `.env.railway` are ignored and
   were never committed. It lives only in the local `.env` files, Vercel and the
   GitHub Actions secrets.
-- [ ] **Submit the form**: repo link, live demo link, video link
+- [ ] **Submit the form**. Its Links step has four fields and asks for at least
+      one: GitHub Repository, Demo URL (the live site, not a video), Pitch Video
+      URL, Technical Video URL. Edits are allowed until Friday 25 September,
+      16:00 ET.
 
 ## Vercel settings
 

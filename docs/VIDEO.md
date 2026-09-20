@@ -1,4 +1,9 @@
-# Video script (2:30)
+# Pitch video script (2:30)
+
+The submission form takes two videos, **Pitch Video URL** and **Technical Video
+URL**, neither required. This is the pitch: the problem, a person using the
+product, and the measured evidence. The technical one is
+`docs/VIDEO-TECHNICAL.md`, and they share no footage.
 
 Record at 1920×1080 on the live site, https://boz-basket-web.vercel.app. The
 keeper runs inside the app, so there is no terminal to show: every attempt
