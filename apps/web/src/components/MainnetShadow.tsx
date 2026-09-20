@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartLegend } from "@/components/ChartLegend";
 import { NoVooNote } from "@/components/NoVooNote";
@@ -49,8 +50,7 @@ export function MainnetShadow() {
 	useEffect(() => {
 		let alive = true;
 		const load = () =>
-			fetch("/api/shadow")
-				.then((r) => r.json())
+			fetchJson<ShadowResponse & { error?: string }>("/api/shadow")
 				.then((b) => {
 					if (!alive) return;
 					if (b.error || !b.summary) setFailed(true);

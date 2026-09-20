@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import type { KeeperStatus as Status } from "@/app/api/status/route";
 import { fmtDuration } from "@/lib/format";
 
@@ -12,8 +13,7 @@ export function KeeperStatus({ compact = false }: { compact?: boolean }) {
 
 	useEffect(() => {
 		const load = () =>
-			fetch("/api/status")
-				.then((r) => r.json())
+			fetchJson<Status>("/api/status")
 				.then(setS)
 				.catch(() => undefined);
 		load();

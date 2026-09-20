@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import { PublicKey } from "@solana/web3.js";
 import { getAccount } from "@solana/spl-token";
 import { connection, readPrograms, type PlanAccount } from "./solana";
@@ -67,8 +68,7 @@ export function usePrices() {
 	useEffect(() => {
 		let alive = true;
 		const load = () =>
-			fetch("/api/prices")
-				.then((r) => r.json())
+			fetchJson<Prices>("/api/prices")
 				.then((b) => alive && b.rows && setPrices(b))
 				.catch(() => undefined);
 		load();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import { Area, CartesianGrid, ComposedChart, Label, Line, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { LoadedPlan, Prices } from "@/lib/usePlans";
 import { chartRows, type HeldBack, type TimelinePoint } from "@/lib/timeline";
@@ -82,8 +83,7 @@ export function PortfolioChart({ plan, prices, refreshKey }: { plan: LoadedPlan;
 
 	useEffect(() => {
 		let alive = true;
-		fetch(`/api/timeline?plan=${address}`)
-			.then((r) => r.json())
+		fetchJson<TimelineResponse>(`/api/timeline?plan=${address}`)
 			.then((b: TimelineResponse) => {
 				if (!alive) return;
 				if (b.error || !Array.isArray(b.points)) setFailed(true);

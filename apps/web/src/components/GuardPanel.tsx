@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import type { GuardResponse } from "@/app/api/guard/route";
 import { fmtDuration, fmtUsd, reasonLabel } from "@/lib/format";
 import { SessionPill } from "@/components/SessionPill";
@@ -25,8 +26,7 @@ export function GuardPanel({ plan, refreshKey }: { plan: string; refreshKey: num
 	const [error, setError] = useState<string | null>(null);
 
 	const load = useCallback(() => {
-		fetch(`/api/guard?plan=${plan}`)
-			.then((r) => r.json())
+		fetchJson<GuardResponse & { error?: string }>(`/api/guard?plan=${plan}`)
 			.then((b) => (b.error ? setError(b.error) : (setData(b), setError(null))))
 			.catch((e) => setError(String(e)));
 	}, [plan]);

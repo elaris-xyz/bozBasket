@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import { REASON } from "@bozbasket/shared";
 import type { ProofResponse } from "@/app/api/proof/route";
 import { fmtDuration, fmtUsd, reasonLabel } from "@/lib/format";
@@ -16,8 +17,7 @@ export function LiveProof() {
 	useEffect(() => {
 		let alive = true;
 		const load = () =>
-			fetch("/api/proof")
-				.then((r) => r.json())
+			fetchJson<ProofResponse & { error?: string }>("/api/proof")
 				.then((b) => {
 					if (!alive) return;
 					if (b.error || !Array.isArray(b.feeds) || b.feeds.length === 0) setFailed(true);

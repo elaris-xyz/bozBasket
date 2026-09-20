@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJson } from "@/lib/fetchJson";
 import { CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
 import { DEMO_STOCKS } from "@bozbasket/shared";
 import type { BacktestView, SymbolView } from "@/lib/backtestView";
@@ -78,8 +79,7 @@ export function WeekendBacktest() {
 	const [failed, setFailed] = useState(false);
 
 	useEffect(() => {
-		fetch("/api/backtest")
-			.then((r) => r.json())
+		fetchJson<BacktestView>("/api/backtest")
 			.then((b: BacktestView) => (Array.isArray(b.symbols) ? setView(b) : setFailed(true)))
 			.catch(() => setFailed(true));
 	}, []);
