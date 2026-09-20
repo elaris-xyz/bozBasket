@@ -45,9 +45,12 @@ https://hackathons.solana.com/hackathons/stocklana
 - [x] ~~Screenshots for the README~~ — `docs/img/home.png` (the landing page
   with the mainnet check) and `docs/img/guard.png` (a demo control applied)
 - [x] ~~The demo plan page as `docs/img/plan.png`~~ — the chart zoomed to Sunday 13 September; `home.png` retaken on a Saturday (2026-09-19), both in New York time
-- [ ] **Record the pitch video** from `docs/VIDEO.md`, upload it, put the link in the README
-- [ ] **Record the technical video** from `docs/VIDEO-TECHNICAL.md` (optional, but
-      the form has a field for it and a technical judge is the reader)
+- [ ] **Record the pitch video**. `docs/VIDEO.md` is a production brief written
+      for a video editor: setup, ten shots, the narration verbatim, and what to
+      do when the site does not cooperate. Upload it, link it in the README.
+- [ ] **Record the technical video** from `docs/VIDEO-TECHNICAL.md`, the same
+      kind of brief. Its nine tabs are fixed links (GitHub lines, two real
+      transactions), so the editor never has to find anything.
 - [x] ~~Rotate the Neon database password~~ — decided against on 2026-09-15.
   Checked first: the password and the database host appear in no commit on any
   branch and in no tracked file, and `.env` and `.env.railway` are ignored and
