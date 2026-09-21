@@ -140,8 +140,11 @@ the transaction link on that row; the explorer opens.
 
 ### Shot 6 — Put it back, and buy (1:40–1:52)
 
-**Do:** Tab 3: **Restore everything**, then **Make the plan due**. Tab 2: the
-new executed row, then the "Portfolio" card.
+**Do:** Tab 3: **Restore everything**, then **Make the plan due**. Tab 2:
+scroll down to **History** and hold on the new top row, marked "executed".
+Then scroll back **up**, past the "Execution guard" panel, to the card headed
+**Portfolio**: it is in the right-hand column beside "What the guard did",
+just under the chart. Its unit counts have just grown.
 
 **Say:**
 

@@ -136,8 +136,11 @@ stock balances up, the vault down by 100; a Pyth instruction at the end.
 ### Shot 6 — And a refusal (1:35–1:58)
 
 **Do:** Tab 6. Show **Success**, then the token balances (unchanged), then the
-log line starting `Program data:`. Cut to tab 9, **History**, and stop on the
-row "Reference price stale · TSLA price 47 h old".
+log line starting `Program data:`. Cut to tab 9 and scroll to **History**. The
+row you need is old, so it is not in the short list: click **Show all …
+entries** at the bottom of History, then press Ctrl+F and search `47 h old`.
+Stop on that row: "deferred ×7 · Reference price stale · TSLA price 47 h old".
+Its transaction link ends in `DabHUD`, the same transaction as tab 6.
 
 **Say:**
 
