@@ -56,6 +56,9 @@ Then:
 - Chrome, a brand-new profile, no extensions, bookmarks bar hidden, zoom 100%.
 - Browser window exactly 1920×1080. No dev tools.
 - System notifications off.
+- Set the computer's clock to automatic time and sync it. Some ages on the
+  site are counted by your computer; a clock a few minutes off makes a fresh
+  price look minutes old on camera.
 - Open https://boz-basket-web.vercel.app/demo and click **Restore everything**.
   Wait about twenty seconds. That returns the demo to a clean state.
 - Keep three tabs open, in this order:
@@ -222,19 +225,25 @@ table.
 
 ### Shot 9 — Measured on the real market (2:36–2:50)
 
-**Do:** Tab 1. Scroll to "The real market: xStocks on Solana mainnet", hold
-three seconds on the two cards, then scroll on to "Weekends, measured".
+**Do:** Tab 1. Scroll to "The real market: xStocks on Solana mainnet" and hold
+three seconds on the two cards. Scroll on to "Weekends, measured" and hold on
+the first card there, "Last weekend, measured live". Then scroll a little to
+the eight-weekend card below it.
 
 **Say:**
 
-> And the problem is not a story, it is measured. Every five minutes this checks
-> what a hundred dollars actually buys in real tokenized stocks on mainnet, and
-> runs the same guard over it. Nothing is ever bought there. Over the last eight
-> weekends a blind weekend buy landed about half a percent from the next price
-> anyone could vouch for — four times the weekday gap, and up to two percent at
-> worst. [read from screen if the numbers differ]
+> And the problem is measured, not assumed. Every five minutes this checks what
+> a hundred dollars buys in real tokenized stocks on mainnet, and runs the same
+> guard over it — nothing is ever bought there. Last weekend Pyth was silent for
+> forty-eight hours, and the guard would have refused four hundred and
+> ninety-five of four hundred and ninety-six checks. It was a calm weekend, and
+> the page says so. Over the eight before it, a blind buy landed anywhere from
+> two percent under to two percent over the next price anyone could vouch for.
+> That gamble is what the guard removes. [read from screen if the numbers
+> differ]
 
-**Edit:** Highlight the two median figures and the "Worst weekend buy" line.
+**Edit:** Highlight "would have deferred 495" in the live card's headline, then
+the "Worst weekend buy" lines in the eight-weekend card.
 
 ---
 

@@ -21,6 +21,16 @@ const files = [
 	["deploy/devnet.json", "devnet.json"],
 	["deploy/weekend-backtest.json", "weekend-backtest.json"],
 ];
+// The newest live weekend, whichever Friday it was, so next week's file needs
+// no edit here.
+const live = fs
+	.readdirSync(path.join(root, "deploy"))
+	.filter((f) => /^weekend-live-\d{4}-\d{2}-\d{2}\.json$/.test(f))
+	.sort()
+	.pop();
+if (live) files.push([`deploy/${live}`, "weekend-live.json"]);
+else console.error("sync-generated: no deploy/weekend-live-*.json");
+
 for (const [from, to] of files) {
 	const src = path.join(root, from);
 	if (!fs.existsSync(src)) {

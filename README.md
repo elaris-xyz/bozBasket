@@ -126,11 +126,36 @@ Two details decide whether the number means anything:
 - The reference age is Pyth's own publish time, never restamped.
 
 The window that matters is the weekend, when the pools keep quoting against a
-price that stopped on Friday. The live check has none on record until Friday
-2026-09-18 at 20:00 ET and keeps collecting through judging; the eight
-weekends before it are measured from history below. VOOx is left out: the
-token exists, but no pool holds it, so Jupiter finds no route and there is no
-market price to check (checked 2026-09-20). VOO stays in the devnet baskets.
+price that stopped on Friday. VOOx is left out: the token exists, but no pool
+holds it, so Jupiter finds no route and there is no market price to check
+(checked 2026-09-20). VOO stays in the devnet baskets.
+
+## The first weekend, measured live
+
+The live check's first weekend was 18–20 September. Pyth was silent from
+Friday 20:00 to Sunday 20:00 ET, and the check kept running: 496 times in
+those 48 hours. `apps/keeper/scripts/weekend-live.ts` measured it on Monday against
+Pyth's first price back, and wrote
+[`deploy/weekend-live-2026-09-18.json`](deploy/weekend-live-2026-09-18.json).
+
+| Weekend of 2026-09-18, live | TSLAx | QQQx |
+|---|---|---|
+| Checks while Pyth was silent | 496 | 496 |
+| The guard would have deferred | 495 | 495 |
+| Oldest reference price | 47.9 h | 47.9 h |
+| Pool against Pyth's first price back, median distance | 22 bps | 31 bps |
+| The same pools on the weekdays before | 2.7 bps | 3.5 bps |
+| Traded hours beyond the 150 bps limit | 0 of 48 | 0 of 48 |
+| A blind buy at Saturday 12:00 ET, against the reopen | 18 bps cheaper | 31 bps cheaper |
+
+A calm weekend, and it did not flatter the guard. The pools drifted about
+eight to nine times their weekday gap but never far enough to trip the limit,
+and a buy on Saturday would have come in slightly cheaper than waiting for
+Sunday night. That is the same finding as the history below: the guard does
+not earn a premium, it removes a gamble whose range on these eight weekends
+ran from −1.96% to +1.92%. The home page shows this weekend above the
+eight-weekend table, and it is computed from the file, so next weekend's
+measurement replaces it without a code change.
 
 ## Eight weekends, measured
 

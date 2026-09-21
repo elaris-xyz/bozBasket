@@ -5,6 +5,8 @@ import { fetchJson } from "@/lib/fetchJson";
 import { CartesianGrid, ReferenceArea, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
 import { DEMO_STOCKS } from "@bozbasket/shared";
 import type { BacktestView, SymbolView } from "@/lib/backtestView";
+import type { LiveWeekendView } from "@/lib/liveWeekend";
+import { LiveWeekendCard } from "@/components/LiveWeekendCard";
 import { fmtTs } from "@/lib/format";
 import { ChartLegend } from "@/components/ChartLegend";
 import { NoVooNote } from "@/components/NoVooNote";
@@ -75,12 +77,12 @@ function Tile({ s, limitBps }: { s: SymbolView; limitBps: number }) {
 /** Eight real weekends of xStock trading against Pyth, including the parts that
  *  do not flatter the guard. */
 export function WeekendBacktest() {
-	const [view, setView] = useState<BacktestView | null>(null);
+	const [view, setView] = useState<(BacktestView & { live?: LiveWeekendView }) | null>(null);
 	const [failed, setFailed] = useState(false);
 
 	useEffect(() => {
-		fetchJson<BacktestView>("/api/backtest")
-			.then((b: BacktestView) => (Array.isArray(b.symbols) ? setView(b) : setFailed(true)))
+		fetchJson<BacktestView & { live?: LiveWeekendView }>("/api/backtest")
+			.then((b) => (Array.isArray(b.symbols) ? setView(b) : setFailed(true)))
 			.catch(() => setFailed(true));
 	}, []);
 
@@ -103,95 +105,98 @@ export function WeekendBacktest() {
 	const overpaid = view.symbols.map((s) => `${s.timerOverpaid} of ${s.timerWeekends}`);
 
 	return (
-		<section className="card">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<p className="label">The last {weekends} weekends</p>
-				<span className="pill bg-white/10 text-slate-300">real pool trades · Pyth history</span>
-			</div>
-			<p className="mt-2 text-lg font-semibold leading-snug text-slate-100">
-				A blind weekend buy landed a median {range(view.symbols.map((s) => s.weekendMedianGapBps).sort((a, b) => (a ?? 0) - (b ?? 0)))} from the next price Pyth
-				published. On weekdays the same pools sit {range(view.symbols.map((s) => s.weekdayMedianGapBps).sort((a, b) => (a ?? 0) - (b ?? 0)))} from Pyth.
-			</p>
-
-			<ul className="mt-4 grid gap-3 sm:grid-cols-2">
-				{view.symbols.map((s) => (
-					<Tile key={s.symbol} s={s} limitBps={limit} />
-				))}
-			</ul>
-			<NoVooNote missing="no weekend trade to measure" />
-
-			<div className="mt-5">
-				<ChartLegend caption="Each dot: one traded weekend hour, against the next Pyth price, in bps" series={bySymbol.map((s) => ({ name: s, color: colorOf(s) }))} shape="dot" />
-				<div className="h-56 sm:h-64" aria-label="Weekend pool prices against the next Pyth price, per traded hour">
-					<ResponsiveContainer>
-						<ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-							<CartesianGrid stroke="rgba(170,186,210,.10)" vertical={false} />
-							<XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} tickFormatter={day} stroke="#6B7686" fontSize={10} fontFamily="var(--font-mono)" tickLine={false} axisLine={{ stroke: "rgba(170,186,210,.10)" }} minTickGap={40} />
-							<YAxis
-								dataKey="y"
-								type="number"
-								orientation="right"
-								stroke="#6B7686"
-								fontSize={10}
-								fontFamily="var(--font-mono)"
-								tickLine={false}
-								axisLine={false}
-								width={44}
-								domain={[-Y_BOUND, Y_BOUND]}
-								ticks={[-200, -limit, 0, limit, 200]}
-								tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
-							/>
-							<ZAxis range={[40, 40]} />
-							<ReferenceArea y1={-limit} y2={limit} fill="#10B981" fillOpacity={0.06} stroke="none" />
-							<ReferenceArea y1={limit} y2={Y_BOUND} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
-							<ReferenceArea y1={-Y_BOUND} y2={-limit} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
-							<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
-							<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
-							<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
-							<Tooltip cursor={false} content={(p) => <HourTip {...(p as TipProps<{ x: number; y: number; symbol: string }>)} />} />
-							{bySymbol.map((symbol) => (
-								<Scatter
-									key={symbol}
-									name={symbol}
-									data={view.points.filter((p) => p.symbol === symbol).map((p) => ({ x: p.ts, y: p.bps, symbol }))}
-									fill={colorOf(symbol)}
-									fillOpacity={0.55}
-									isAnimationActive={false}
-								/>
-							))}
-						</ScatterChart>
-					</ResponsiveContainer>
+		<div className="space-y-4 sm:space-y-5">
+			{view.live && <LiveWeekendCard live={view.live} limitBps={view.limitBps} />}
+			<section className="card">
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<p className="label">The last {weekends} weekends</p>
+					<span className="pill bg-white/10 text-slate-300">real pool trades · Pyth history</span>
 				</div>
-			</div>
-
-			<p className="mt-4 text-sm leading-relaxed text-slate-300">
-				<span className="font-semibold text-slate-100">Waiting did not save money on average here.</span> A weekly buy at Saturday noon ET came in{" "}
-				{view.symbols.map((s, i) => (
-					<span key={s.symbol}>
-						{i > 0 && " and "}
-						{pct(s.timerMeanBps)} on {s.symbol}
-					</span>
-				))}{" "}
-				against the price Pyth came back at, and paid more on {overpaid.every((c) => c === overpaid[0]) ? `${overpaid[0]} weekends for each` : `${overpaid.join(" and ")} weekends`}. What the guard
-				removes is the uncertainty, not a premium: a blind buy landed anywhere from {cheapest ? `${pct(cheapest.bestUnderpayBps)} (${cheapest.symbol})` : "–"} to{" "}
-				{worst?.worstOverpay ? `${pct(worst.worstOverpay.bps)} (${worst.symbol})` : "–"} against the first price anyone could vouch for, while the Friday price a timer would
-				have trusted was already stale.
-			</p>
-			<details className="mt-3 text-xs text-slate-500">
-				<summary className="cursor-pointer select-none py-1.5 text-slate-400 hover:text-slate-200">How this is measured</summary>
-				<p className="mt-2">
-					Weekends of {view.from} to {view.to}. Pool prices are hourly closes of the deepest USDC pool of each xStock (GeckoTerminal), per share; Pyth prices come from its
-					history, which reaches back about eight weeks. The weekend measure spans up to two days of market movement; the weekday one compares prices at the same moment.{" "}
-					<a className="underline" href={`${REPO}/apps/keeper/scripts/backtest-weekends.ts`} target="_blank" rel="noreferrer">
-						Reproduce it
-					</a>{" "}
-					or read{" "}
-					<a className="underline" href={`${REPO}/deploy/weekend-backtest.json`} target="_blank" rel="noreferrer">
-						the data
-					</a>
-					.
+				<p className="mt-2 text-lg font-semibold leading-snug text-slate-100">
+					A blind weekend buy landed a median {range(view.symbols.map((s) => s.weekendMedianGapBps).sort((a, b) => (a ?? 0) - (b ?? 0)))} from the next price Pyth
+					published. On weekdays the same pools sit {range(view.symbols.map((s) => s.weekdayMedianGapBps).sort((a, b) => (a ?? 0) - (b ?? 0)))} from Pyth.
 				</p>
-			</details>
-		</section>
+
+				<ul className="mt-4 grid gap-3 sm:grid-cols-2">
+					{view.symbols.map((s) => (
+						<Tile key={s.symbol} s={s} limitBps={limit} />
+					))}
+				</ul>
+				<NoVooNote missing="no weekend trade to measure" />
+
+				<div className="mt-5">
+					<ChartLegend caption="Each dot: one traded weekend hour, against the next Pyth price, in bps" series={bySymbol.map((s) => ({ name: s, color: colorOf(s) }))} shape="dot" />
+					<div className="h-56 sm:h-64" aria-label="Weekend pool prices against the next Pyth price, per traded hour">
+						<ResponsiveContainer>
+							<ScatterChart margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+								<CartesianGrid stroke="rgba(170,186,210,.10)" vertical={false} />
+								<XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} tickFormatter={day} stroke="#6B7686" fontSize={10} fontFamily="var(--font-mono)" tickLine={false} axisLine={{ stroke: "rgba(170,186,210,.10)" }} minTickGap={40} />
+								<YAxis
+									dataKey="y"
+									type="number"
+									orientation="right"
+									stroke="#6B7686"
+									fontSize={10}
+									fontFamily="var(--font-mono)"
+									tickLine={false}
+									axisLine={false}
+									width={44}
+									domain={[-Y_BOUND, Y_BOUND]}
+									ticks={[-200, -limit, 0, limit, 200]}
+									tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
+								/>
+								<ZAxis range={[40, 40]} />
+								<ReferenceArea y1={-limit} y2={limit} fill="#10B981" fillOpacity={0.06} stroke="none" />
+								<ReferenceArea y1={limit} y2={Y_BOUND} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
+								<ReferenceArea y1={-Y_BOUND} y2={-limit} fill="#F59E0B" fillOpacity={0.05} stroke="none" />
+								<ReferenceLine y={limit} stroke="#F59E0B" strokeDasharray="4 4" />
+								<ReferenceLine y={-limit} stroke="#F59E0B" strokeDasharray="4 4" />
+								<ReferenceLine y={0} stroke="rgba(255,255,255,.2)" />
+								<Tooltip cursor={false} content={(p) => <HourTip {...(p as TipProps<{ x: number; y: number; symbol: string }>)} />} />
+								{bySymbol.map((symbol) => (
+									<Scatter
+										key={symbol}
+										name={symbol}
+										data={view.points.filter((p) => p.symbol === symbol).map((p) => ({ x: p.ts, y: p.bps, symbol }))}
+										fill={colorOf(symbol)}
+										fillOpacity={0.55}
+										isAnimationActive={false}
+									/>
+								))}
+							</ScatterChart>
+						</ResponsiveContainer>
+					</div>
+				</div>
+
+				<p className="mt-4 text-sm leading-relaxed text-slate-300">
+					<span className="font-semibold text-slate-100">Waiting did not save money on average here.</span> A weekly buy at Saturday noon ET came in{" "}
+					{view.symbols.map((s, i) => (
+						<span key={s.symbol}>
+							{i > 0 && " and "}
+							{pct(s.timerMeanBps)} on {s.symbol}
+						</span>
+					))}{" "}
+					against the price Pyth came back at, and paid more on {overpaid.every((c) => c === overpaid[0]) ? `${overpaid[0]} weekends for each` : `${overpaid.join(" and ")} weekends`}. What the guard
+					removes is the uncertainty, not a premium: a blind buy landed anywhere from {cheapest ? `${pct(cheapest.bestUnderpayBps)} (${cheapest.symbol})` : "–"} to{" "}
+					{worst?.worstOverpay ? `${pct(worst.worstOverpay.bps)} (${worst.symbol})` : "–"} against the first price anyone could vouch for, while the Friday price a timer would
+					have trusted was already stale.
+				</p>
+				<details className="mt-3 text-xs text-slate-500">
+					<summary className="cursor-pointer select-none py-1.5 text-slate-400 hover:text-slate-200">How this is measured</summary>
+					<p className="mt-2">
+						Weekends of {view.from} to {view.to}. Pool prices are hourly closes of the deepest USDC pool of each xStock (GeckoTerminal), per share; Pyth prices come from its
+						history, which reaches back about eight weeks. The weekend measure spans up to two days of market movement; the weekday one compares prices at the same moment.{" "}
+						<a className="underline" href={`${REPO}/apps/keeper/scripts/backtest-weekends.ts`} target="_blank" rel="noreferrer">
+							Reproduce it
+						</a>{" "}
+						or read{" "}
+						<a className="underline" href={`${REPO}/deploy/weekend-backtest.json`} target="_blank" rel="noreferrer">
+							the data
+						</a>
+						.
+					</p>
+				</details>
+			</section>
+		</div>
 	);
 }
