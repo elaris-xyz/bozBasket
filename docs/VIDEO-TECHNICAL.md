@@ -1,55 +1,39 @@
 # Technical video — production brief
 
-**For the editor.** This film is watched by an engineer, so the screen is code
-and transactions rather than a person clicking. You still need no wallet, no
-install and no command line: every file is opened as a normal web page on
-GitHub, and every transaction as a normal web page on the Solana explorer. All
-the links are written out below — open them exactly as given.
+**For the editor.** An engineer watches this film, so the screen is code and
+transactions. You still need no wallet, install or command line: every file is
+a GitHub page and every transaction an explorer page, and all the links are
+below. Work top to bottom. Keep the narration wording; you do not need to
+understand it.
 
-Work top to bottom. Each shot says what to open, what you should see, exactly
-what to say, and what to do in the edit. Keep the narration wording; you are
-not expected to understand it, and you should not paraphrase it.
-
-This is the companion to `docs/VIDEO.md`, the pitch. **The two share no
-footage.** Do not reuse a single frame between them.
-
----
-
-## 1. The deliverable
+## 1. Deliverable
 
 | | |
 |---|---|
-| Length | 3:00–3:20. Hard limit 3:30. |
+| Length | About 2:45. Hard limit 3:00. |
 | Format | MP4, H.264, 1920×1080, 30 fps |
-| Audio | One voice-over track. No music, or music at least 25 dB under the voice. |
-| Captions | Burned in, every narration line. |
-| File name | `bozbasket-technical.mp4` |
-| Where it goes | YouTube, unlisted. The link goes in the submission form's **Technical Video URL** field. |
+| Audio | Voice-over. No music, or music at least 25 dB under it. |
+| Captions | Burned in, every line. |
+| File | `bozbasket-technical.mp4` → YouTube, unlisted → the form's **Technical Video URL** |
+
+It shares no footage with the pitch film, `docs/VIDEO.md`.
 
 ## 2. What you are looking at
 
-The product buys a basket of tokenized US stocks on a schedule, and refuses to
-buy when the price it checks cannot be trusted. This film shows an engineer
-three things: where that decision is made, that it is made on the blockchain
-rather than in the website, and that the refusals are real transactions.
-
-Two words you will hear and see:
-
-- **Pyth** — the service that publishes the reference price.
-- **defer** — the product's word for "refuse this buy for now, and write down
-  why".
+The product buys a basket of tokenized US stocks on a schedule and refuses when
+the price cannot be trusted. This film shows where that decision is made — on
+the blockchain, not in the website — and that the refusals are real
+transactions. **Pyth** publishes the price; **defer** means "refuse for now,
+and record why".
 
 ## 3. Before you record
 
-- Chrome, new profile, no extensions, bookmarks bar hidden, zoom 100%.
-- **On GitHub, switch to the dark theme** so the code matches the site: any
-  GitHub page → the profile icon → Settings → Appearance → Dark. Do this once
-  before recording.
-- Browser window exactly 1920×1080, no dev tools, notifications off.
-- Nothing here depends on the time of day. Unlike the pitch film, you can
-  record this at any hour.
-- Open these nine links in nine tabs, in this order. The `#L…` part scrolls
-  the page to the right lines and highlights them — do not remove it.
+- Chrome, new profile, no extensions, bookmarks bar hidden, zoom 100%, window
+  1920×1080, notifications off.
+- **GitHub in dark theme**: profile icon → Settings → Appearance → Dark.
+- Any time of day works; nothing here depends on the market.
+- Open the nine links below in nine tabs, in order. The `#L…` part scrolls to
+  and highlights the right lines — keep it.
 
 | Tab | Link |
 |---|---|
@@ -63,215 +47,142 @@ Two words you will hear and see:
 | 8 | https://boz-basket-web.vercel.app/developers |
 | 9 | https://boz-basket-web.vercel.app/plan/5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq |
 
-Tabs 5 and 6 are real transactions and will stay where they are; if either
-fails to load, reload once.
-
-The edit cuts between two kinds of page: GitHub (the code) and the live site or
-explorer (what the code did). Keep that rhythm — code, then proof, then code.
+Keep the rhythm: code, then proof, then code.
 
 ---
 
 ## 4. The shots
 
-### Shot 1 — What the thing is made of (0:00–0:22)
+### Shot 1 — What it is made of (0:00–0:15)
 
-**Do:** Tab 1, the repository front page. Scroll slowly down the file list,
-then stop on the README's architecture section.
+**Do:** Tab 1. Scroll slowly down the file list to the README.
 
 **Say:**
 
 > An Anchor program on Solana devnet. A keeper that runs as a scheduled
-> serverless function, or as a long-running worker, through one code path. A
-> Next.js app that reads the chain directly. And a shared package holding the
-> guard rules, mirrored in Rust inside the program. Nine instructions, three of
-> which matter: create a plan, deposit, execute the basket.
-
-**Edit:** Keep the scroll slow enough to read folder names. No zoom.
+> function or a worker, through one code path. A Next.js app that reads the
+> chain. And one package of guard rules, mirrored in Rust inside the program.
+> Nine instructions; three matter: create a plan, deposit, execute.
 
 ---
 
-### Shot 2 — The account model (0:22–0:42)
+### Shot 2 — The account model (0:15–0:30)
 
-**Do:** Tab 2. The page opens with the plan account's fields highlighted. Hold,
-then zoom gently into the highlighted `vault` lines.
-
-**See:** A Rust struct listing the owner, the legs, the schedule, and a comment
-saying the vault's authority is the plan itself.
+**Do:** Tab 2. Hold, then zoom gently into the highlighted `vault` lines.
 
 **Say:**
 
-> A plan is one account: its owner, the stocks and their weights, the amount
-> per period, the schedule, and the counters. The money sits in a vault whose
-> authority is the plan, and the only key that can withdraw from it is the
-> owner's. The keeper can make a plan execute. It can never move that money
-> anywhere else.
+> A plan is one account: owner, legs and weights, amount, schedule, counters.
+> The money sits in a vault the plan owns, and only the owner's key can
+> withdraw. The keeper can trigger a buy; it can never move the money anywhere
+> else.
 
-**Edit:** Put a highlight box around the `owner` field and the `vault` comment
-as each is said.
+**Edit:** Highlight `owner`, then the `vault` comment.
 
 ---
 
-### Shot 3 — The guard runs on chain (0:42–1:12)
+### Shot 3 — The guard runs on chain (0:30–0:58)
 
-**Do:** Tab 3. The four checks are highlighted. Scroll through them slowly,
-about eight seconds from the first to the last.
-
-**See:** Rust code comparing an age, a confidence figure, a divergence and a
-liquidity depth against configured limits, each followed by a line saying
-`Verdict::Defer`.
+**Do:** Tab 3. Scroll through the highlighted checks over about eight seconds.
 
 **Say:**
 
 > This is the part that is not a dashboard. Inside the transaction, for every
-> leg: the price account has to be the one the Pyth receiver just wrote, its
-> feed has to match the leg, and its verification level has to be full. Then
-> four numbers against limits held on chain — how old the price is, how wide
-> its confidence band is, how far the venue has drifted from it, and whether
-> there is depth to fill this leg. Any one of them fails, and the verdict is
-> defer.
+> leg, the price account must be one the Pyth receiver wrote, for this leg's
+> feed, fully verified. Then four numbers against limits stored on chain: the
+> price's age, its confidence band, the venue's divergence, and depth. Any one
+> fails, and the verdict is defer.
 
-**Edit:** As each of the four checks is named, highlight that block. This is
-the most important shot in the film: give it room.
+**Edit:** Highlight each check as it is named. The most important shot; give
+it room.
 
 ---
 
-### Shot 4 — A refusal is a successful transaction (1:12–1:32)
+### Shot 4 — A refusal is a success (0:58–1:12)
 
 **Do:** Tab 4. Hold on the highlighted block.
 
-**See:** Code writing a reason code into the plan, emitting an event, and
-returning `Ok`.
-
 **Say:**
 
-> When it defers, the reason code and the leg go into the plan's account, an
-> event is emitted, and the instruction returns success. That is deliberate. A
-> failed transaction leaves nothing anyone can audit, and this product's whole
-> claim is that its refusals are as visible as its buys.
+> A deferral writes the reason into the plan, emits an event, and returns
+> success. Deliberately: a failed transaction leaves nothing to audit, and
+> this product's claim is that its refusals are as visible as its buys.
 
-**Edit:** Highlight the line that returns success.
+**Edit:** Highlight `return Ok(());`.
 
 ---
 
-### Shot 5 — One transaction, three stocks (1:32–1:52)
+### Shot 5 — One transaction, three stocks (1:12–1:35)
 
-**Do:** Tab 5, the explorer. Scroll to the instruction list and expand it if it
-is collapsed. Then scroll to the token balance changes.
+**Do:** Tab 5, the explorer. Expand the instructions, then scroll to the token
+balance changes.
 
-**See:** Status Success. One `ExecuteBasket` instruction with three `Fill`
-calls inside it. Three stock balances going up, and the plan's dollar balance
-going down by a hundred. A Pyth instruction at the end, closing the price
-update this transaction consumed.
+**See:** Success; one `ExecuteBasket` with three `Fill` calls inside; three
+stock balances up, the vault down by 100; a Pyth instruction at the end.
 
 **Say:**
 
-> Here is a real execution. The keeper first posts Pyth's signed price update
-> to Pyth's own on-chain receiver. Then, in this transaction, the program reads
-> that account back, checks it, and buys all three legs — all or nothing, one
-> signature. Three balances up, a hundred dollars out of the vault, once. And
-> note the time: ten to five in the morning, New York, hours before the
-> exchange opens. It filled because Pyth was publishing a price, not because a
-> calendar said the market was open.
+> A real execution. The keeper posts Pyth's signed update to Pyth's receiver
+> first; then this transaction reads it back, checks it, and buys all three
+> legs — all or nothing. Three balances up, a hundred dollars out of the vault.
+> Note the time: ten to five in the morning, New York, before the exchange
+> opened. It filled because Pyth was publishing, not because a calendar said
+> so.
 
-**Edit:** Zoom into the instruction names, then into the balance changes.
+**Edit:** Zoom into the instruction names, then the balance changes.
 
 ---
 
-### Shot 6 — And here is a refusal (1:52–2:12)
+### Shot 6 — And a refusal (1:35–1:58)
 
-**Do:** Tab 6, the explorer. Show the Success status. Scroll to the token
-balance section and hold — there is nothing to see there, and that is the
-point. Then scroll to the program logs and stop on the line that begins
-`Program data:`. Then cut to tab 9, the plan page, scroll to **History**, and
-stop on the row reading "Reference price stale · TSLA price 47 h old".
-
-**See:** Status Success. An `ExecuteBasket` instruction. No token balance
-change at all. A `Program data:` line of base64.
+**Do:** Tab 6. Show **Success**, then the token balances (unchanged), then the
+log line starting `Program data:`. Cut to tab 9, **History**, and stop on the
+row "Reference price stale · TSLA price 47 h old".
 
 **Say:**
 
-> And here is the same plan refusing, ten hours earlier. Status: success.
-> The basket instruction ran — and not one token moved. The reason is not
-> printed in plain text; it is in that encoded line, the event the program
-> emitted, and in the plan's own account. Decoded, it says: reference price
-> stale, first leg, forty-seven hours old, retry in an hour. The site decodes
-> the same event, and that is the row you can read.
+> The same plan, ten hours earlier. Success — and not one token moved. The
+> reason is not printed; it is in this encoded event and in the plan account.
+> Decoded: reference price stale, forty-seven hours old, retry in an hour. The
+> site decodes the same event — that is this row.
 
-**Note for the editor:** do not look for a readable reason in the log. It is
-not there, and the shot is built around that: the machine-readable event on
-one side, the site's decoded row on the other.
-
-**Edit:** For the last three seconds, put the two explorer pages side by side:
-the execution's balance changes on the left, this transaction's untouched
-balances on the right. Then the site's History row, full frame.
+**Note:** there is no readable reason in the log. The shot pairs the encoded
+line with the site's decoded row on purpose.
 
 ---
 
-### Shot 7 — One rulebook, three readers (2:12–2:38)
+### Shot 7 — One rulebook, and what is real (1:58–2:45)
 
-**Do:** Tab 7, the shared guard file. Hold five seconds. Then tab 8, the
-developers page on the live site; scroll to the endpoint that returns a
-verdict.
-
-**Say:**
-
-> The Rust inside the program and this TypeScript are the same rules, and the
-> comment above the reason codes says all three files change together. The
-> plan page, the keeper and the public API all call this one function, so the
-> number a reader sees is the number the program will act on. And that API is
-> open: any wallet or recurring-buy tool can ask for a verdict before its own
-> swap.
-
-**Edit:** Cut between the code and the API page on the word "API".
-
----
-
-### Shot 8 — Measured against the real market (2:38–2:58)
-
-**Do:** Open https://boz-basket-web.vercel.app and scroll to "The real market:
-xStocks on Solana mainnet", then to "Weekends, measured".
+**Do:** Tab 7 for five seconds, then tab 8, scrolling to the verdict endpoint.
+Then the live site's home page, scrolled to its footer line. End on tab 1.
 
 **Say:**
 
-> None of this is argued from a whiteboard. Every five minutes the keeper asks
-> a real venue what a hundred dollars actually buys in tokenized stocks on
-> mainnet, compares it with Pyth, and runs the same guard over it — read-only,
-> nothing is bought. The table underneath is built from real trades, hour by
-> hour, over eight weekends. Both panels say how they were measured, including
-> the parts that do not flatter the guard.
-
-**Edit:** Highlight the "read-only · every 5 min" tag, then the medians.
-
----
-
-### Shot 9 — What is real, and what is not (2:58–3:15)
-
-**Do:** Scroll to the footer line of the home page. Hold.
-
-**Say:**
-
-> Devnet has no real tokenized stocks and no real venue, so in the demo the
-> stock tokens and the fills come from a mock market program that fills at the
-> reference price, and every page says so. The program, the vaults, the
-> schedule, the Pyth updates, the guard and every deferral are real on chain.
+> The Rust in the program and this TypeScript are the same rules. The plan
+> page, the keeper and the public API all call it, so what a user sees is what
+> the program will do — and any wallet can ask for the verdict before its own
+> swap. The same guard runs every five minutes against real tokenized-stock
+> quotes on mainnet, read-only. On devnet the stock tokens and fills come from
+> a mock market that fills at the reference price, and every page says so; the
+> program, the vaults, the Pyth updates, the guard and every deferral are real.
 > The repository is in the description.
 
-**Edit:** End on the repository page from shot 1 for two seconds, then cut to
-black.
+**Edit:** Cut from the code to the API page on the word "API". Hold the
+repository page two seconds, then cut to black.
 
 ---
 
 ## 5. If something goes wrong
 
-| What you see | What to do |
+| You see | Do |
 |---|---|
-| A GitHub link does not highlight any lines | The file changed. Film the file anyway, from its top, and tell the client which link missed. |
-| An explorer page says the transaction was not found | Reload once, then switch the network selector to **Devnet** at the top right. |
-| The developers page or the site shows an error panel | Reload once and wait ten seconds; tell the client if it persists. |
-| GitHub is in light theme | Stop and fix it (section 3). A white page in a dark film is jarring. |
+| A GitHub link highlights nothing | Film the file from its top and tell the client which link missed. |
+| The explorer says "not found" | Reload once, then set the network selector (top right) to **Devnet**. |
+| A site page shows an error panel | Reload once, wait ten seconds; tell the client if it persists. |
+| GitHub is in light theme | Fix it first (section 3). |
 
 ## 6. Delivery
 
-One MP4, plus the project file and the raw capture. Upload to YouTube as
-unlisted and send the link. It goes in the **Technical Video URL** field of the
-submission form, which closes **Friday 25 September, 16:00 New York time**.
+The MP4, the project file and the raw capture. Upload to YouTube as unlisted
+and send the link: it goes in the **Technical Video URL** field. The form
+closes **Friday 25 September, 16:00 New York time**.
