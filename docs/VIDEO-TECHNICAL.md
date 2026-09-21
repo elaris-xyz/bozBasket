@@ -3,8 +3,11 @@
 **For the editor.** An engineer watches this film, so the screen is code and
 transactions. You still need no wallet, install or command line: every file is
 a GitHub page and every transaction an explorer page, and all the links are
-below. Work top to bottom. Keep the narration wording; you do not need to
-understand it.
+below. Keep the narration wording; you do not need to understand it.
+
+**Nine tabs, nine shots.** Shot 1 is tab 1, shot 2 is tab 2, and so on to
+shot 9, tab 9. Work left to right through the tabs and never go back to an
+earlier one.
 
 ## 1. Deliverable
 
@@ -32,30 +35,28 @@ and record why".
   1920×1080, notifications off.
 - **GitHub in dark theme**: profile icon → Settings → Appearance → Dark.
 - Any time of day works; nothing here depends on the market.
-- Open the nine links below in nine tabs, in order. The `#L…` part scrolls to
-  and highlights the right lines — keep it.
+- Open these nine links in nine tabs, in this order. On GitHub, the `#L…` part
+  scrolls to and highlights the right lines — keep it.
 
-| Tab | Link |
-|---|---|
-| 1 | https://github.com/elaris-xyz/bozBasket |
-| 2 | https://github.com/elaris-xyz/bozBasket/blob/main/programs/basket_dca/src/state.rs#L69-L100 |
-| 3 | https://github.com/elaris-xyz/bozBasket/blob/main/programs/basket_dca/src/execute.rs#L126-L176 |
-| 4 | https://github.com/elaris-xyz/bozBasket/blob/main/programs/basket_dca/src/execute.rs#L180-L195 |
-| 5 | https://explorer.solana.com/tx/2NP5yUCncCSZoyoxco4bNdDJQVDYEqqHjnVanbAoAgtB6hbjSi7hq38Q3RkyxvVHy1AGti7g6kPWnTpwrUxwQLfd?cluster=devnet |
-| 6 | https://explorer.solana.com/tx/2HyNfzTFehzuEYCsNVWqodFo2XhMKwhYJRnMy5uDFHMmLGcxHLHkJPL6j1pG2JrBuHJKemKMdGn1L3hdSJDabHUD?cluster=devnet |
-| 7 | https://github.com/elaris-xyz/bozBasket/blob/main/packages/shared/src/guard.ts#L75-L95 |
-| 8 | https://boz-basket-web.vercel.app/developers |
-| 9 | https://boz-basket-web.vercel.app/plan/5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq |
-
-Keep the rhythm: code, then proof, then code.
+| Tab = shot | What it is | Link |
+|---|---|---|
+| 1 | The repository | https://github.com/elaris-xyz/bozBasket |
+| 2 | The plan account (code) | https://github.com/elaris-xyz/bozBasket/blob/main/programs/basket_dca/src/state.rs#L69-L100 |
+| 3 | The four checks (code) | https://github.com/elaris-xyz/bozBasket/blob/main/programs/basket_dca/src/execute.rs#L126-L176 |
+| 4 | What a refusal does (code) | https://github.com/elaris-xyz/bozBasket/blob/main/programs/basket_dca/src/execute.rs#L180-L195 |
+| 5 | A real buy (explorer) | https://explorer.solana.com/tx/2NP5yUCncCSZoyoxco4bNdDJQVDYEqqHjnVanbAoAgtB6hbjSi7hq38Q3RkyxvVHy1AGti7g6kPWnTpwrUxwQLfd?cluster=devnet |
+| 6 | A real refusal (explorer) | https://explorer.solana.com/tx/2HyNfzTFehzuEYCsNVWqodFo2XhMKwhYJRnMy5uDFHMmLGcxHLHkJPL6j1pG2JrBuHJKemKMdGn1L3hdSJDabHUD?cluster=devnet |
+| 7 | The same refusal on the site | https://boz-basket-web.vercel.app/plan/5vV866AdEP6kR5NemndnVoopUCK4ygXCuyGUG8L78LZq |
+| 8 | The shared rules (code) | https://github.com/elaris-xyz/bozBasket/blob/main/packages/shared/src/guard.ts#L75-L95 |
+| 9 | The public API (site) | https://boz-basket-web.vercel.app/developers |
 
 ---
 
 ## 4. The shots
 
-### Shot 1 — What it is made of (0:00–0:15)
+### Shot 1 · Tab 1 — What it is made of (0:00–0:15)
 
-**Do:** Tab 1. Scroll slowly down the file list to the README.
+**Do:** Scroll slowly down the file list to the README.
 
 **Say:**
 
@@ -66,9 +67,9 @@ Keep the rhythm: code, then proof, then code.
 
 ---
 
-### Shot 2 — The account model (0:15–0:30)
+### Shot 2 · Tab 2 — The account model (0:15–0:30)
 
-**Do:** Tab 2. Hold, then zoom gently into the highlighted `vault` lines.
+**Do:** Hold on the highlighted lines, then zoom gently into the `vault` lines.
 
 **Say:**
 
@@ -81,9 +82,12 @@ Keep the rhythm: code, then proof, then code.
 
 ---
 
-### Shot 3 — The guard runs on chain (0:30–0:58)
+### Shot 3 · Tab 3 — The guard runs on chain (0:30–0:58)
 
-**Do:** Tab 3. Scroll through the highlighted checks over about eight seconds.
+**Do:** Scroll through the highlighted checks over about eight seconds.
+
+**See:** Code comparing an age, a confidence figure, a divergence and a depth
+with limits, each followed by `Verdict::Defer`.
 
 **Say:**
 
@@ -98,9 +102,9 @@ it room.
 
 ---
 
-### Shot 4 — A refusal is a success (0:58–1:12)
+### Shot 4 · Tab 4 — A refusal is a success (0:58–1:12)
 
-**Do:** Tab 4. Hold on the highlighted block.
+**Do:** Hold on the highlighted block.
 
 **Say:**
 
@@ -112,13 +116,12 @@ it room.
 
 ---
 
-### Shot 5 — One transaction, three stocks (1:12–1:35)
+### Shot 5 · Tab 5 — One transaction, three stocks (1:12–1:35)
 
-**Do:** Tab 5, the explorer. Expand the instructions, then scroll to the token
-balance changes.
+**Do:** Expand the instructions, then scroll to the token balance changes.
 
 **See:** Success; one `ExecuteBasket` with three `Fill` calls inside; three
-stock balances up, the vault down by 100; a Pyth instruction at the end.
+stock balances up and the vault down by 100; a Pyth instruction at the end.
 
 **Say:**
 
@@ -133,45 +136,68 @@ stock balances up, the vault down by 100; a Pyth instruction at the end.
 
 ---
 
-### Shot 6 — And a refusal (1:35–1:58)
+### Shot 6 · Tab 6 — And a refusal (1:35–1:50)
 
-**Do:** Tab 6. Show **Success**, then the token balances (unchanged), then the
-log line starting `Program data:`. Cut to tab 9 and scroll to **History**. The
-row you need is old, so it is not in the short list: click **Show all …
-entries** at the bottom of History, then press Ctrl+F and search `47 h old`.
-Stop on that row: "deferred ×7 · Reference price stale · TSLA price 47 h old".
-Its transaction link ends in `DabHUD`, the same transaction as tab 6.
+**Do:** Show **Success**. Scroll to the token balances, which are unchanged,
+then to the log line that starts `Program data:`.
 
 **Say:**
 
 > The same plan, ten hours earlier. Success — and not one token moved. The
-> reason is not printed; it is in this encoded event and in the plan account.
-> Decoded: reference price stale, forty-seven hours old, retry in an hour. The
-> site decodes the same event — that is this row.
+> reason is not printed as text; it is in this encoded event, and in the
+> plan's own account.
 
-**Note:** there is no readable reason in the log. The shot pairs the encoded
-line with the site's decoded row on purpose.
+**Note:** there is no readable reason in the log, and that is the point: the
+next shot shows it decoded.
 
 ---
 
-### Shot 7 — One rulebook, and what is real (1:58–2:45)
+### Shot 7 · Tab 7 — The same refusal, decoded (1:50–2:02)
 
-**Do:** Tab 7 for five seconds, then tab 8, scrolling to the verdict endpoint.
-Then the live site's home page, scrolled to its footer line. End on tab 1.
+**Do:** Scroll to **History** at the bottom of the page. The row you need is
+old, so it is not in the short list: click **Show all … entries** at the
+bottom of History, then press Ctrl+F and search `47 h old`. Stop on the row
+"deferred ×7 · Reference price stale · TSLA price 47 h old". Its transaction
+link ends in `DabHUD`: the same transaction as tab 6.
+
+**Say:**
+
+> Decoded: reference price stale, forty-seven hours old, retry in an hour. The
+> site reads the same event — this row is that same transaction.
+
+**Edit:** Highlight the row, then its `DabHUD` link.
+
+---
+
+### Shot 8 · Tab 8 — One rulebook (2:02–2:17)
+
+**Do:** Hold on the highlighted function for about five seconds.
 
 **Say:**
 
 > The Rust in the program and this TypeScript are the same rules. The plan
-> page, the keeper and the public API all call it, so what a user sees is what
-> the program will do — and any wallet can ask for the verdict before its own
-> swap. The same guard runs every five minutes against real tokenized-stock
-> quotes on mainnet, read-only. On devnet the stock tokens and fills come from
-> a mock market that fills at the reference price, and every page says so; the
-> program, the vaults, the Pyth updates, the guard and every deferral are real.
-> The repository is in the description.
+> page, the keeper and the public API all call this one function, so what a
+> user sees is what the program will do.
 
-**Edit:** Cut from the code to the API page on the word "API". Hold the
-repository page two seconds, then cut to black.
+---
+
+### Shot 9 · Tab 9 — The open API, and what is real (2:17–2:45)
+
+**Do:** Scroll to the verdict endpoint, `/api/v1/verdict`, and hold. Then
+scroll to the very bottom of the page, to the footer line that begins "Devnet
+demo. Stock tokens and fills are synthetic", and hold two seconds. Cut to
+black.
+
+**Say:**
+
+> And any wallet can ask for the same verdict before its own swap. The same
+> guard runs every five minutes against real tokenized-stock quotes on
+> mainnet, read-only. On devnet the stock tokens and fills come from a mock
+> market that fills at the reference price, and every page says so; the
+> program, the vaults, the Pyth updates, the guard and every deferral are
+> real. The repository is in the description.
+
+**Edit:** Highlight the endpoint name, then the footer line.
 
 ---
 
@@ -181,6 +207,7 @@ repository page two seconds, then cut to black.
 |---|---|
 | A GitHub link highlights nothing | Film the file from its top and tell the client which link missed. |
 | The explorer says "not found" | Reload once, then set the network selector (top right) to **Devnet**. |
+| Tab 7: no `47 h old` row | Make sure you clicked **Show all … entries** first, then search again. |
 | A site page shows an error panel | Reload once, wait ten seconds; tell the client if it persists. |
 | GitHub is in light theme | Fix it first (section 3). |
 
