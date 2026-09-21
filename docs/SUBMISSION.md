@@ -56,7 +56,7 @@ https://hackathons.solana.com/hackathons/stocklana
   branch and in no tracked file, and `.env` and `.env.railway` are ignored and
   were never committed. It lives only in the local `.env` files, Vercel and the
   GitHub Actions secrets.
-- [ ] **Submit the form**. Its Links step has four fields and asks for at least
+- [ ] **Submit the form**, with the text in `docs/SUBMISSION-FORM.md`. Its Links step has four fields and asks for at least
       one: GitHub Repository, Demo URL (the live site, not a video), Pitch Video
       URL, Technical Video URL. Edits are allowed until Friday 25 September,
       16:00 ET.

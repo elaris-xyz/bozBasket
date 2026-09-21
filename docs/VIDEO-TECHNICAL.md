@@ -80,8 +80,8 @@ then stop on the README's architecture section.
 
 **Say:**
 
-> An Anchor program on Solana devnet. A keeper that runs both as a scheduled
-> serverless function and as a long-running worker, sharing one code path. A
+> An Anchor program on Solana devnet. A keeper that runs as a scheduled
+> serverless function, or as a long-running worker, through one code path. A
 > Next.js app that reads the chain directly. And a shared package holding the
 > guard rules, mirrored in Rust inside the program. Nine instructions, three of
 > which matter: create a plan, deposit, execute the basket.
